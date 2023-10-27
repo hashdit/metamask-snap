@@ -11,7 +11,7 @@
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
-        "iconPath": "images/HashDit-Logo.svg",
+        "iconPath": "images/favicon.ico",
         "packageName": "snap",
         "registry": "https://registry.npmjs.org/"
       }
