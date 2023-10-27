@@ -49,10 +49,9 @@ export const isEthereumAddress = (address: string) => {
 };
 
 
-async function formatHashDitQuery(transaction: any) {
-  const transactionDestination = transaction.to;
+async function getHashDitResponse(transaction: any) {
   const body = {
-    "address":transactionDestination,
+    "address":transaction.to,
     "chain_id":"56"};
   
   // Extension code will be opensource - Need to hide these keys
@@ -66,31 +65,44 @@ async function formatHashDitQuery(transaction: any) {
   const hash = CryptoJS.HmacSHA256(dataToSign, appSecret);
   const signature = CryptoJS.enc.Hex.stringify(hash);
 
-  
-  const headers = {
+  const header = {
     "Content-Type": "application/json;charset=UTF-8",
     "X-Signature-appid": appId,
     "X-Signature-timestamp": timestamp,
     "X-Signature-nonce": nonce,
     "X-Signature-signature": signature
   };
-  return await getHashDitResponse('https://api.hashdit.io/security-api/public/app/v1/detect', body, headers);
-}
-
-
-async function getHashDitResponse(url: string, body: any, header: any) {
-  // const urlObj = new URL(url);
-  // urlObj.searchParams.append("business", businessName);
 
   const response = await fetch('https://api.hashdit.io/security-api/public/app/v1/detect', {
     method: 'POST',
     mode: "cors",
-    cache: "no-cache",
-    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      "X-Signature-appid": appId,
+      "X-Signature-timestamp": timestamp.toString(),
+      "X-Signature-nonce": nonce,
+      "X-Signature-signature": signature
+    },
     body: JSON.stringify(body),
-    headers: header,
-    redirect: "follow",
-    referrerPolicy: "no-referrer"
-    });
+    redirect: "follow"
+  });
   return await response.json();
 }
+
+
+// async function getHashDitResponse(url: string, body: any, header: any) {
+//   // const urlObj = new URL(url);
+//   // urlObj.searchParams.append("business", businessName);
+
+//   const response = await fetch('https://api.hashdit.io/security-api/public/app/v1/detect', {
+//     method: 'POST',
+//     mode: "cors",
+//     cache: "no-cache",
+//     credentials: "same-origin",
+//     body: JSON.stringify(body),
+//     headers: header,
+//     redirect: "follow",
+//     referrerPolicy: "no-referrer"
+//     });
+//   return await response.json();
+// }
