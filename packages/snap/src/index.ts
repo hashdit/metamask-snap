@@ -2,11 +2,11 @@ import type { OnTransactionHandler } from '@metamask/snaps-types';
 import { heading, panel, text } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
 
-import { formatHashDitQuery } from "./utils/utils";
+import { getHashDitResponse } from "./utils/utils";
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({ transaction, chainId, transactionOrigin }) => {
-  const response = await formatHashDitQuery(transaction);
+  const response = await getHashDitResponse(transaction);
   console.log(response);
 
   return {
