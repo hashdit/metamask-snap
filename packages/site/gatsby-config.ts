@@ -13,7 +13,6 @@ const config: GatsbyConfig = {
         name: 'Template Snap',
         icon: 'src/assets/HashDit-Icon.svg',
         theme_color: '#6F4CFF',
-        background_color: '#FFFFFF',
         display: 'standalone',
       },
     },

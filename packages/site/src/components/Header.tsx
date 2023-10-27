@@ -4,6 +4,7 @@ import { MetamaskActions, MetaMaskContext } from '../hooks';
 import { connectSnap, getThemePreference, getSnap } from '../utils';
 import { HeaderButtons } from './Buttons';
 import { SnapLogo } from './SnapLogo';
+import { HashDitNameLogo } from './HashDitName';
 import { Toggle } from './Toggle';
 
 const HeaderWrapper = styled.header`
@@ -62,8 +63,7 @@ export const Header = ({
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        <SnapLogo color={theme.colors.icon.default} size={36} />
-        <Title>HashDit Security</Title>
+        <HashDitNameLogo color={theme.colors.icon.default} size={300} />
       </LogoWrapper>
       <RightContainer>
         <Toggle
