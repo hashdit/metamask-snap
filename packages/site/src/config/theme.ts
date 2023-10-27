@@ -41,29 +41,29 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#FFFFFF',
-      alternative: '#F2F4F6',
-      inverse: '#141618',
+      default: '#2f4ed8',
+      alternative: '#141618',
+      inverse: '#FFFFFF',
     },
     icon: {
-      default: '#141618',
+      default: '#FFFFFF',
       alternative: '#BBC0C5',
     },
     text: {
-      default: '#24272A',
-      muted: '#6A737D',
-      alternative: '#535A61',
-      inverse: '#FFFFFF',
+      default: '#FFFFFF',
+      muted: '#FFFFFF',
+      alternative: '#D6D9DC',
+      inverse: '#24272A',
     },
     border: {
-      default: '#BBC0C5',
+      default: '#848C96',
     },
     primary: {
       default: '#6F4CFF',
       inverse: '#FFFFFF',
     },
     card: {
-      default: '#FFFFFF',
+      default: '#141618',
     },
     error: {
       default: '#d73a49',
