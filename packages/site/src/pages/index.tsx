@@ -108,7 +108,7 @@ const Index = () => {
         Welcome to HashDit Security
       </Heading>
       <Subtitle>
-        Protect your cryptocurrency assets with destination address screening, transaction insights and url risk screenings.
+        Protect your cryptocurrency assets with destination address and url screening, alongside transaction insights.
       </Subtitle>
       <CardContainer>
         {state.error && (
