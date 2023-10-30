@@ -20,8 +20,8 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   flex: 1;
-  margin-top: 7.6rem;
-  margin-bottom: 7.6rem;
+  margin-top: 5rem;
+  margin-bottom: 4rem;
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
     padding-right: 2.4rem;
@@ -56,7 +56,7 @@ const CardContainer = styled.div`
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 64.8rem;
+  max-width: 30.4rem;
   width: 100%;
   height: 100%;
   margin-top: 1.5rem;
@@ -105,10 +105,13 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        Welcome to HashDit Security
+        HashDit Security
       </Heading>
       <Subtitle>
-        Protect your cryptocurrency assets with destination address and url screening, alongside transaction insights.
+        Protect your cryptocurrency assets with destination address and url screening,
+      </Subtitle>
+      <Subtitle>
+        alongside transaction insights.
       </Subtitle>
       <CardContainer>
         {state.error && (
