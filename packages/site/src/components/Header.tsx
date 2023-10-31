@@ -63,7 +63,7 @@ export const Header = ({
   return (
     <HeaderWrapper>
       <LogoWrapper>
-        <HashDitNameLogo color={theme.colors.icon.default} size={300} />
+        <HashDitNameLogo color={theme.colors.icon.default} size={200} />
       </LogoWrapper>
       <RightContainer>
         <Toggle
