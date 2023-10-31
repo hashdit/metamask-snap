@@ -10,69 +10,42 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   //const response = await getHashDitResponse(transaction);
   //console.log(response);
 
-  // Check if the current chain is supported
-  if(!Object.values(SUPPORTED_CHAINS).includes(chainId) ){
+  // Check if the current chain is supported by this Snap. If not supported, display "not supported" text.
+  const explorerURL = SUPPORTED_CHAINS[chainId]?.url;
+  if(explorerURL === undefined){
     return{
-      content: panel([g
+      content: panel([
         heading('HashDit Security Insights'),
-        text("Not supported on this chain"),
-        text(chainId)
+        text("HashDit Security Insights is not supported on this chain."),
+        text("Currently we support **Ethereum Mainnet**, **Sepolia Testnet**, **BSC Mainnet**, and **BSC Testnet**")
         ]),
     }
   }
-  // else{
-  // // Build the blockchain explorer URL
-  // // Reference: https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md#syntax
-  //   var explorerURL = null;
-  //   switch (chainId) {
-  //     // Sepolia testnet
-  //     case '11155111':
-  //       explorerURL = "https://sepolia.etherscan.io/address/";
-  //       break;
-  //     // BSC mainnet
-  //     case '56':
-  //       explorerURL = "https://bscscan.com/address/";
-  //       break;
-  //     // BSC testnet
-  //     case '97':
-  //       explorerURL = "https://testnet.bscscan.com/address/"
-  //     break;
-  //     // opBNB mainnet
-  //     case '204':
-  //       explorerURL = "https://opbnbscan.com/address/"
-  //     break;
-  //     // opBNB testnet
-  //     case '5611':
-  //       explorerURL = "https://testnet.opbnbscan.com/address/"
-  //     break;
-  //   }
-  // }
-
-
 
   
+
   return {
-  content: panel([
-    heading('HashDit Security Insights'),
-    text(
-      `As set up, you are transfering to **${transaction.to}**`
-    ),
-    divider(),
-    heading('HashDit Security Response'),
-    text(
-      `HashDit Response: `,
+    content: panel([
+      text(`${transaction.data}`),
+      heading('HashDit Security Insights'),
+      text(
+        `As set up, you are transfering to **${transaction.to}**`
       ),
+      divider(),
+      heading('HashDit Security Response'),
+      text(
+        `HashDit Response: `,
+        ),
 
-    divider(),
-    heading(
-      `View Destination Address On Explorer`
-    ),
-    //copyable(`${explorerURL}${transaction.to}`),
-    ]),
-    
+      divider(),
+      heading(
+        `View Destination Address On Explorer`
+      ),
+      copyable(`${explorerURL}${transaction.to}`),
+      ]),
+      
+    };
   };
-};
-
 // return {
 //   content: panel([
 //     heading('HashDit Security Insights'),
