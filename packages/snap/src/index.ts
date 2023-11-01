@@ -34,6 +34,8 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     }
     // Otherwise, display token transfer insights
     else{
+      const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
+      console.log("respData: ", respData);
       return {
         content: panel([
           text(`${transaction.data}`),
@@ -45,6 +47,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
           heading('HashDit Security Response'),
           text(
             `HashDit Response: `,
+            `Transaction risk score: **${respData.detection_result.risks.risk_level}**`
             ),
     
           divider(),
@@ -58,6 +61,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   }
 
   // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
+  const respData = getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
   return {
     content: panel([
       heading('HashDit Security Insights'),
@@ -70,8 +74,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
         `HashDit Response: `,
         ),
       divider(),
-      // Todo: Call HashDit api here to determine if a url is safe
-      text(`The url **${transactionOrigin}** is safe/malicious`)
+      // Todo: Call HashDit api here to determine if a url is safe -- Pat: Let's call outside of the return and pass the response in
+      text(`The url **${transactionOrigin}** has a risk score of **${respData.risk_level}**`),
+      divider(),
+      text(`**${respData.risk_detail}**`)
       ]),
       
     };
