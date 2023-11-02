@@ -1,9 +1,13 @@
 import type { OnTransactionHandler, OnRpcRequestHandler } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse, getTestResponse } from "./utils/utils";
+import { getHashDitResponse } from "./utils/utils";
 import { SUPPORTED_CHAINS } from "./utils/chains";
 
+// https://github.com/here-wallet/near-snap/blob/main/packages/snap/src/index.ts <- example of how to use this
+export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
+  const methods = request.method;
+};
 
 
 
@@ -34,20 +38,21 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     }
     // Otherwise, display token transfer insights
     else{
-      //const respData = await getTestResponse();
       const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
       console.log("respData: ", respData);
       return {
         content: panel([
-          //text(`${transaction.data}`),
           heading('HashDit Transaction Screening'),
-          text(`Transaction risk: **${respData.overall_risk_title}**`),
-          text(`Transaction risk details: **${respData.overall_risk_detail}**`),
+          text(`Overall risk: **${respData.overall_risk_title}**`),
+          text(`Risk details: **${respData.overall_risk_detail}**`),
+          text(`Transaction risk: **${respData.transaction_risk_detail}**`),
+          text(`**${respData.function_param1}**`), // If function_param1 is empty, this text will not be displayed
+          text(`**${respData.function_param2}**`),
 
           divider(),
-          heading('Transaction Information'),
+          heading('URL Risk Information'),
           text(
-            `You are transfering **${transaction.value}** to **${transaction.to}**`
+            `The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`
           ),
     
           divider(),
@@ -83,14 +88,3 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
       
     };
   };
-// return {
-//   content: panel([
-//     heading('HashDit Security Insights'),
-//     text(
-//       `As set up, you are paying **${gasFeesPercentage.toFixed(
-//         2,
-//       )}%** in gas fees for this transaction.`,
-//     ),
-//   ]),
-// };
-// };

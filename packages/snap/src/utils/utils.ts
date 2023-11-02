@@ -128,6 +128,10 @@ function formatResponse(resp: any, businessName: string){
     overall_risk: -1,
     overall_risk_title: "Unknown Risk",
     overall_risk_detail: "No details",
+    url_risk: -1,
+    function_param1: "",
+    function_param2: "",
+    transaction_risk_detail: "N/A",
   };
 
   if (businessName == "hashdit_snap_tx_api_url_detection") {
@@ -137,16 +141,31 @@ function formatResponse(resp: any, businessName: string){
     responseData.url_risk_title = risk_details.name;
     responseData.url_risk_detail = risk_details.value;
 
-  } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
+  } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
     if (resp.detection_result != null) {
       const detectionResults = resp.detection_result.risks;
       responseData.overall_risk = detectionResults.risk_level;
 
       responseData.function_name = resp.detection_result.function_name;
-      // responseData.transaction_type = resp.detection_result.transaction_type; // might not need this
       if (responseData.function_name == "approve") {
-        responseData.
+        responseData.function_param1 = "name: " + resp.detection_result.params[0].name + ", type: " + resp.detection_result.params[0].type + ", value: " + resp.detection_result.params[0].value;
+        responseData.function_param2 = "name: " + resp.detection_result.params[1].name + ", type: " + resp.detection_result.params[1].type + ", value: " + resp.detection_result.params[1].value;
       }
+
+      interface TransactionRisk {
+        risk_level: number;
+        risk_detail: string;
+      }
+      const transactions: TransactionRisk[] = resp.detection_result.transaction;
+      let highestRiskTransaction: TransactionRisk = transactions[0];
+      for (const transaction of resp.detection_result.transaction) {
+        if (transaction.risk_level > highestRiskTransaction.risk_level) {
+          highestRiskTransaction = transaction;
+          responseData.transaction_risk_detail = transaction.risk_detail;
+        }
+      }
+      responseData.transaction_risk_detail = "Risk explanation: " + highestRiskTransaction.risk_detail;
+      responseData.url_risk = detectionResults.url.risk_level;
 
       const risk_details = JSON.parse(detectionResults.url);
       responseData.url_risk_title = risk_details.name;
@@ -162,7 +181,7 @@ function formatResponse(resp: any, businessName: string){
   } else if (responseData.overall_risk >= 2) {
     responseData.overall_risk_title = "Medium Risk";
     responseData.overall_risk_detail = "This transaction is considered medium risk. Please review the details of this transaction.";
-  } else if (responseData.overall_risk >= 0)) {
+  } else if (responseData.overall_risk >= 0) {
     responseData.overall_risk_title = "Low Risk";
     responseData.overall_risk_detail = "This transaction is considered low risk. Please review the details of this transaction.";
   } 
