@@ -50,20 +50,6 @@ export const isEthereumAddress = (address: string) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-
-export async function getTestResponse() {
-  console.log("getTestResponse")
-  const API_KEY = "MWKDJD38BW2MB7985K83Y9EZNSF233DXH7";
-  const contract = '0x66d21fef2Ef9322a18245E2635ac10D12247F7E5';  // replace with your contract address
-  const url = `https://api.bscscan.com/api?module=contract&action=getcontractcreation&contractaddresses=${contract}&apikey=${API_KEY}`;
-
-  const response = await fetch(url);
-  const resp = await response.json();
-  console.log(JSON.stringify(resp.result, null, 2));
-  return resp;
-}
-
-
 export async function getHashDitResponse(transaction: any, transactionUrl: any, chainId: string, businessName: string) {
   console.log("getHashDitResponse");
   console.log(transaction);
