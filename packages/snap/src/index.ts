@@ -4,6 +4,10 @@ import { hasProperty } from '@metamask/utils';
 import { getHashDitResponse } from "./utils/utils";
 import { SUPPORTED_CHAINS } from "./utils/chains";
 
+// https://github.com/here-wallet/near-snap/blob/main/packages/snap/src/index.ts <- example of how to use this
+export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
+  const methods = request.method;
+};
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({ transaction, chainId, transactionOrigin }) => {
@@ -30,18 +34,22 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     }
     // Otherwise, display token transfer insights
     else{
+      const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
+      console.log("respData: ", respData);
       return {
         content: panel([
-          text(`${transaction.data}`),
-          heading('HashDit Security Insights'),
-          text(
-            `You are transfering **${transaction.value}** to **${transaction.to}**`
-          ),
+          heading('HashDit Transaction Screening'),
+          text(`Overall risk: **${respData.overall_risk_title}**`),
+          text(`Risk details: **${respData.overall_risk_detail}**`),
+          text(`Transaction risk: **${respData.transaction_risk_detail}**`),
+          text(`**${respData.function_param1}**`), // If function_param1 is empty, this text will not be displayed
+          text(`**${respData.function_param2}**`),
+
           divider(),
-          heading('HashDit Security Response'),
+          heading('URL Risk Information'),
           text(
-            `HashDit Response: `,
-            ),
+            `The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`
+          ),
     
           divider(),
           heading(
@@ -54,6 +62,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   }
 
   // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
+  const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
   return {
     content: panel([
       heading('HashDit Security Insights'),
@@ -66,20 +75,12 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
         `HashDit Response: `,
         ),
       divider(),
-      // Todo: Call HashDit api here to determine if a url is safe
-      text(`The url **${transactionOrigin}** is safe/malicious`)
+      // Todo: Call HashDit api here to determine if a url is safe -- Pat: Let's call outside of the return and pass the response in
+      text(`The url **${transactionOrigin}** has a risk score of **${respData.overall_risk}**`),
+      divider(),
+      text(`**${respData.overall_risk_title}**`),
+      text(`**${respData.overall_risk_detail}**`)
       ]),
       
     };
   };
-// return {
-//   content: panel([
-//     heading('HashDit Security Insights'),
-//     text(
-//       `As set up, you are paying **${gasFeesPercentage.toFixed(
-//         2,
-//       )}%** in gas fees for this transaction.`,
-//     ),
-//   ]),
-// };
-// };
