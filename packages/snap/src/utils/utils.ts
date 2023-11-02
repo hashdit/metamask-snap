@@ -2,6 +2,8 @@ import { remove0x } from '@metamask/utils';
 
 import { v4 as uuidv4 } from 'uuid';
 import * as CryptoJS from 'crypto-js';
+import hmacSHA256 from "crypto-js/hmac-sha256";
+import encHex from "crypto-js/enc-hex";
 
 /**
  * The function signatures for the different types of transactions. This is used
@@ -49,6 +51,19 @@ export const isEthereumAddress = (address: string) => {
 };
 
 
+export async function getTestResponse() {
+  console.log("getTestResponse")
+  const API_KEY = "MWKDJD38BW2MB7985K83Y9EZNSF233DXH7";
+  const contract = '0x66d21fef2Ef9322a18245E2635ac10D12247F7E5';  // replace with your contract address
+  const url = `https://api.bscscan.com/api?module=contract&action=getcontractcreation&contractaddresses=${contract}&apikey=${API_KEY}`;
+
+  const response = await fetch(url);
+  const resp = await response.json();
+  console.log(JSON.stringify(resp.result, null, 2));
+  return resp;
+}
+
+
 export async function getHashDitResponse(transaction: any, transactionUrl: any, chainId: string, businessName: string) {
   console.log("getHashDitResponse");
   console.log(transaction);
@@ -70,10 +85,6 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   let postBody: any = {};
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     postBody.url = transactionUrl;
-
-  } else if (businessName == "address_screening") {
-    postBody.address = transaction.to;
-    postBody.chain_id = chain;
   
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     postBody.address = transaction.to;
@@ -94,30 +105,87 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   // Extension code will be opensource - Need to hide these keys
   const appId = 'a3d194daa5b64414bbaa';
   const appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
-  const timestamp = new Date().getTime();
+
+  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
+  url.searchParams.append("business", businessName);
+  const query = url.search.substring(1);
+
+  const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  const dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
-  const hash = CryptoJS.HmacSHA256(dataToSign, appSecret);
-  const signature = CryptoJS.enc.Hex.stringify(hash);
+  const dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+  const signature = hmacSHA256(dataToSign, appSecret);
+  const signatureFinal = encHex.stringify(signature);
 
-  const url = new URL('https://api.hashdit.io/security-api/public/app/v1/detect');
-  url.searchParams.append("business", businessName);
+  const response = await customFetch(url, postBody, appId, timestamp, nonce, signatureFinal);
+  return formatResponse(response, businessName);
+}
 
+
+function formatResponse(resp: any, businessName: string){
+  console.log("data: ", resp)
+  let responseData: any = {
+    overall_risk: -1,
+    overall_risk_title: "Unknown Risk",
+    overall_risk_detail: "No details",
+  };
+
+  if (businessName == "hashdit_snap_tx_api_url_detection") {
+    responseData.url_risk_level = resp.risk_level;
+
+    const risk_details = JSON.parse(resp.risk_detail);
+    responseData.url_risk_title = risk_details.name;
+    responseData.url_risk_detail = risk_details.value;
+
+  } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
+    if (resp.detection_result != null) {
+      const detectionResults = resp.detection_result.risks;
+      responseData.overall_risk = detectionResults.risk_level;
+
+      responseData.function_name = resp.detection_result.function_name;
+      // responseData.transaction_type = resp.detection_result.transaction_type; // might not need this
+      if (responseData.function_name == "approve") {
+        responseData.
+      }
+
+      const risk_details = JSON.parse(detectionResults.url);
+      responseData.url_risk_title = risk_details.name;
+      responseData.url_risk_detail = risk_details.value;
+    }
+  } else if (businessName == "hashdit_snap_tx_api_signature_request") {
+
+  }
+
+  if (responseData.overall_risk >= 4) {
+    responseData.overall_risk_title = "High Risk";
+    responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
+  } else if (responseData.overall_risk >= 2) {
+    responseData.overall_risk_title = "Medium Risk";
+    responseData.overall_risk_detail = "This transaction is considered medium risk. Please review the details of this transaction.";
+  } else if (responseData.overall_risk >= 0)) {
+    responseData.overall_risk_title = "Low Risk";
+    responseData.overall_risk_detail = "This transaction is considered low risk. Please review the details of this transaction.";
+  } 
+
+  return responseData;
+}
+
+
+async function customFetch(url: URL, postBody: any, appId: string, timestamp: number, nonce: any, signatureFinal: any){
   const response = await fetch(url, {
-    method: 'POST',
-    cache: "no-cache",
-    credentials: "same-origin",
+    method: "POST", 
+    mode: "cors", 
+    cache: "no-cache", 
+    credentials: "same-origin", 
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
-      "Access-Control-Allow-Origin":"*", 
       "X-Signature-appid": appId,
       "X-Signature-timestamp": timestamp.toString(),
       "X-Signature-nonce": nonce,
-      "X-Signature-signature": signature
+      "X-Signature-signature": signatureFinal
     },
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
+    redirect: "follow", 
+    referrerPolicy: "no-referrer", 
     body: JSON.stringify(postBody),
   });
 
@@ -130,7 +198,6 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
     throw Error("Fetch api error: " + resp.errorData);
   }
 }
-
 
 // async function getHashDitResponse(url: string, body: any, header: any) {
 //   // const urlObj = new URL(url);
