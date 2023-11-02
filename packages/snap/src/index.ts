@@ -5,6 +5,10 @@ import { getHashDitResponse } from "./utils/utils";
 import { SUPPORTED_CHAINS } from "./utils/chains";
 
 
+
+
+  
+
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({ transaction, chainId, transactionOrigin }) => {
   //const response = await getHashDitResponse(transaction);
