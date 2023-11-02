@@ -1,7 +1,7 @@
 import type { OnTransactionHandler, OnRpcRequestHandler } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse } from "./utils/utils";
+import { getHashDitResponse, getTestResponse } from "./utils/utils";
 import { SUPPORTED_CHAINS } from "./utils/chains";
 
 
@@ -30,21 +30,21 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     }
     // Otherwise, display token transfer insights
     else{
+      //const respData = await getTestResponse();
       const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
       console.log("respData: ", respData);
       return {
         content: panel([
-          text(`${transaction.data}`),
-          heading('HashDit Security Insights'),
+          //text(`${transaction.data}`),
+          heading('HashDit Transaction Screening'),
+          text(`Transaction risk: **${respData.overall_risk_title}**`),
+          text(`Transaction risk details: **${respData.overall_risk_detail}**`),
+
+          divider(),
+          heading('Transaction Information'),
           text(
             `You are transfering **${transaction.value}** to **${transaction.to}**`
           ),
-          divider(),
-          heading('HashDit Security Response'),
-          text(
-            `HashDit Response: `,
-            `Transaction risk score: **${respData.detection_result.risks.risk_level}**`
-            ),
     
           divider(),
           heading(
@@ -57,7 +57,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   }
 
   // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
-  const respData = getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
+  const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
   return {
     content: panel([
       heading('HashDit Security Insights'),
@@ -71,9 +71,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
         ),
       divider(),
       // Todo: Call HashDit api here to determine if a url is safe -- Pat: Let's call outside of the return and pass the response in
-      text(`The url **${transactionOrigin}** has a risk score of **${respData.risk_level}**`),
+      text(`The url **${transactionOrigin}** has a risk score of **${respData.overall_risk}**`),
       divider(),
-      text(`**${respData.risk_detail}**`)
+      text(`**${respData.overall_risk_title}**`),
+      text(`**${respData.overall_risk_detail}**`)
       ]),
       
     };
