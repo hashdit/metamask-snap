@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import encHex from "crypto-js/enc-hex";
+import { trace } from 'console';
 import { SUPPORTED_CHAINS } from "./chains";
 
 /**
@@ -56,28 +57,35 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   console.log(transaction);
   console.log(transactionUrl, chainId, businessName);
 
+  const trace_id = uuidv4(); // unique id for each screening, allowing users to report issues and for us to track issues
+
   // formatting chainid to match api formatting
   let chain: string;
   switch (chainId) {
       case "eip155:1":
-        chain = "0x1";
+        chain = "1";
         break;
       case "eip155:38":
-        chain = "0x56";
+        chain = "56";
         break;
       default:
-        chain = "0x1"; // only to stop errors, need to find good default
+        chain = "56"; // only to stop errors, need to find good default
   }
 
   let postBody: any = {};
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     postBody.url = transactionUrl;
-  
+
+  } else if (businessName == "hashdit_native_transfer") {
+    postBody.address = transaction.to;
+    postBody.chain_id = chain;
+
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     postBody.address = transaction.to;
     postBody.chain_id = chain;
-    postBody.trace_id = "5c978e09-1508-4ab0-8550-4d3e6640b9d4"; // random string e.g. "5c978e09-1508-4ab0-8550-4d3e6640b9c3", need to be generated
-    postBody.transaction = transaction;
+    postBody.trace_id = trace_id;
+    postBody.transaction = JSON.stringify(transaction);
+    console.log("transaction: ", transaction);
     postBody.url = transactionUrl;
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
@@ -85,78 +93,102 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
     postBody.chain_id = chain;
     postBody.message = "0xdeadbeef"; // should be signature message
     postBody.method = "eth_sign";
-    postBody.trace_id = "5c978e09-1508-4ab0-8550-4d3e6640b9d4"; // random string e.g. "5c978e09-1508-4ab0-8550-4d3e6640b9c3", needs to be generated
+    postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
   console.log("postbody: ", postBody);
-  // Extension code will be opensource - Need to hide these keys
-  const appId = 'a3d194daa5b64414bbaa';
-  const appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
-
-  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  url.searchParams.append("business", businessName);
-  const query = url.search.substring(1);
+  let appId: string;
+  let appSecret: string;
 
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  const dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
+
+  let dataToSign: string;
+  if (businessName === "hashdit_native_transfer") {
+    appId = '42b7d48e81754984b624';
+    appSecret = '03909eb04c894bd29a79f9e1127847c6';
+    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
+
+  } else {
+    appId = 'a3d194daa5b64414bbaa';
+    appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
+    url.searchParams.append("business", businessName);
+    const query = url.search.substring(1);
+    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+  }
+
   const signature = hmacSHA256(dataToSign, appSecret);
   const signatureFinal = encHex.stringify(signature);
 
   const response = await customFetch(url, postBody, appId, timestamp, nonce, signatureFinal);
-  return formatResponse(response, businessName);
+  return formatResponse(response, businessName, trace_id);
 }
 
 
-function formatResponse(resp: any, businessName: string){
+function formatResponse(resp: any, businessName: string, trace_id: any){
   console.log("data: ", resp)
   let responseData: any = {
     overall_risk: -1,
     overall_risk_title: "Unknown Risk",
     overall_risk_detail: "No details",
     url_risk: -1,
+    function_name: "",
     function_param1: "",
     function_param2: "",
-    transaction_risk_detail: "N/A",
+    transaction_risk_detail: "None found",
+    trace_id: trace_id,
   };
 
   if (businessName == "hashdit_snap_tx_api_url_detection") {
-    responseData.url_risk_level = resp.risk_level;
+    responseData.url_risk = resp.risk_level;
 
-    const risk_details = JSON.parse(resp.risk_detail);
-    responseData.url_risk_title = risk_details.name;
-    responseData.url_risk_detail = risk_details.value;
+    // const risk_details = JSON.parse(resp.risk_detail);
+    // responseData.url_risk_title = risk_details.name;
+    // responseData.url_risk_detail = risk_details.value;
+  
+  } else if (businessName == "hashdit_native_transfer") {
+    responseData.overall_risk = resp.risk_level;
+    responseData.overall_risk_title = resp.risk_level_title;
+    responseData.overall_risk_detail = resp.risk_detail_simple;
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
     if (resp.detection_result != null) {
+      console.log("detectionResults: ", resp.detection_result)
       const detectionResults = resp.detection_result.risks;
+      console.log("detectionResults2: ", JSON.stringify(detectionResults, null, 2))
       responseData.overall_risk = detectionResults.risk_level;
 
-      responseData.function_name = resp.detection_result.function_name;
-      if (responseData.function_name == "approve") {
-        responseData.function_param1 = "name: " + resp.detection_result.params[0].name + ", type: " + resp.detection_result.params[0].type + ", value: " + resp.detection_result.params[0].value;
-        responseData.function_param2 = "name: " + resp.detection_result.params[1].name + ", type: " + resp.detection_result.params[1].type + ", value: " + resp.detection_result.params[1].value;
+      // Get function name and params - catch if none returned
+      try {
+        const paramsCopy = [...resp.detection_result.params];
+        console.log("params: ", JSON.stringify(paramsCopy, null, 2));
+        console.log("params1: ", paramsCopy[0]);
+        console.log("params2: ", paramsCopy[1]);
+
+        responseData.function_name = resp.detection_result.function_name;
+        responseData.function_param1 = "name: " + paramsCopy[0].name + " | type: " + paramsCopy[0].type + " | value: " + paramsCopy[0].value;
+        responseData.function_param2 = "name: " + paramsCopy[1].name + " | type: " + paramsCopy[1].type + " | value: " + paramsCopy[1].value;
+      } catch {
+        console.log("No params")
       }
 
-      interface TransactionRisk {
-        risk_level: number;
-        risk_detail: string;
+      // Get most risky transaction risk detail - catch if none returned
+      try {
+        const transactionData = [...detectionResults.transaction];
+        responseData.transaction_risk_detail = transactionData[0].risk_detail;
+      } catch {
+        console.log("No transaction data")
       }
-      const transactions: TransactionRisk[] = resp.detection_result.transaction;
-      let highestRiskTransaction: TransactionRisk = transactions[0];
-      for (const transaction of resp.detection_result.transaction) {
-        if (transaction.risk_level > highestRiskTransaction.risk_level) {
-          highestRiskTransaction = transaction;
-          responseData.transaction_risk_detail = transaction.risk_detail;
-        }
-      }
-      responseData.transaction_risk_detail = "Risk explanation: " + highestRiskTransaction.risk_detail;
+
       responseData.url_risk = detectionResults.url.risk_level;
 
-      const risk_details = JSON.parse(detectionResults.url);
-      responseData.url_risk_title = risk_details.name;
-      responseData.url_risk_detail = risk_details.value;
+      if (responseData.url_risk >= 0) {
+        const risk_details = JSON.parse(detectionResults.url.risk_detail);
+        responseData.url_risk_title = risk_details.name;
+        responseData.url_risk_detail = risk_details.value;
+      }
     }
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
