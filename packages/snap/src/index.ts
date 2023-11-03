@@ -36,28 +36,38 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     else{
       const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
       console.log("respData: ", respData);
-      return {
-        content: panel([
+
+      let contentArray: any[] = [];
+
+      if (respData.overall_risk_title != "Unknown Risk") {
+        contentArray = [
           heading('HashDit Transaction Screening'),
           text(`Overall risk: **${respData.overall_risk_title}**`),
-          text(`Risk details: **${respData.overall_risk_detail}**`),
-          text(`Transaction risk: **${respData.transaction_risk_detail}**`),
-          text(`**${respData.function_param1}**`), // If function_param1 is empty, this text will not be displayed
-          text(`**${respData.function_param2}**`),
-
+          text(`Risk Overview: **${respData.overall_risk_detail}**`),
+          text(`Risk Details: **${respData.transaction_risk_detail}**`),
           divider(),
-          heading('URL Risk Information'),
-          text(
-            `The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`
-          ),
-    
+        ];
+      } else {
+        contentArray = [
+          heading('HashDit Transaction Screening'),
+          text(`Overall risk: **${respData.overall_risk_title}**`),
           divider(),
-          heading(
-            `View Destination Address On Explorer`
-          ),
-          copyable(`${explorerURL}${transaction.to}`),
-        ])
+        ];
       }
+      
+      contentArray = contentArray.concat([
+        heading('URL Risk Information'),
+        text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+      ]);
+
+      // Copyable below causes error
+      // contentArray = contentArray.concat([
+      //   heading(`View Destination Address On Explorer`),
+      //   copyable(`${explorerURL}${transaction.to}`),
+      // ]);
+      
+      const content = panel(contentArray);
+      return { content };
     }
   }
 
@@ -68,8 +78,8 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   let contentArray = [
     heading('HashDit Transaction Screening'),
     text(`Overall risk: **${respData.overall_risk_title}**`),
-    text(`Risk details: **${respData.overall_risk_detail}**`),
-    text(`Transaction risk: **${respData.transaction_risk_detail}**`),
+    text(`Risk Overview: **${respData.overall_risk_detail}**`),
+    text(`Risk Details: **${respData.transaction_risk_detail}**`),
     divider(),
   ];
   
