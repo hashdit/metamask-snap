@@ -34,7 +34,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
     }
     // Otherwise, display token transfer insights
     else{
-      const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
+      const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_native_transfer");
       console.log("respData: ", respData);
 
       let contentArray: any[] = [];
@@ -58,6 +58,13 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
       contentArray = contentArray.concat([
         heading('URL Risk Information'),
         text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+        divider(),
+      ]);
+
+      // We should try to make this smaller somehow
+      contentArray = contentArray.concat([
+        heading('HashDit Trace-ID'),
+        text(`**${respData.trace_id}**`),
       ]);
 
       // Copyable below causes error
@@ -95,6 +102,13 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   contentArray = contentArray.concat([
     heading('URL Risk Information'),
     text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+    divider(),
+  ]);
+
+  // We should try to make this smaller somehow
+  contentArray = contentArray.concat([
+    heading('HashDit Trace-ID'),
+    text(`**${respData.trace_id}**`),
   ]);
   
   const content = panel(contentArray);

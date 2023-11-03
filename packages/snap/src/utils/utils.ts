@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import encHex from "crypto-js/enc-hex";
+import { trace } from 'console';
 
 /**
  * The function signatures for the different types of transactions. This is used
@@ -55,6 +56,8 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   console.log(transaction);
   console.log(transactionUrl, chainId, businessName);
 
+  const trace_id = uuidv4(); // unique id for each screening, allowing users to report issues and for us to track issues
+
   // formatting chainid to match api formatting
   let chain: string;
   switch (chainId) {
@@ -71,11 +74,15 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   let postBody: any = {};
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     postBody.url = transactionUrl;
-  
+
+  } else if (businessName == "hashdit_native_transfer") {
+    postBody.address = transaction.to;
+    postBody.chain_id = chain;
+
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     postBody.address = transaction.to;
     postBody.chain_id = chain;
-    postBody.trace_id = "5c978e09-1508-4ab0-8550-4d3e6640b9d4"; // random string e.g. "5c978e09-1508-4ab0-8550-4d3e6640b9c3", need to be generated
+    postBody.trace_id = trace_id;
     postBody.transaction = JSON.stringify(transaction);
     console.log("transaction: ", transaction);
     postBody.url = transactionUrl;
@@ -85,7 +92,7 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
     postBody.chain_id = chain;
     postBody.message = "0xdeadbeef"; // should be signature message
     postBody.method = "eth_sign";
-    postBody.trace_id = "5c978e09-1508-4ab0-8550-4d3e6640b9d4"; // random string e.g. "5c978e09-1508-4ab0-8550-4d3e6640b9c3", needs to be generated
+    postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
   console.log("postbody: ", postBody);
@@ -93,23 +100,30 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
   const appId = 'a3d194daa5b64414bbaa';
   const appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
 
-  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  url.searchParams.append("business", businessName);
-  const query = url.search.substring(1);
-
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  const dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
+
+  let dataToSign: string;
+  if (businessName === "hashdit_native_transfer") {
+    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
+
+  } else {
+    url.searchParams.append("business", businessName);
+    const query = url.search.substring(1);
+    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+  }
+
   const signature = hmacSHA256(dataToSign, appSecret);
   const signatureFinal = encHex.stringify(signature);
 
   const response = await customFetch(url, postBody, appId, timestamp, nonce, signatureFinal);
-  return formatResponse(response, businessName);
+  return formatResponse(response, businessName, trace_id);
 }
 
 
-function formatResponse(resp: any, businessName: string){
+function formatResponse(resp: any, businessName: string, trace_id: any){
   console.log("data: ", resp)
   let responseData: any = {
     overall_risk: -1,
@@ -120,6 +134,7 @@ function formatResponse(resp: any, businessName: string){
     function_param1: "",
     function_param2: "",
     transaction_risk_detail: "None found",
+    trace_id: trace_id,
   };
 
   if (businessName == "hashdit_snap_tx_api_url_detection") {
