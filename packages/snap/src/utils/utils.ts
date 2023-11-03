@@ -5,6 +5,7 @@ import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import encHex from "crypto-js/enc-hex";
 import { trace } from 'console';
+import { SUPPORTED_CHAINS } from "./chains";
 
 /**
  * The function signatures for the different types of transactions. This is used
@@ -189,7 +190,9 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
         responseData.url_risk_detail = risk_details.value;
       }
     }
+
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
+
 
   }
 
@@ -234,6 +237,29 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
   } else {
     throw Error("Fetch api error: " + resp.errorData);
   }
+}
+
+// Parse transacting value to decimals to be human-readable
+export function parseTransactingValue(transactionValue: any){ 
+  const valueAsString = transactionValue.value?.toString()
+  let valueAsDecimals = 0;
+  if(valueAsString !== undefined){
+    valueAsDecimals = parseInt(valueAsString, 16);
+  }
+  // Assumes 18 decimal places for native token
+  valueAsDecimals = valueAsDecimals/1e18;
+
+  return valueAsDecimals;
+}
+
+// Get native token of chain. If not specified, defaults to `ETH`
+export function getNativeToken(chainId: string){
+  let nativeToken = SUPPORTED_CHAINS[chainId]?.nativeToken;
+  if(nativeToken == undefined){
+    nativeToken = 'ETH';
+  }
+  
+  return nativeToken;
 }
 
 // async function getHashDitResponse(url: string, body: any, header: any) {
