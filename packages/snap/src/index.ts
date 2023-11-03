@@ -62,25 +62,31 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
   }
 
   // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
-  const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
-  return {
-    content: panel([
-      heading('HashDit Security Insights'),
-      text(
-        `You are interacting with contract **${transaction.to}**`
-      ),
+  const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_transaction_request");
+  console.log("respData: ", respData);
+
+  let contentArray = [
+    heading('HashDit Transaction Screening'),
+    text(`Overall risk: **${respData.overall_risk_title}**`),
+    text(`Risk details: **${respData.overall_risk_detail}**`),
+    text(`Transaction risk: **${respData.transaction_risk_detail}**`),
+    divider(),
+  ];
+  
+  if (respData.function_name !== "") {
+    contentArray = contentArray.concat([
+      heading(`**${respData.function_name}**`),
+      text(`**${respData.function_param1}**`),
+      text(`**${respData.function_param2}**`),
       divider(),
-      heading('HashDit Security Response'),
-      text(
-        `HashDit Response: `,
-        ),
-      divider(),
-      // Todo: Call HashDit api here to determine if a url is safe -- Pat: Let's call outside of the return and pass the response in
-      text(`The url **${transactionOrigin}** has a risk score of **${respData.overall_risk}**`),
-      divider(),
-      text(`**${respData.overall_risk_title}**`),
-      text(`**${respData.overall_risk_detail}**`)
-      ]),
-      
-    };
+    ]);
+  }
+
+  contentArray = contentArray.concat([
+    heading('URL Risk Information'),
+    text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+  ]);
+  
+  const content = panel(contentArray);
+  return { content };
   };
