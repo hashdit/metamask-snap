@@ -96,9 +96,8 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
     postBody.url = transactionUrl;
   }
   console.log("postbody: ", postBody);
-  // Extension code will be opensource - Need to hide these keys
-  const appId = 'a3d194daa5b64414bbaa';
-  const appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
+  let appId: string;
+  let appSecret: string;
 
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
@@ -107,9 +106,13 @@ export async function getHashDitResponse(transaction: any, transactionUrl: any, 
 
   let dataToSign: string;
   if (businessName === "hashdit_native_transfer") {
+    appId = '42b7d48e81754984b624';
+    appSecret = '03909eb04c894bd29a79f9e1127847c6';
     dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
 
   } else {
+    appId = 'a3d194daa5b64414bbaa';
+    appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
     url.searchParams.append("business", businessName);
     const query = url.search.substring(1);
     dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
@@ -138,11 +141,16 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   };
 
   if (businessName == "hashdit_snap_tx_api_url_detection") {
-    responseData.url_risk_level = resp.risk_level;
+    responseData.url_risk = resp.risk_level;
 
-    const risk_details = JSON.parse(resp.risk_detail);
-    responseData.url_risk_title = risk_details.name;
-    responseData.url_risk_detail = risk_details.value;
+    // const risk_details = JSON.parse(resp.risk_detail);
+    // responseData.url_risk_title = risk_details.name;
+    // responseData.url_risk_detail = risk_details.value;
+  
+  } else if (businessName == "hashdit_native_transfer") {
+    responseData.overall_risk = resp.risk_level;
+    responseData.overall_risk_title = resp.risk_level_title;
+    responseData.overall_risk_detail = resp.risk_detail_simple;
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
     if (resp.detection_result != null) {

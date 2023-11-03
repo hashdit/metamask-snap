@@ -37,6 +37,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
       const respData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_native_transfer");
       console.log("respData: ", respData);
 
+      // We also need to add seperate URL screening, as the native transfer hashdit endpoint doesnt have url screening
+      const urlRespData = await getHashDitResponse(transaction, transactionOrigin, chainId, "hashdit_snap_tx_api_url_detection");
+      console.log("urlRespData: ", urlRespData);
+
       let contentArray: any[] = [];
 
       if (respData.overall_risk_title != "Unknown Risk") {
@@ -57,7 +61,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
       
       contentArray = contentArray.concat([
         heading('URL Risk Information'),
-        text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+        text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
         divider(),
       ]);
 
