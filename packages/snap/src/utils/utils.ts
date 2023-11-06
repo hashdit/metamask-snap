@@ -5,7 +5,7 @@ import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import encHex from "crypto-js/enc-hex";
 import { trace } from 'console';
-import { SUPPORTED_CHAINS } from "./chains";
+import { CHAINS_INFO } from "./chains";
 
 /**
  * The function signatures for the different types of transactions. This is used
@@ -59,13 +59,14 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
 
   const trace_id = uuidv4(); // unique id for each screening, allowing users to report issues and for us to track issues
 
+  // Todo: If BSC network is the only chain supported by HashDit, then we could remove this switch case.
   // formatting chainid to match api formatting
   let chain: string;
   switch (chainId) {
-      case "eip155:1":
+      case "0x1":
         chain = "1";
         break;
-      case "eip155:38":
+      case "0x38":
         chain = "56";
         break;
       default:
@@ -254,13 +255,14 @@ export function parseTransactingValue(transactionValue: any){
 
 // Get native token of chain. If not specified, defaults to `ETH`
 export function getNativeToken(chainId: string){
-  let nativeToken = SUPPORTED_CHAINS[chainId]?.nativeToken;
+  let nativeToken = CHAINS_INFO[chainId]?.nativeToken;
   if(nativeToken == undefined){
-    nativeToken = 'ETH';
+    nativeToken = 'Native Tokens';
   }
   
   return nativeToken;
 }
+
 
 // async function getHashDitResponse(url: string, body: any, header: any) {
 //   // const urlObj = new URL(url);
