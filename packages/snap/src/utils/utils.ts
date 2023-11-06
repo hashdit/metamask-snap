@@ -52,7 +52,7 @@ export const isEthereumAddress = (address: string) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-export async function getHashDitResponse(transaction: any, transactionUrl: any, chainId: string, businessName: string) {
+export async function getHashDitResponse(businessName: string, transactionUrl?: any, transaction?: any, chainId?: string) {
   console.log("getHashDitResponse");
   console.log(transaction);
   console.log(transactionUrl, chainId, businessName);

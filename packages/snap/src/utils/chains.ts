@@ -4,7 +4,7 @@ export const SUPPORTED_CHAINS : { [key: string]: {url: string, nativeToken: stri
   // Sepolia Testnet
   'eip155:11155111': {url: 'https://sepolia.etherscan.io/address/', nativeToken: 'ETH' },
   // BSC Mainnet
-  'eip155:38': { url: 'https://bscscan.com/address/', nativeToken: 'BNB' },
+  'eip155:89': { url: 'https://bscscan.com/address/', nativeToken: 'BNB' },
   // BSC Testnet
   'eip155:61': { url: 'https://testnet.bscscan.com/address/', nativeToken: 'TBNB' },
 };
