@@ -22,7 +22,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       const nativeToken = getNativeToken(chainId);
 
       let contentArray: any[] = [ 
-        text(`chainID: ${chainId}`),
         heading('Transfer Details'),
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
         divider(),
@@ -39,7 +38,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
 
       contentArray = contentArray.concat([        
         text("HashDit Security Insights is not fully supported on this chain."),
-        divider(),
         text("Currently we only support the **BSC Mainnet**."),
       ])
       
@@ -62,7 +60,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
 
       if (respData.overall_risk_title != "Unknown Risk") {
         contentArray = [
-          text(`chainID: ${chainId}`),
           heading('HashDit Transaction Screening'),
           text(`Overall risk: **${respData.overall_risk_title}**`),
           text(`Risk Overview: **${respData.overall_risk_detail}**`),
@@ -71,7 +68,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
         ];
       } else {
         contentArray = [
-          text(`chainID: ${chainId}`),
           heading('HashDit Transaction Screening'),
           text(`Overall risk: **${respData.overall_risk_title}**`),
           divider(),
@@ -121,11 +117,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     ];
 
     contentArray = contentArray.concat([   
-      text(`chainID: ${chainId}`),   
       heading('URL Risk Information'),
       text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
       divider(),
-      text("HashDit Security Insights is not fully supported on this chain. Only URL screening is performed."),
+      text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
       text("Currently we only support the **BSC Mainnet**."),
     ]);
 
@@ -139,28 +134,35 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     console.log("respData: ", respData);
   
     let contentArray = [
-      text(`chainID: ${chainId}`),
       heading('HashDit Transaction Screening'),
-      text(`Overall risk: ${respData.overall_risk_title}`),
-      text(`Risk Overview: ${respData.overall_risk_detail}`),
-      text(`Risk Details: ${respData.transaction_risk_detail}`),
+      text(`**Overall risk:** _${respData.overall_risk_title}_`),
+      text(`**Risk Overview:** _${respData.overall_risk_detail}_`),
+      text(`**Risk Details:** _${respData.transaction_risk_detail}_`),
       divider(),
     ];
-    
-    if (respData.function_name !== "") {
-      contentArray = contentArray.concat([
-        heading(`${respData.function_name}`),
-        text(`**${respData.function_param1}**`),
-        text(`**${respData.function_param2}**`),
-        divider(),
-      ]);
-    }
-  
+      
     contentArray = contentArray.concat([
       heading('URL Risk Information'),
       text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
       divider(),
     ]);
+
+    if (respData.function_name !== "") {
+      
+      contentArray = contentArray.concat([
+        heading(`Function Name: ${respData.function_name}`),
+      ]);
+      // Loop through each function parameter and display its values
+      for (const param of respData.function_params){
+        contentArray.push( 
+          text(`**Name:** _${param.name}_`),
+          text(`**Type**: _${param.type}_`),
+          text(`**Value:** _${param.value}_`),
+          divider()
+        );
+      }
+
+    }
   
     // We should try to make this smaller somehow
     contentArray = contentArray.concat([
