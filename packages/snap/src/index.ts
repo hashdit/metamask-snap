@@ -20,7 +20,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     if(chainId !== '0x38'){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
-      const explorerURL = CHAINS_INFO[chainId].url;
 
       let contentArray: any[] = [ 
         text(`chainID: ${chainId}`),
@@ -29,21 +28,23 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
         divider(),
       ];
 
-      if(explorerURL !== undefined){
-        contentArray.concat([
+      if(CHAINS_INFO.hasOwnProperty(chainId)){
+        const explorerURL = CHAINS_INFO[chainId].url;
+        contentArray = contentArray.concat([
           heading(`View Destination Address On Explorer`),
           copyable(`${explorerURL}${transaction.to}`),
           divider(),
         ])
       }
 
-      contentArray.concat([        
-        divider(),
+      contentArray = contentArray.concat([        
         text("HashDit Security Insights is not fully supported on this chain."),
         divider(),
-        text("Currently we only support the **BSC Mainnet**."),])
-
-      }
+        text("Currently we only support the **BSC Mainnet**."),
+      ])
+      
+      const content = panel(contentArray);
+      return { content };
     }
     // Current chain is supported. Display token transfer insights
     else{
@@ -56,7 +57,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
-      const explorerURL = CHAINS_INFO[chainId]?.url;
 
       let contentArray: any[] = [];
 
@@ -89,13 +89,14 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
         divider(),
       ]);
-      
-      if(explorerURL !== undefined){
+
+      if(CHAINS_INFO[chainId].url){
+        const explorerURL = CHAINS_INFO[chainId].url;
         contentArray = contentArray.concat([
           heading(`View Destination Address On Explorer`),
           copyable(`${explorerURL}${transaction.to}`),
           divider(),
-        ]);
+        ])
       }
 
       // We should try to make this smaller somehow
@@ -108,6 +109,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       return { content };
     }
   }
+  
   // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
   const chainId = await ethereum.request({ method: "eth_chainId"});
   // Current chain is not BSC. Only perform URL screening
@@ -169,6 +171,5 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     const content = panel(contentArray);
     return { content };
   }
-
 
 };
