@@ -123,8 +123,8 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       heading('URL Risk Information'),
       text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
       divider(),
-      text("HashDit Security Insights is not fully supported on this chain. Only URL screening is performed"),
-      text("Currently we support **Ethereum Mainnet**, **Sepolia Testnet**, **BSC Mainnet**, and **BSC Testnet**"),
+      text("HashDit Security Insights is not fully supported on this chain. Only URL screening is performed."),
+      text("Currently we only support the **BSC Mainnet**."),
     ]);
 
     const content = panel(contentArray);
@@ -147,7 +147,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     
     if (respData.function_name !== "") {
       contentArray = contentArray.concat([
-        heading(`**${respData.function_name}**`),
+        heading(`${respData.function_name}`),
         text(`**${respData.function_param1}**`),
         text(`**${respData.function_param2}**`),
         divider(),
