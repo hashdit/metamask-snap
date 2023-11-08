@@ -171,8 +171,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
         
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
-        // responseData.function_param1 = "name: " + paramsCopy[0].name + " | type: " + paramsCopy[0].type + " | value: " + paramsCopy[0].value;
-        // responseData.function_param2 = "name: " + paramsCopy[1].name + " | type: " + paramsCopy[1].type + " | value: " + paramsCopy[1].value;
       } catch {
         console.log("No params")
       }
@@ -187,20 +185,19 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
 
       responseData.url_risk = detectionResults.url.risk_level;
 
-      if (responseData.url_risk >= 0) {
-        const risk_details = JSON.parse(detectionResults.url.risk_detail);
-        responseData.url_risk_title = risk_details.name;
-        responseData.url_risk_detail = risk_details.value;
+      if (responseData.url_risk >= 4) {
+        responseData.url_risk_title = "⚠️ Interaction with a dangerous site ⚠️";
+      } else if (responseData.url_risk >= 2) {
+        responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
       }
     }
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
-
-
+    // This will be utilised in v2
   }
 
   if (responseData.overall_risk >= 4) {
-    responseData.overall_risk_title = "High Risk";
+    responseData.overall_risk_title = "⚠️ High Risk ⚠️";
     responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
   } else if (responseData.overall_risk >= 2) {
     responseData.overall_risk_title = "Medium Risk";

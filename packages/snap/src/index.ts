@@ -140,9 +140,17 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       text(`**Risk Details:** _${respData.transaction_risk_detail}_`),
       divider(),
     ];
-      
+
     contentArray = contentArray.concat([
       heading('URL Risk Information'),
+    ]);
+
+    if (respData.url_risk >= 2) {
+      contentArray.push( 
+        text(`**${respData.url_risk_title}**`));
+      }
+
+    contentArray = contentArray.concat([
       text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
       divider(),
     ]);
