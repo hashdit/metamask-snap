@@ -8,9 +8,7 @@ import {
   shouldDisplayReconnectButton,
 } from '../utils';
 import {
-  ConnectButton,
   InstallFlaskButton,
-  ReconnectButton,
   Card,
 } from '../components';
 import { defaultSnapOrigin } from '../config';
@@ -105,7 +103,7 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        HashDit Security
+        Protect your MetaMask transactions
       </Heading>
       <Subtitle>
         Protect your cryptocurrency assets with destination address and url screening,
@@ -114,54 +112,7 @@ const Index = () => {
         alongside transaction insights.
       </Subtitle>
       <CardContainer>
-        {state.error && (
-          <ErrorMessage>
-            <b>An error happened:</b> {state.error.message}
-          </ErrorMessage>
-        )}
-        {!isMetaMaskReady && (
-          <Card
-            content={{
-              title: 'Install',
-              description:
-                'Snaps is pre-release software only available in MetaMask Flask, a canary distribution for developers with access to upcoming features.',
-              button: <InstallFlaskButton />,
-            }}
-            fullWidth
-          />
-        )}
-        {!state.installedSnap && (
-          <Card
-            content={{
-              title: 'Get Started',
-              description:
-                'Get started by connecting to and installing the HashDit Security snap.',
-              button: (
-                <ConnectButton
-                  onClick={handleConnectClick}
-                  disabled={!isMetaMaskReady}
-                />
-              ),
-            }}
-            disabled={!isMetaMaskReady}
-          />
-        )}
-        {shouldDisplayReconnectButton(state.installedSnap) && (
-          <Card
-            content={{
-              title: 'Reconnect',
-              description:
-                'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
-              button: (
-                <ReconnectButton
-                  onClick={handleConnectClick}
-                  disabled={!state.installedSnap}
-                />
-              ),
-            }}
-            disabled={!state.installedSnap}
-          />
-        )}
+        <Subtitle>Description text</Subtitle>
       </CardContainer>
     </Container>
   );
