@@ -20,7 +20,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     if(chainId !== '0x38'){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
-
+      
       let contentArray: any[] = [ 
         heading('Transfer Details'),
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
