@@ -75,14 +75,21 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
 
       contentArray.push(
         heading('URL Risk Information'),
+      );
+  
+      if (urlRespData.url_risk >= 2) {
+        contentArray.push( 
+          text(`**${urlRespData.url_risk_title}**`));
+        }
+  
+      contentArray.push(
         text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
         divider(),
       );
-
       contentArray.push(
         heading('Transfer Details'),
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
-        divider(),
+        divider()
       );
 
       if(CHAINS_INFO[chainId].url){
@@ -170,20 +177,28 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       );
       
       if(transactionCount !== undefined){
-        contentArray.push(
-          text(`**Transaction Count:** _${transactionCount}_`),
-        );
+        // Add a check if transactions is 1k, as 1k results is max from the bscscan api
+        // then add a + to the end of the transaction count to indicate that there are more than 1k transactions
+        if (transactionCount == 1000) {
+          contentArray.push(
+            text(`**Transaction Count:** _${transactionCount}+_`),
+          );
+          } else {
+            contentArray.push(
+              text(`**Transaction Count:** _${transactionCount}_`),
+            );
+          }
       }
       // Todo: Move string creating logic to utils.ts
       if(isContractVerified !== undefined){
         if(isContractVerified){
           contentArray.push(
-            text(`Contract is verified.`),
+            text(`Contract is **verified**.`),
           );
         }
         else{
           contentArray.push(
-            text(`⚠️ Contract is NOT verified ⚠️`),
+            text(`⚠️ Contract is **NOT verified** ⚠️`),
           );
         }
 
