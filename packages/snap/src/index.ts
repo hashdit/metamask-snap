@@ -1,7 +1,7 @@
 import type { OnTransactionHandler } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse, parseTransactingValue, getNativeToken, getContractTransactionCount, getContractVerification, getContractAge } from "./utils/utils";
+import { getHashDitResponse, parseTransactingValue, getNativeToken } from "./utils/utils";
 import { CHAINS_INFO } from "./utils/chains";
 
 
@@ -155,17 +155,8 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
   }
   // Current chain is BSC. Perform smart contract interaction insights
   else{
-    const [respData, transactionCount, isContractVerified, contractAge] = await Promise.all([
-      getHashDitResponse("hashdit_snap_tx_api_transaction_request", transactionOrigin, transaction, chainId),
-      getContractTransactionCount(transaction.to),
-      getContractVerification(transaction.to),
-      getContractAge(transaction.to)
-    ]);
-    
+    const respData = await getHashDitResponse("hashdit_snap_tx_api_transaction_request", transactionOrigin, transaction, chainId);
     console.log("respData: ", respData);
-    console.log("transactionCount: ", transactionCount);
-    console.log("isContractVerified: ", isContractVerified);
-    console.log("contractAge: ", contractAge);
 
     let contentArray = [
       heading('HashDit Transaction Screening'),
@@ -188,35 +179,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
       divider(),
     );
-
-    // Display smart contract stats
-    if(transactionCount !== undefined || isContractVerified !== undefined || contractAge !== undefined){
-      contentArray.push(
-        heading(`Smart Contract Stats`),
-      );
-      
-      if(transactionCount !== undefined){
-        contentArray.push(
-          text(transactionCount),
-        );
-      }
-      
-      if(isContractVerified !== undefined){
-        contentArray.push(
-          text(isContractVerified),
-        );
-
-      }
-            
-      if(contractAge !== undefined){
-        contentArray.push(
-          text(`**Contract Age:** _${contractAge} Days_`),
-        );
-      }
-      contentArray.push(
-        divider(),
-      );
-    }
 
     // Display function name and parameters
     if (respData.function_name !== "") {
