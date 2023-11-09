@@ -1,26 +1,25 @@
-import type { OnTransactionHandler, OnRpcRequestHandler } from '@metamask/snaps-types';
+import type { OnTransactionHandler } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse, parseTransactingValue, getNativeToken } from "./utils/utils";
+import { getHashDitResponse, parseTransactingValue, getNativeToken, getContractTransactionCount, getContractVerification, getContractAge } from "./utils/utils";
 import { CHAINS_INFO } from "./utils/chains";
 
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({ transaction, brokenChainId, transactionOrigin }) => {
-
   /** 
    *Transaction is a native token transfer. Only check if current chain is supported since the transfer will not interact with a URL.
-   *The key `data` in object `transaction` only exists in smart contract interactions and not native transfers.
+   *The key `type` in object `transaction` only exists in smart contract interactions and not native transfers.
    *We can use this to determine the type of transaction (native transfer or contract interaction).
    */ 
 
-  if (!transaction.hasOwnProperty('data')) {
+  if (transaction.hasOwnProperty('type')) {
     const chainId = await ethereum.request({ method: "eth_chainId"});
     // Current chain is not BSC. Display not supported text.
     if(chainId !== '0x38'){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
-
+      
       let contentArray: any[] = [ 
         heading('Transfer Details'),
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
@@ -29,17 +28,17 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
 
       if(CHAINS_INFO.hasOwnProperty(chainId)){
         const explorerURL = CHAINS_INFO[chainId].url;
-        contentArray = contentArray.concat([
+        contentArray.push(
           heading(`View Destination Address On Explorer`),
           copyable(`${explorerURL}${transaction.to}`),
           divider(),
-        ])
+        )
       }
 
-      contentArray = contentArray.concat([        
+      contentArray.push(       
         text("HashDit Security Insights is not fully supported on this chain."),
         text("Currently we only support the **BSC Mainnet**."),
-      ])
+      )
       
       const content = panel(contentArray);
       return { content };
@@ -74,39 +73,39 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
         ];
       }
 
-      contentArray = contentArray.concat([
+      contentArray.push(
         heading('URL Risk Information'),
         text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
         divider(),
-      ]);
+      );
 
-      contentArray = contentArray.concat([
+      contentArray.push(
         heading('Transfer Details'),
         text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
         divider(),
-      ]);
+      );
 
       if(CHAINS_INFO[chainId].url){
         const explorerURL = CHAINS_INFO[chainId].url;
-        contentArray = contentArray.concat([
+        contentArray.push(
           heading(`View Destination Address On Explorer`),
           copyable(`${explorerURL}${transaction.to}`),
           divider(),
-        ])
+        )
       }
 
       // We should try to make this smaller somehow
-      contentArray = contentArray.concat([
+      contentArray.push(
         heading('HashDit Trace-ID'),
         text(`${respData.trace_id}`),
-      ]);
+      );
 
       const content = panel(contentArray);
       return { content };
     }
   }
   
-  // Transaction is an interaction with a smart contract because key `data` was found in object `transaction`
+  // Transaction is an interaction with a smart contract because key `type` was found in object `transaction`
   const chainId = await ethereum.request({ method: "eth_chainId"});
   // Current chain is not BSC. Only perform URL screening
   if(chainId !== '0x38'){
@@ -116,13 +115,13 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     let contentArray: any[] = [      
     ];
 
-    contentArray = contentArray.concat([   
+    contentArray.push(  
       heading('URL Risk Information'),
       text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
       divider(),
       text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
       text("Currently we only support the **BSC Mainnet**."),
-    ]);
+    );
 
     const content = panel(contentArray);
     return { content };
@@ -130,9 +129,18 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
   }
   // Current chain is BSC. Perform smart contract interaction insights
   else{
-    const respData = await getHashDitResponse( "hashdit_snap_tx_api_transaction_request", transactionOrigin, transaction, chainId);
+    const [respData, transactionCount, isContractVerified, contractAge] = await Promise.all([
+      getHashDitResponse("hashdit_snap_tx_api_transaction_request", transactionOrigin, transaction, chainId),
+      getContractTransactionCount(transaction.to),
+      getContractVerification(transaction.to),
+      getContractAge(transaction.to)
+    ]);
+    
     console.log("respData: ", respData);
-  
+    console.log("transactionCount: ", transactionCount);
+    console.log("isContractVerified: ", isContractVerified);
+    console.log("contractAge: ", contractAge);
+
     let contentArray = [
       heading('HashDit Transaction Screening'),
       text(`**Overall risk:** _${respData.overall_risk_title}_`),
@@ -141,25 +149,61 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       divider(),
     ];
 
-    contentArray = contentArray.concat([
+    contentArray.push(
       heading('URL Risk Information'),
-    ]);
+    );
 
     if (respData.url_risk >= 2) {
       contentArray.push( 
         text(`**${respData.url_risk_title}**`));
       }
 
-    contentArray = contentArray.concat([
+    contentArray.push(
       text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
       divider(),
-    ]);
+    );
+
+    
+    if(transactionCount !== undefined || isContractVerified !== undefined || contractAge !== undefined){
+      contentArray.push(
+        heading(`Smart Contract Stats`),
+      );
+      
+      if(transactionCount !== undefined){
+        contentArray.push(
+          text(`**Transaction Count:** _${transactionCount}_`),
+        );
+      }
+      // Todo: Move string creating logic to utils.ts
+      if(isContractVerified !== undefined){
+        if(isContractVerified){
+          contentArray.push(
+            text(`Contract is verified.`),
+          );
+        }
+        else{
+          contentArray.push(
+            text(`⚠️ Contract is NOT verified ⚠️`),
+          );
+        }
+
+      }
+            
+      if(contractAge !== undefined){
+        contentArray.push(
+          text(`**Contract Age:** _${contractAge} days_`),
+        );
+      }
+      contentArray.push(
+        divider(),
+      );
+    }
 
     if (respData.function_name !== "") {
       
-      contentArray = contentArray.concat([
+      contentArray.push(
         heading(`Function Name: ${respData.function_name}`),
-      ]);
+      );
       // Loop through each function parameter and display its values
       for (const param of respData.function_params){
         contentArray.push( 
@@ -173,10 +217,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
     }
   
     // We should try to make this smaller somehow
-    contentArray = contentArray.concat([
+    contentArray.push(
       heading('HashDit Trace-ID'),
       text(`${respData.trace_id}`),
-    ]);
+    );
     
     const content = panel(contentArray);
     return { content };

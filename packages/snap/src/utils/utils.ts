@@ -1,4 +1,6 @@
-import { remove0x } from '@metamask/utils';
+import { remove0x, add0x } from '@metamask/utils';
+import { decode } from '@metamask/abi-utils';
+import { ethers } from 'ethers';
 
 import { v4 as uuidv4 } from 'uuid';
 import * as CryptoJS from 'crypto-js';
@@ -241,11 +243,10 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
 
 // Parse transacting value to decimals to be human-readable
 export function parseTransactingValue(transactionValue: any){ 
-  const valueAsString = transactionValue.value?.toString()
+  
   let valueAsDecimals = 0;
-  if(valueAsString !== undefined){
-    valueAsDecimals = parseInt(valueAsString, 16);
-  }
+  valueAsDecimals = parseInt(transactionValue, 16);
+  
   // Assumes 18 decimal places for native token
   valueAsDecimals = valueAsDecimals/1e18;
 
@@ -261,6 +262,70 @@ export function getNativeToken(chainId: string){
   
   return nativeToken;
 }
+
+const bscApiKey = "API_KEY_HERE";
+
+// Get number of transactions 
+export async function getContractTransactionCount(contractAddress: any){
+  const contractAddressString = contractAddress.toString();
+  // Do not break up the url string into multiple lines. Otherwise the API call will not work.
+  const url = `https://api.bscscan.com/api?module=account&action=txlist&address=${contractAddressString}&startblock=0&endblock=99999999&page=1&offset=1000&sort=asc&apikey=${bscApiKey}`;
+  const response = await fetch(url);
+  const resp = await response.json();
+  //console.log("getContractTransactionCount resp: ", resp);
+  if (resp.message == "OK" && resp.result) {
+    return resp.result.length;
+  } else {
+    throw Error("Fetch api error: " + resp.errorData);
+  }
+}
+
+// Check if contract is verified on BscScan
+export async function getContractVerification(contractAddress: any){
+  const contractAddressString = contractAddress.toString();
+  // Do not break up the url string into multiple lines. Otherwise the API call will not work.
+  const url = `https://api.bscscan.com/api?module=contract&action=getabi&address=${contractAddressString}&apikey=${bscApiKey}`;
+  const response = await fetch(url);
+  const resp = await response.json();
+  //console.log("getContractVerification resp: ", resp);
+  if(resp.message === "OK"){
+    if(resp.result !== 'Contract source code not verified'){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+  else{
+    throw Error("Fetch api error: " + resp.errorData);
+  }
+
+  
+}
+
+// Get contract the contract age in days since its creation date
+export async function getContractAge(contractAddress: any){
+  const contractAddressString = contractAddress.toString();
+  // Do not break up the url string into multiple lines. Otherwise the API call will not work.
+  const url = `https://api.bscscan.com/api?module=account&action=txlist&address=${contractAddressString}&apikey=${bscApiKey}&page=1&offset=1`;
+  const response = await fetch(url);
+  const resp = await response.json();
+  //console.log("getContractAge resp :", resp);
+  if (resp.message == "OK" && resp.result) {
+    const timestampOfContractCreation = resp.result[0].timeStamp
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const difference = currentTimestamp - timestampOfContractCreation;
+    const days = Math.floor(difference / 86400);
+
+    return days;
+  } 
+  else{
+    throw Error("Fetch api error: " + resp.errorData);
+  }
+}
+
+
+
 
 
 // async function getHashDitResponse(url: string, body: any, header: any) {

@@ -49,7 +49,9 @@
     "node": ">=18.6.0"
   },
   "dependencies": {
+    "@metamask/abi-utils": "^2.0.2",
     "crypto-js": "^4.1.1",
+    "ethers": "^6.8.1",
     "snaps-cli": "^0.4.2",
     "uuid": "^9.0.1",
     "webextension-polyfill": "^0.10.0"
