@@ -263,7 +263,7 @@ export function getNativeToken(chainId: string){
   return nativeToken;
 }
 
-const bscApiKey = "24I8GDC4DNQ8EPVSZXCHFEUZ97Z6QV12EA";
+const bscApiKey = "API_KEY_HERE";
 
 // Get number of transactions 
 export async function getContractTransactionCount(contractAddress: any){
