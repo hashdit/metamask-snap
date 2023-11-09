@@ -147,14 +147,19 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     responseData.url_risk = resp.risk_level;
 
-    // const risk_details = JSON.parse(resp.risk_detail);
-    // responseData.url_risk_title = risk_details.name;
-    // responseData.url_risk_detail = risk_details.value;
+    if (responseData.url_risk >= 4) {
+      responseData.url_risk_title = "⚠️ Interaction with a dangerous site ⚠️";
+    } else if (responseData.url_risk >= 2) {
+      responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
+    }
   
   } else if (businessName == "hashdit_native_transfer") {
     responseData.overall_risk = resp.risk_level;
-    responseData.overall_risk_title = resp.risk_level_title;
-    responseData.overall_risk_detail = resp.risk_detail_simple;
+    if (resp.black_labels && resp.black_labels.length > 0) {
+      responseData.transaction_risk_detail = "Destination address is in HashDit blacklist";
+    } else if (resp.white_labels && resp.white_labels.length > 0) {
+      responseData.transaction_risk_detail = "Destination address is in whitelisted, please still review the transaction details";
+    }
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
     if (resp.detection_result != null) {
@@ -263,7 +268,7 @@ export function getNativeToken(chainId: string){
   return nativeToken;
 }
 
-const bscApiKey = "API_KEY_HERE";
+const bscApiKey = "24I8GDC4DNQ8EPVSZXCHFEUZ97Z6QV12EA";
 
 // Get number of transactions 
 export async function getContractTransactionCount(contractAddress: any){
@@ -323,9 +328,6 @@ export async function getContractAge(contractAddress: any){
     throw Error("Fetch api error: " + resp.errorData);
   }
 }
-
-
-
 
 
 // async function getHashDitResponse(url: string, body: any, header: any) {
