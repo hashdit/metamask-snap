@@ -6,7 +6,7 @@ import { CHAINS_INFO } from "./utils/chains";
 
 
 // Handle outgoing transactions.
-export const onTransaction: OnTransactionHandler = async ({ transaction, brokenChainId, transactionOrigin }) => {
+export const onTransaction: OnTransactionHandler = async ({ transaction, transactionOrigin }) => {
   /** 
    *Transaction is a native token transfer. Only check if current chain is supported since the transfer will not interact with a URL.
    *The key `type` in object `transaction` only exists in smart contract interactions and not native transfers.
@@ -14,9 +14,19 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
    */ 
 
   if (transaction.hasOwnProperty('type')) {
-    const chainId = await ethereum.request({ method: "eth_chainId"});
+    
+    const chainId = await ethereum.request({ method: "eth_chainId" });
+    // Check if chainId is undefined or null
+    if (typeof chainId !== 'string') {
+      const contentArray: any[] = [
+        heading("HashDit Security Insights"),
+        text(`Error: ChainId could not be retreived (${chainId})`)
+      ]
+      const content = panel(contentArray);
+      return { content };
+    }
     // Current chain is not BSC. Display not supported text.
-    if(chainId !== '0x38'){
+    if(chainId !== '0x38' ){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
       
@@ -34,7 +44,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
           divider(),
         )
       }
-
+      
       contentArray.push(       
         text("HashDit Security Insights is not fully supported on this chain."),
         text("Currently we only support the **BSC Mainnet**."),
@@ -114,6 +124,15 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
   
   // Transaction is an interaction with a smart contract because key `type` was found in object `transaction`
   const chainId = await ethereum.request({ method: "eth_chainId"});
+  // Check if chainId is undefined or null
+  if (typeof chainId !== 'string') {
+    const contentArray: any[] = [
+      heading("HashDit Security Insights"),
+      text(`Error: ChainId could not be retreived (${chainId})`)
+    ]
+    const content = panel(contentArray);
+    return { content };
+  }
   // Current chain is not BSC. Only perform URL screening
   if(chainId !== '0x38'){
     const urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", transactionOrigin);
@@ -170,43 +189,28 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       divider(),
     );
 
-    
+    // Display smart contract stats
     if(transactionCount !== undefined || isContractVerified !== undefined || contractAge !== undefined){
       contentArray.push(
         heading(`Smart Contract Stats`),
       );
       
       if(transactionCount !== undefined){
-        // Add a check if transactions is 1k, as 1k results is max from the bscscan api
-        // then add a + to the end of the transaction count to indicate that there are more than 1k transactions
-        if (transactionCount == 1000) {
-          contentArray.push(
-            text(`**Transaction Count:** _${transactionCount}+_`),
-          );
-          } else {
-            contentArray.push(
-              text(`**Transaction Count:** _${transactionCount}_`),
-            );
-          }
+        contentArray.push(
+          text(transactionCount),
+        );
       }
-      // Todo: Move string creating logic to utils.ts
+      
       if(isContractVerified !== undefined){
-        if(isContractVerified){
-          contentArray.push(
-            text(`Contract is **verified**.`),
-          );
-        }
-        else{
-          contentArray.push(
-            text(`⚠️ Contract is **NOT verified** ⚠️`),
-          );
-        }
+        contentArray.push(
+          text(isContractVerified),
+        );
 
       }
             
       if(contractAge !== undefined){
         contentArray.push(
-          text(`**Contract Age:** _${contractAge} days_`),
+          text(`**Contract Age:** _${contractAge} Days_`),
         );
       }
       contentArray.push(
@@ -214,6 +218,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, brokenC
       );
     }
 
+    // Display function name and parameters
     if (respData.function_name !== "") {
       
       contentArray.push(

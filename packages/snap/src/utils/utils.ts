@@ -258,13 +258,15 @@ export function parseTransactingValue(transactionValue: any){
   return valueAsDecimals;
 }
 
-// Get native token of chain. If not specified, defaults to `ETH`
-export function getNativeToken(chainId: string){
+// Get native token of chain. If not specified, defaults to `Native Tokens`
+export function getNativeToken(chainId: any){
+  if(chainId === undefined || chainId === null){
+    return "Native Tokens"
+  }
   let nativeToken = CHAINS_INFO[chainId]?.nativeToken;
   if(nativeToken == undefined){
-    nativeToken = 'Native Tokens';
+    return 'Native Tokens';
   }
-  
   return nativeToken;
 }
 
@@ -278,10 +280,19 @@ export async function getContractTransactionCount(contractAddress: any){
   const response = await fetch(url);
   const resp = await response.json();
   //console.log("getContractTransactionCount resp: ", resp);
-  if (resp.message == "OK" && resp.result) {
-    return resp.result.length;
-  } else {
-    throw Error("Fetch api error: " + resp.errorData);
+  if (resp.message == "OK" && resp.result){
+    const transactionCount = resp.result.length;
+    // Add a check if transactions is 1k, as 1k results is max from the bscscan api
+    // then add a + to the end of the transaction count to indicate that there are more than 1k transactions
+    if (transactionCount == 1000){
+      return `**Transaction Count:** _${transactionCount}+_`;
+    } 
+    else{
+      return `**Transaction Count:** _${transactionCount}_`;
+    }
+  } 
+  else{
+    return undefined;
   }
 }
 
@@ -295,14 +306,14 @@ export async function getContractVerification(contractAddress: any){
   //console.log("getContractVerification resp: ", resp);
   if(resp.message === "OK"){
     if(resp.result !== 'Contract source code not verified'){
-      return true;
+      return `**Contract Is:** _Verified_ 🟩`;
     }
     else{
-      return false;
+      return `**Contract Is:** ⚠️ _NOT Verified_ ⚠️`;
     }
   }
   else{
-    throw Error("Fetch api error: " + resp.errorData);
+    return undefined;
   }
 
   
