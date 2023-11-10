@@ -168,6 +168,9 @@ const Index = () => {
           <Subtitle>
             - Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
           </Subtitle>
+          <Subtitle>
+            - Full security screening support for <Span>BSC Mainnet</Span> and <Span>ETH Mainnet</Span> utilising the <Span>HashDit API</Span> .
+          </Subtitle>
         </SubtitleContainer>
          </CardContainer>
     </Container>
