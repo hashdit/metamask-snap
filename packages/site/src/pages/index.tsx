@@ -14,8 +14,6 @@ interface ImageProps {
   src: string;
 }
 
-
-
 const fadeInAndSlideFromBottom = keyframes`
   from {
     transform: translateY(+50%);
@@ -38,7 +36,6 @@ const fadeInAndSlideFromLeft = keyframes`
   }
 `;
 
-
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -46,7 +43,7 @@ const Container = styled.div`
   flex: 1;
   padding-top: 5rem;
   padding-bottom: 4rem;
-  background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
+  
   
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
@@ -58,6 +55,7 @@ const Container = styled.div`
   }
   
 `;
+//background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
 const Hero = styled.div`
   display:flex;
   width: auto;
@@ -67,11 +65,7 @@ const Hero = styled.div`
  
 `;
 
-const HeroLeft = styled.div`
-  
-`
-
-
+const HeroLeft = styled.div``
 
 const Heading = styled.h1`
   margin-top: 0;
@@ -138,8 +132,6 @@ const SubtitleContainer = styled.div`
   flex: 1; // Take up the remaining space
   padding-right: 5rem; // Add some space between the text and the image
 `;
-
-
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
