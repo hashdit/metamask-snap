@@ -26,7 +26,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       return { content };
     }
     // Current chain is not BSC. Display not supported text.
-    if(chainId !== '0x38' ){
+    if(chainId !== '0x38' && chainId !== '0x1'){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
       
@@ -47,7 +47,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       
       contentArray.push(       
         text("HashDit Security Insights is not fully supported on this chain."),
-        text("Currently we only support the **BSC Mainnet**."),
+        text("Currently we only support the **BSC Mainnet** and **ETH Mainnet**."),
       )
       
       const content = panel(contentArray);
@@ -134,7 +134,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     return { content };
   }
   // Current chain is not BSC. Only perform URL screening
-  if(chainId !== '0x38'){
+  if(chainId !== '0x38' && chainId !== '0x1'){
     const urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", transactionOrigin);
     console.log("urlRespData: ", urlRespData);
 
@@ -146,7 +146,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
       divider(),
       text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
-      text("Currently we only support the **BSC Mainnet**."),
+      text("Currently we only support the **BSC Mainnet** and **ETH Mainnet**."),
     );
 
     const content = panel(contentArray);

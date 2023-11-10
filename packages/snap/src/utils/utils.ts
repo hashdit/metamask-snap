@@ -153,10 +153,21 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   
   } else if (businessName == "hashdit_native_transfer") {
     responseData.overall_risk = resp.risk_level;
-    if (resp.black_labels && resp.black_labels.length > 0) {
-      responseData.transaction_risk_detail = "Destination address is in HashDit blacklist";
-    } else if (resp.white_labels && resp.white_labels.length > 0) {
-      responseData.transaction_risk_detail = "Destination address is in whitelisted, please still review the transaction details";
+    try {
+      const black_labels = JSON.parse(resp.black_labels);
+      const white_labels = JSON.parse(resp.white_labels);
+      const risk_detail_simple = JSON.parse(resp.risk_detail_simple);
+      if (Array.isArray(black_labels) && black_labels.length > 0) {
+        console.log("blackLabels: ", black_labels)
+        responseData.transaction_risk_detail = "Destination address is in HashDit blacklist";
+      } else if (Array.isArray(white_labels) && white_labels.length > 0) {
+        console.log("whiteLabels: ", white_labels)
+        responseData.transaction_risk_detail = "Destination address is in whitelisted, please still review the transaction details";
+      } else if (risk_detail_simple.length > 0 && risk_detail_simple[0].hasOwnProperty('value')){
+        responseData.transaction_risk_detail = risk_detail_simple[0].value;
+      }
+    } catch {
+      console.log("No black or white labels")
     }
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
@@ -205,7 +216,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
     responseData.overall_risk_title = "⚠️ High Risk ⚠️";
     responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
   } else if (responseData.overall_risk >= 2) {
-    responseData.overall_risk_title = "Medium Risk";
+    responseData.overall_risk_title = "🔎 Medium Risk 🔎";
     responseData.overall_risk_detail = "This transaction is considered medium risk. Please review the details of this transaction.";
   } else if (responseData.overall_risk >= 0) {
     responseData.overall_risk_title = "Low Risk";

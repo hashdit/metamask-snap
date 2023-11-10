@@ -86,7 +86,7 @@ const HerorLeftText = styled.div`
 `
 
 const InsightImage = styled.img<ImageProps>`
-  width: 50%;
+  width: 40%;
   marginLeft: 10rem;
   animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out;
 `
@@ -131,6 +131,9 @@ const CardContainer = styled.div`
 const SubtitleContainer = styled.div`
   flex: 1; // Take up the remaining space
   padding-right: 5rem; // Add some space between the text and the image
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 const Index = () => {
@@ -156,8 +159,6 @@ const Index = () => {
       </Hero>
       <CardContainer>
         <SubtitleContainer>
-        
-          
           <SmallHeading>
             Security Features
           </SmallHeading>
@@ -168,7 +169,7 @@ const Index = () => {
             - Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
           </Subtitle>
           <Subtitle>
-            - Information about the contract you're interacting with, such as <Span>deployment date</Span> and if it's <Span>code is verified</Span> on bscscan (for bsc contracts).
+            - Full security screening support for <Span>BSC Mainnet</Span> and <Span>ETH Mainnet</Span> utilising the <Span>HashDit API</Span> .
           </Subtitle>
         </SubtitleContainer>
          </CardContainer>
