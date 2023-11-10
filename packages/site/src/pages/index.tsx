@@ -1,51 +1,117 @@
+import MyImage from '../assets/snap-image.png';
 import { useContext } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   connectSnap,
   getSnap,
   isLocalSnap,
-  shouldDisplayReconnectButton,
 } from '../utils';
-import {
-  ConnectButton,
-  InstallFlaskButton,
-  ReconnectButton,
-  Card,
-} from '../components';
 import { defaultSnapOrigin } from '../config';
+
+interface ImageProps {
+  alt: string;
+  src: string;
+}
+
+const fadeInAndSlideFromBottom = keyframes`
+  from {
+    transform: translateY(+50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+}
+`;
+
+const fadeInAndSlideFromLeft = keyframes`
+  from {
+    transform: translateX(-50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   flex: 1;
-  margin-top: 5rem;
-  margin-bottom: 4rem;
+  padding-top: 5rem;
+  padding-bottom: 4rem;
+  
+  
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
     padding-right: 2.4rem;
     margin-top: 2rem;
     margin-bottom: 2rem;
     width: auto;
+    
   }
+  
 `;
+//background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
+const Hero = styled.div`
+  display:flex;
+  width: auto;
+  max-width: 1000px;
+  min-width: auto;
+  align-self: center;
+ 
+`;
+
+const HeroLeft = styled.div``
 
 const Heading = styled.h1`
   margin-top: 0;
   margin-bottom: 2.4rem;
-  text-align: center;
+  text-align: left;
+  font-size:60px;
+  span {
+    display: block;
+
+  }
+  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+ 
 `;
 
+const HerorLeftText = styled.div`
+  font-size:28px;
+  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+`
+
+const InsightImage = styled.img<ImageProps>`
+  width: 50%;
+  marginLeft: 10rem;
+  animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out;
+`
+
+
 const Span = styled.span`
-  color: ${(props) => props.theme.colors.primary.default};
+  color: #19b2f2;
+  ${({ theme }) => theme.mediaQueries.small} {
+    font-size: ${({ theme }) => theme.fontSizes.text};
+  }
+  font-weight: 600;
+`;
+
+const SmallHeading = styled.h1`
+  margin-top: 0;
+  margin-bottom: 2.4rem;
+  text-align: center;
+  font-size: ${({ theme }) => theme.fontSizes.mobileHeading};
 `;
 
 const Subtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.large};
-  font-weight: 500;
+  font-size: ${({ theme }) => theme.fontSizes.text};
+  font-weight: 400;
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 5;
   ${({ theme }) => theme.mediaQueries.small} {
     font-size: ${({ theme }) => theme.fontSizes.text};
   }
@@ -56,28 +122,15 @@ const CardContainer = styled.div`
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 30.4rem;
+  max-width: 100.0rem;
   width: 100%;
   height: 100%;
   margin-top: 1.5rem;
 `;
 
-const ErrorMessage = styled.div`
-  background-color: ${({ theme }) => theme.colors.error.muted};
-  border: 1px solid ${({ theme }) => theme.colors.error.default};
-  color: ${({ theme }) => theme.colors.error.alternative};
-  border-radius: ${({ theme }) => theme.radii.default};
-  padding: 2.4rem;
-  margin-bottom: 2.4rem;
-  margin-top: 2.4rem;
-  max-width: 60rem;
-  width: 100%;
-  ${({ theme }) => theme.mediaQueries.small} {
-    padding: 1.6rem;
-    margin-bottom: 1.2rem;
-    margin-top: 1.2rem;
-    max-width: 100%;
-  }
+const SubtitleContainer = styled.div`
+  flex: 1; // Take up the remaining space
+  padding-right: 5rem; // Add some space between the text and the image
 `;
 
 const Index = () => {
@@ -87,82 +140,38 @@ const Index = () => {
     ? state.isFlask
     : state.snapsDetected;
 
-  const handleConnectClick = async () => {
-    try {
-      await connectSnap();
-      const installedSnap = await getSnap();
-
-      dispatch({
-        type: MetamaskActions.SetInstalled,
-        payload: installedSnap,
-      });
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   return (
     <Container>
-      <Heading>
-        HashDit Security
-      </Heading>
-      <Subtitle>
-        Protect your cryptocurrency assets with destination address and url screening,
-      </Subtitle>
-      <Subtitle>
-        alongside transaction insights.
-      </Subtitle>
+      <Hero>
+        <HeroLeft>
+          <Heading> 
+            <span>HashDit Security </span>
+            for MetaMask
+          </Heading>
+          <HerorLeftText>
+            Receive <Span>risk warnings</Span> and details whenever you interact with contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
+          </HerorLeftText>
+        </HeroLeft>
+        <InsightImage src={MyImage} alt="Description of Image" style={{marginLeft: '10rem', borderRadius: '20px'}} />
+      </Hero>
       <CardContainer>
-        {state.error && (
-          <ErrorMessage>
-            <b>An error happened:</b> {state.error.message}
-          </ErrorMessage>
-        )}
-        {!isMetaMaskReady && (
-          <Card
-            content={{
-              title: 'Install',
-              description:
-                'Snaps is pre-release software only available in MetaMask Flask, a canary distribution for developers with access to upcoming features.',
-              button: <InstallFlaskButton />,
-            }}
-            fullWidth
-          />
-        )}
-        {!state.installedSnap && (
-          <Card
-            content={{
-              title: 'Get Started',
-              description:
-                'Get started by connecting to and installing the HashDit Security snap.',
-              button: (
-                <ConnectButton
-                  onClick={handleConnectClick}
-                  disabled={!isMetaMaskReady}
-                />
-              ),
-            }}
-            disabled={!isMetaMaskReady}
-          />
-        )}
-        {shouldDisplayReconnectButton(state.installedSnap) && (
-          <Card
-            content={{
-              title: 'Reconnect',
-              description:
-                'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
-              button: (
-                <ReconnectButton
-                  onClick={handleConnectClick}
-                  disabled={!state.installedSnap}
-                />
-              ),
-            }}
-            disabled={!state.installedSnap}
-          />
-        )}
-      </CardContainer>
+        <SubtitleContainer>
+        
+          
+          <SmallHeading>
+            Security Features
+          </SmallHeading>
+          <Subtitle>
+            - HashDit API screening including <Span>transaction</Span>, <Span>destination address</Span> and <Span>url risk screening</Span>.
+          </Subtitle>
+          <Subtitle>
+            - Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
+          </Subtitle>
+          <Subtitle>
+            - Information about the contract you're interacting with, such as <Span>deployment date</Span> and if it's <Span>code is verified</Span> on bscscan (for bsc contracts).
+          </Subtitle>
+        </SubtitleContainer>
+         </CardContainer>
     </Container>
   );
 };

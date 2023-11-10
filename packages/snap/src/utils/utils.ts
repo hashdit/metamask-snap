@@ -1,11 +1,11 @@
-import { remove0x } from '@metamask/utils';
+import { remove0x, add0x } from '@metamask/utils';
 
 import { v4 as uuidv4 } from 'uuid';
 import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from "crypto-js/hmac-sha256";
 import encHex from "crypto-js/enc-hex";
 import { trace } from 'console';
-import { SUPPORTED_CHAINS } from "./chains";
+import { CHAINS_INFO } from "./chains";
 
 /**
  * The function signatures for the different types of transactions. This is used
@@ -52,20 +52,21 @@ export const isEthereumAddress = (address: string) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-export async function getHashDitResponse(transaction: any, transactionUrl: any, chainId: string, businessName: string) {
+export async function getHashDitResponse(businessName: string, transactionUrl?: any, transaction?: any, chainId?: string) {
   console.log("getHashDitResponse");
   console.log(transaction);
   console.log(transactionUrl, chainId, businessName);
 
   const trace_id = uuidv4(); // unique id for each screening, allowing users to report issues and for us to track issues
 
+  // Todo: If BSC network is the only chain supported by HashDit, then we could remove this switch case.
   // formatting chainid to match api formatting
   let chain: string;
   switch (chainId) {
-      case "eip155:1":
+      case "0x1":
         chain = "1";
         break;
-      case "eip155:38":
+      case "0x38":
         chain = "56";
         break;
       default:
@@ -144,14 +145,19 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     responseData.url_risk = resp.risk_level;
 
-    // const risk_details = JSON.parse(resp.risk_detail);
-    // responseData.url_risk_title = risk_details.name;
-    // responseData.url_risk_detail = risk_details.value;
+    if (responseData.url_risk >= 4) {
+      responseData.url_risk_title = "⚠️ Interaction with a dangerous site ⚠️";
+    } else if (responseData.url_risk >= 2) {
+      responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
+    }
   
   } else if (businessName == "hashdit_native_transfer") {
     responseData.overall_risk = resp.risk_level;
-    responseData.overall_risk_title = resp.risk_level_title;
-    responseData.overall_risk_detail = resp.risk_detail_simple;
+    if (resp.black_labels && resp.black_labels.length > 0) {
+      responseData.transaction_risk_detail = "Destination address is in HashDit blacklist";
+    } else if (resp.white_labels && resp.white_labels.length > 0) {
+      responseData.transaction_risk_detail = "Destination address is in whitelisted, please still review the transaction details";
+    }
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
     if (resp.detection_result != null) {
@@ -164,12 +170,12 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       try {
         const paramsCopy = [...resp.detection_result.params];
         console.log("params: ", JSON.stringify(paramsCopy, null, 2));
-        console.log("params1: ", paramsCopy[0]);
-        console.log("params2: ", paramsCopy[1]);
-
+        // for (const [index, params] of paramsCopy.entries()) {
+        //   console.log(`params${index}: `, params);
+        // }
+        
         responseData.function_name = resp.detection_result.function_name;
-        responseData.function_param1 = "name: " + paramsCopy[0].name + " | type: " + paramsCopy[0].type + " | value: " + paramsCopy[0].value;
-        responseData.function_param2 = "name: " + paramsCopy[1].name + " | type: " + paramsCopy[1].type + " | value: " + paramsCopy[1].value;
+        responseData.function_params = paramsCopy;
       } catch {
         console.log("No params")
       }
@@ -184,20 +190,19 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
 
       responseData.url_risk = detectionResults.url.risk_level;
 
-      if (responseData.url_risk >= 0) {
-        const risk_details = JSON.parse(detectionResults.url.risk_detail);
-        responseData.url_risk_title = risk_details.name;
-        responseData.url_risk_detail = risk_details.value;
+      if (responseData.url_risk >= 4) {
+        responseData.url_risk_title = "⚠️ Interaction with a dangerous site ⚠️";
+      } else if (responseData.url_risk >= 2) {
+        responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
       }
     }
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
-
-
+    // This will be utilised in v2
   }
 
   if (responseData.overall_risk >= 4) {
-    responseData.overall_risk_title = "High Risk";
+    responseData.overall_risk_title = "⚠️ High Risk ⚠️";
     responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
   } else if (responseData.overall_risk >= 2) {
     responseData.overall_risk_title = "Medium Risk";
@@ -239,42 +244,27 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
   }
 }
 
+
 // Parse transacting value to decimals to be human-readable
 export function parseTransactingValue(transactionValue: any){ 
-  const valueAsString = transactionValue.value?.toString()
+  
   let valueAsDecimals = 0;
-  if(valueAsString !== undefined){
-    valueAsDecimals = parseInt(valueAsString, 16);
-  }
+  valueAsDecimals = parseInt(transactionValue, 16);
+  
   // Assumes 18 decimal places for native token
   valueAsDecimals = valueAsDecimals/1e18;
 
   return valueAsDecimals;
 }
 
-// Get native token of chain. If not specified, defaults to `ETH`
-export function getNativeToken(chainId: string){
-  let nativeToken = SUPPORTED_CHAINS[chainId]?.nativeToken;
-  if(nativeToken == undefined){
-    nativeToken = 'ETH';
+// Get native token of chain. If not specified, defaults to `Native Tokens`
+export function getNativeToken(chainId: any){
+  if(chainId === undefined || chainId === null){
+    return "Native Tokens"
   }
-  
+  let nativeToken = CHAINS_INFO[chainId]?.nativeToken;
+  if(nativeToken == undefined){
+    return 'Native Tokens';
+  }
   return nativeToken;
 }
-
-// async function getHashDitResponse(url: string, body: any, header: any) {
-//   // const urlObj = new URL(url);
-//   // urlObj.searchParams.append("business", businessName);
-
-//   const response = await fetch('https://api.hashdit.io/security-api/public/app/v1/detect', {
-//     method: 'POST',
-//     mode: "cors",
-//     cache: "no-cache",
-//     credentials: "same-origin",
-//     body: JSON.stringify(body),
-//     headers: header,
-//     redirect: "follow",
-//     referrerPolicy: "no-referrer"
-//     });
-//   return await response.json();
-// }

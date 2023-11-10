@@ -13,10 +13,10 @@ const theme = {
   },
   fontSizes: {
     heading: '5.2rem',
-    mobileHeading: '3.6rem',
+    mobileHeading: '3.4rem',
     title: '2.4rem',
-    large: '2rem',
-    text: '1.6rem',
+    large: '2.5rem',
+    text: '2rem',
     small: '1.4rem',
   },
   radii: {
@@ -41,7 +41,7 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#2f4ed8',
+      default: '#1a4ad9',
       alternative: '#141618',
       inverse: '#FFFFFF',
     },
@@ -80,7 +80,7 @@ export const light: DefaultTheme = {
 export const dark: DefaultTheme = {
   colors: {
     background: {
-      default: '#24272A',
+      default: '#0f0f0f',
       alternative: '#141618',
       inverse: '#FFFFFF',
     },
