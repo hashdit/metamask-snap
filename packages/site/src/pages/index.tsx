@@ -1,4 +1,10 @@
-import MyImage from '../assets/snap-image.png';
+import Insight from '../assets/snap-image.png';
+import Url from '../assets/URL.png';
+import Screening from '../assets/Screening.png';
+import ScreeningAndUrl from '../assets/ScreeningAndUrl1.png';
+import FunctionParam from '../assets/FunctionParam1.png';
+import bscLogo from '../assets/BscLogo.svg';
+import ethLogo from '../assets/EthLogo.svg';
 import { useContext } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
@@ -36,6 +42,17 @@ const fadeInAndSlideFromLeft = keyframes`
   }
 `;
 
+const fadeInAndSlideFromRight = keyframes`
+  from {
+    transform: translateX(+50%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -43,7 +60,7 @@ const Container = styled.div`
   flex: 1;
   padding-top: 5rem;
   padding-bottom: 4rem;
-  
+  background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
   
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
@@ -55,17 +72,22 @@ const Container = styled.div`
   }
   
 `;
-//background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
+
 const Hero = styled.div`
   display:flex;
   width: auto;
   max-width: 1000px;
   min-width: auto;
-  align-self: center;
- 
+
+  align-items: center; 
+  justify-content: center; 
+  
 `;
 
-const HeroLeft = styled.div``
+const HeroLeft = styled.div`
+
+
+`
 
 const Heading = styled.h1`
   margin-top: 0;
@@ -85,11 +107,96 @@ const HerorLeftText = styled.div`
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 `
 
+
+const hoverUpDown = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px); /* Adjust the value as needed for the hover distance */
+  }
+`
+
 const InsightImage = styled.img<ImageProps>`
   width: 40%;
-  marginLeft: 10rem;
-  animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out;
+  margin-left: 10rem;
+  animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out, ${hoverUpDown} 3s infinite ease-in-out;
+  border: 1px solid #80807d;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
 `
+
+const FunctionParamImage = styled.img<ImageProps>`
+  width: 40%;
+  border: 1.5px solid #80807d;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+`
+
+
+const FeaturesHeading = styled.h1`
+  font-size:60px;
+  margin-top:15rem;
+`
+
+const Feature = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  width: auto;
+  max-width: 1000px;
+  min-width: auto;
+  padding-bottom:100px;
+  padding-top:100px;
+`
+
+
+const ScreeningAndUrlImage = styled.img<ImageProps>`
+  width: 40%;
+  border: 1.5px solid #80807d;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+`
+
+const FeatureRightDiv = styled.div`
+  font-size: 28px;
+  animation: ${fadeInAndSlideFromRight} 0.9s ease-in-out;
+`
+const Feature1 = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  width: auto;
+  max-width: 1000px;
+  min-width: auto;
+  padding-bottom:100px;
+  padding-top:100px;
+`
+
+const Feature1LeftDiv  = styled.div`
+  font-size: 28px;
+  padding-right:100px;
+  
+`
+
+
+const Feature2 = styled.div`
+  width: auto;
+  max-width: 1000px;
+  min-width: auto;
+  padding-bottom:100px;
+  padding-top:100px;
+`
+const Feature2TopDiv  = styled.div`
+  font-size: 35px;
+  text-align:center;
+  padding-bottom:5rem;
+
+`
+
+const Feature2BotDiv  = styled.div`
+  display:flex;
+  justify-content: center;
+`
+
 
 
 const Span = styled.span`
@@ -100,41 +207,17 @@ const Span = styled.span`
   font-weight: 600;
 `;
 
-const SmallHeading = styled.h1`
-  margin-top: 0;
-  margin-bottom: 2.4rem;
-  text-align: center;
-  font-size: ${({ theme }) => theme.fontSizes.mobileHeading};
-`;
+const BscLogoImage = styled.img<ImageProps>`
+  width:200px;
+  height:200px;
+  padding-right:100px;
+`
 
-const Subtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.text};
-  font-weight: 400;
-  margin-top: 0;
-  margin-bottom: 5;
-  ${({ theme }) => theme.mediaQueries.small} {
-    font-size: ${({ theme }) => theme.fontSizes.text};
-  }
-`;
+const EthLogoImage = styled.img<ImageProps>`
+  width:200px;
+  height:200px;
+`
 
-const CardContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  max-width: 100.0rem;
-  width: 100%;
-  height: 100%;
-  margin-top: 1.5rem;
-`;
-
-const SubtitleContainer = styled.div`
-  flex: 1; // Take up the remaining space
-  padding-right: 5rem; // Add some space between the text and the image
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
@@ -148,31 +231,52 @@ const Index = () => {
       <Hero>
         <HeroLeft>
           <Heading> 
-            <span>HashDit Security </span>
+            <span>HashDit Security</span>
             for MetaMask
           </Heading>
           <HerorLeftText>
             Receive <Span>risk warnings</Span> and details whenever you interact with contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
           </HerorLeftText>
         </HeroLeft>
-        <InsightImage src={MyImage} alt="Description of Image" style={{marginLeft: '10rem', borderRadius: '20px'}} />
+        <InsightImage src={Insight} alt="Description of Image" style={{marginLeft: '10rem', borderRadius: '7px'}} />
       </Hero>
-      <CardContainer>
-        <SubtitleContainer>
-          <SmallHeading>
-            Security Features
-          </SmallHeading>
-          <Subtitle>
-            - HashDit API screening including <Span>transaction</Span>, <Span>destination address</Span> and <Span>url risk screening</Span>.
-          </Subtitle>
-          <Subtitle>
-            - Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
-          </Subtitle>
-          <Subtitle>
-            - Full security screening support for <Span>BSC Mainnet</Span> and <Span>ETH Mainnet</Span> utilising the <Span>HashDit API</Span> .
-          </Subtitle>
-        </SubtitleContainer>
-         </CardContainer>
+      <FeaturesHeading> 
+        Security Features  
+      </FeaturesHeading>
+        
+      <Feature>
+        <ScreeningAndUrlImage src={ScreeningAndUrl} alt="Description of Image" style={{marginRight: '10rem', borderRadius: '7px'}} />
+        <FeatureRightDiv>
+          <Heading> 
+            Hashdit Screening
+          </Heading>
+          HashDit API screening including <Span>transaction</Span>, <Span>destination address</Span> and <Span>url risk screening</Span>.
+        </FeatureRightDiv>
+      </Feature>
+
+      <Feature1>
+        <Feature1LeftDiv>
+          <Heading> 
+            Transaction Insights
+          </Heading>
+          Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
+        </Feature1LeftDiv>
+        <FunctionParamImage src={FunctionParam} alt="Description of Image" style={{borderRadius: '7px'}} />
+     
+        </Feature1>
+
+      <Feature2>
+        
+        <Feature2TopDiv>
+          Full security screening support for <Span>BSC Mainnet</Span> and <Span>ETH Mainnet</Span> utilising the <Span>HashDit API</Span> .
+        </Feature2TopDiv>
+        <Feature2BotDiv>
+          <BscLogoImage src={bscLogo} alt="Description of Image"/>
+          <EthLogoImage src={ethLogo} alt="Description of Image"/>
+        </Feature2BotDiv>
+    
+      </Feature2>
+
     </Container>
   );
 };
