@@ -3,8 +3,9 @@ import Url from '../assets/URL.png';
 import Screening from '../assets/Screening.png';
 import ScreeningAndUrl from '../assets/ScreeningAndUrl1.png';
 import FunctionParam from '../assets/FunctionParam1.png';
-import bscLogo from '../assets/BscLogo.svg';
+import bscLogo from '../assets/BscLogoAlt.svg';
 import ethLogo from '../assets/EthLogo.svg';
+
 import { useContext } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
@@ -60,7 +61,7 @@ const Container = styled.div`
   flex: 1;
   padding-top: 5rem;
   padding-bottom: 4rem;
-  background: linear-gradient(0deg, #0f0f0f 50%, #1c1c1c);
+
   
   ${({ theme }) => theme.mediaQueries.small} {
     padding-left: 2.4rem;
@@ -154,6 +155,11 @@ const ScreeningAndUrlImage = styled.img<ImageProps>`
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+  
+`
+
+const HashDitIconImage = styled.img<ImageProps>`
+  width:1220px;
 `
 
 const FeatureRightDiv = styled.div`
