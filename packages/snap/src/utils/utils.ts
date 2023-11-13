@@ -43,7 +43,6 @@ export function decodeData(data: string) {
   const functionSignature = FUNCTION_SIGNATURES.find(
     (value) => value.signature === signature,
   );
-
   return functionSignature?.name ?? 'Unknown';
 }
 
@@ -57,9 +56,8 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
   console.log(transaction);
   console.log(transactionUrl, chainId, businessName);
 
-  const trace_id = uuidv4(); // unique id for each screening, allowing users to report issues and for us to track issues
+  const trace_id = uuidv4();
 
-  // Todo: If BSC network is the only chain supported by HashDit, then we could remove this switch case.
   // formatting chainid to match api formatting
   let chain: string;
   switch (chainId) {
@@ -70,7 +68,7 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
         chain = "56";
         break;
       default:
-        chain = "56"; // only to stop errors, need to find good default
+        chain = "56";
   }
 
   let postBody: any = {};
@@ -90,9 +88,10 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
     postBody.url = transactionUrl;
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
+    // This will be utilised in v2
     postBody.address = transaction.to;
     postBody.chain_id = chain;
-    postBody.message = "0xdeadbeef"; // should be signature message
+    postBody.message = "0xdeadbeef";
     postBody.method = "eth_sign";
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
@@ -104,7 +103,8 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
+  //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
+  const url = new URL('https://api.hashdit.io/security-api/public/app/v1/detect');
 
   let dataToSign: string;
   if (businessName === "hashdit_native_transfer") {
@@ -128,6 +128,7 @@ export async function getHashDitResponse(businessName: string, transactionUrl?: 
 }
 
 
+// Format the HashDit API response to get the important risk details
 function formatResponse(resp: any, businessName: string, trace_id: any){
   console.log("data: ", resp)
   let responseData: any = {
@@ -181,9 +182,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       try {
         const paramsCopy = [...resp.detection_result.params];
         console.log("params: ", JSON.stringify(paramsCopy, null, 2));
-        // for (const [index, params] of paramsCopy.entries()) {
-        //   console.log(`params${index}: `, params);
-        // }
         
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
