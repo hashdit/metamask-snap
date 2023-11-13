@@ -5,12 +5,13 @@ import { PoweredBy } from './PoweredBy';
 
 const FooterWrapper = styled.footer`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 2.4rem;
-  padding-bottom: 2.4rem;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
   border-top: 1px solid ${(props) => props.theme.colors.border.default};
+  background:${({ theme }) => theme.colors.background.default};
 `;
 
 const PoweredByButton = styled.a`
@@ -22,12 +23,17 @@ const PoweredByButton = styled.a`
   border-radius: ${({ theme }) => theme.radii.button};
   box-shadow: ${({ theme }) => theme.shadows.button};
   background-color: ${({ theme }) => theme.colors.background.alternative};
+  margin-bottom:2.4rem;
 `;
 
 const PoweredByContainer = styled.div`
   display: flex;
   flex-direction: column;
   margin-left: 1rem;
+`;
+
+const HashDitText = styled.text`
+  font-size:16px;
 `;
 
 export const Footer = () => {
@@ -42,6 +48,10 @@ export const Footer = () => {
           <MetaMask color={theme.colors.text.default} />
         </PoweredByContainer>
       </PoweredByButton>
+      <HashDitText>
+        © 2022 HashDit. All rights reserved.
+      </HashDitText>
     </FooterWrapper>
+    
   );
 };
