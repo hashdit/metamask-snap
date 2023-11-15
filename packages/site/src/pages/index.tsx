@@ -108,7 +108,6 @@ const HerorLeftText = styled.div`
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 `
 
-
 const hoverUpDown = keyframes`
   0%, 100% {
     transform: translateY(0);
@@ -132,7 +131,6 @@ const FunctionParamImage = styled.img<ImageProps>`
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
 `
 
-
 const FeaturesHeading = styled.h1`
   font-size:60px;
   margin-top:15rem;
@@ -148,7 +146,6 @@ const Feature = styled.div`
   padding-bottom:100px;
   padding-top:100px;
 `
-
 
 const ScreeningAndUrlImage = styled.img<ImageProps>`
   width: 40%;
@@ -183,7 +180,6 @@ const Feature1LeftDiv  = styled.div`
   
 `
 
-
 const Feature2 = styled.div`
   width: auto;
   max-width: 1000px;
@@ -191,6 +187,7 @@ const Feature2 = styled.div`
   padding-bottom:100px;
   padding-top:100px;
 `
+
 const Feature2TopDiv  = styled.div`
   font-size: 35px;
   text-align:center;
@@ -202,8 +199,6 @@ const Feature2BotDiv  = styled.div`
   display:flex;
   justify-content: center;
 `
-
-
 
 const Span = styled.span`
   color: #19b2f2;

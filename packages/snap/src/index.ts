@@ -1,8 +1,33 @@
-import type { OnTransactionHandler } from '@metamask/snaps-types';
+import type { OnTransactionHandler, OnRpcRequestHandler, JsonRpcRequest, JsonRpcParams } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
 import { getHashDitResponse, parseTransactingValue, getNativeToken } from "./utils/utils";
+import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { CHAINS_INFO } from "./utils/chains";
+
+
+interface CustomRpcRequest extends JsonRpcRequest<JsonRpcParams> {
+  message?: string;
+  signature?: string;
+}
+
+
+export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
+  switch (request.method) {
+    case 'processSignature':
+      console.log('processSignature:', request)
+      const { message, signature } = request.params;
+      console.log('signature:', signature)
+
+      const publicKey = extractPublicKeyFromSignature(message, signature);
+      console.log('Public key:', publicKey);
+
+      return { success: true, publicKey: publicKey };
+
+    default:
+      return onTransaction(request);
+  }
+};
 
 
 // Handle outgoing transactions.
@@ -111,7 +136,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         )
       }
 
-      // We should try to make this smaller somehow
       contentArray.push(
         heading('HashDit Trace-ID'),
         text(`${respData.trace_id}`),
@@ -198,7 +222,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
 
     }
   
-    // We should try to make this smaller somehow
     contentArray.push(
       heading('HashDit Trace-ID'),
       text(`${respData.trace_id}`),

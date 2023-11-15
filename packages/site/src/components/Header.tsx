@@ -6,6 +6,7 @@ import { HeaderButtons } from './Buttons';
 import { SnapLogo } from './SnapLogo';
 import { HashDitNameLogo } from './HashDitName';
 import { Toggle } from './Toggle';
+import { defaultSnapOrigin } from '../config';
 
 const HeaderWrapper = styled.header`
   display: flex;
@@ -60,6 +61,36 @@ export const Header = ({
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
+  const onSignatureClick = async () => {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const from = accounts[0];
+  
+      const message = "Please sign this message to confirm your identity.";
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, from],
+      });
+      console.log('signed', signature)
+  
+      // Send the signature to the snap for processing
+      const result = await window.ethereum.request({
+        method: 'wallet_invokeSnap',
+        params: {
+          snapId: defaultSnapOrigin, // Replace with your actual Snap ID
+          request: {
+            method: 'processSignature',
+            message: message,
+            signature: signature
+          }
+        }
+      });
+      console.log("Signature processed", result);
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
   return (
     <HeaderWrapper>
       <LogoWrapper>
@@ -70,7 +101,7 @@ export const Header = ({
           onToggle={handleToggleClick}
           defaultChecked={getThemePreference()}
         />
-        <HeaderButtons state={state} onConnectClick={handleConnectClick} />
+        <HeaderButtons state={state} onConnectClick={handleConnectClick} onSignatureClick={onSignatureClick} />
       </RightContainer>
     </HeaderWrapper>
   );
