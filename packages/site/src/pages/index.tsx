@@ -1,10 +1,13 @@
-import Insight from '../assets/snap-image.png';
-import Url from '../assets/URL.png';
-import Screening from '../assets/Screening.png';
-import ScreeningAndUrl from '../assets/ScreeningAndUrl1.png';
-import FunctionParam from '../assets/FunctionParam1.png';
-import bscLogo from '../assets/BscLogoAlt.svg';
-import ethLogo from '../assets/EthLogo.svg';
+import InsightScreen from '../assets/snap-image.png';
+import UrlScreen from '../assets/URL.png';
+import ScreeningScreen from '../assets/ScreeningHighRisk.png';
+import ScreeningAndUrlScreen from '../assets/ScreeningAndUrl.png';
+import FunctionParamScreen from '../assets/FunctionParam.png';
+import BscLogo from '../assets/BscLogoAlt.svg';
+import EthLogo from '../assets/EthLogo.svg';
+import HashDitBanner from '../assets/banner.png';
+import HashDitGurad from '../assets/guard.png';
+import WarningIcon from '../assets/warning.svg';
 
 import { useContext } from 'react';
 import styled, { keyframes } from 'styled-components';
@@ -79,9 +82,7 @@ const Hero = styled.div`
   width: auto;
   max-width: 1000px;
   min-width: auto;
-
-  align-items: center; 
-  justify-content: center; 
+  padding-top:10rem;
   
 `;
 
@@ -97,13 +98,12 @@ const Heading = styled.h1`
   font-size:60px;
   span {
     display: block;
-
   }
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
  
 `;
 
-const HerorLeftText = styled.div`
+const HeroLeftText = styled.div`
   font-size:28px;
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 `
@@ -118,15 +118,14 @@ const hoverUpDown = keyframes`
   }
 `
 
-const InsightImage = styled.img<ImageProps>`
-  width: 40%;
-  margin-left: 10rem;
+
+const BannerImg = styled.img<ImageProps>`
+  width: 50%;
+  margin-left: 5rem;
   animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out, ${hoverUpDown} 3s infinite ease-in-out;
-  border: 1px solid #80807d;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
 `
 
-const FunctionParamImage = styled.img<ImageProps>`
+const FunctionParamImg = styled.img<ImageProps>`
   width: 40%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
@@ -136,6 +135,33 @@ const FunctionParamImage = styled.img<ImageProps>`
 const FeaturesHeading = styled.h1`
   font-size:60px;
   margin-top:15rem;
+  position: relative;
+  width:100%;
+`
+
+const FeaturesHeadingDescription = styled.h1`
+  font-size:40px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  position: absolute;
+  width: 80%;
+  z-index: 1;
+
+`
+
+const InsightImg = styled.img<ImageProps>`
+  width: 30%;
+  height: 30%;
+  // border: 1px solid #80807d;
+  // border-radius: 7px;
+  // box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+  filter: blur(5px);
+  display: block; /* Ensures the image is centered within the container */
+  margin: 0 auto; /* Centers the image horizontally */
+
+
 `
 
 const Feature = styled.div`
@@ -150,22 +176,21 @@ const Feature = styled.div`
 `
 
 
-const ScreeningAndUrlImage = styled.img<ImageProps>`
+const ScreeningImg = styled.img<ImageProps>`
   width: 40%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
   
 `
-
-const HashDitIconImage = styled.img<ImageProps>`
-  width:1220px;
-`
+    
 
 const FeatureRightDiv = styled.div`
   font-size: 28px;
   animation: ${fadeInAndSlideFromRight} 0.9s ease-in-out;
 `
+
+
 const Feature1 = styled.div`
   display: flex;
   justify-content: space-between;
@@ -179,26 +204,49 @@ const Feature1 = styled.div`
 
 const Feature1LeftDiv  = styled.div`
   font-size: 28px;
-  padding-right:100px;
-  
 `
 
+const UrlImg= styled.img<ImageProps>`
+  width: 40%;
+  border: 1.5px solid #80807d;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+`
 
 const Feature2 = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
   width: auto;
   max-width: 1000px;
   min-width: auto;
   padding-bottom:100px;
   padding-top:100px;
 `
-const Feature2TopDiv  = styled.div`
+
+const Feature2RightDiv  = styled.div`
+  font-size: 28px;
+  padding-left:100px;
+  
+`
+
+
+
+const Feature3 = styled.div`
+  width: auto;
+  max-width: 1000px;
+  min-width: auto;
+  padding-bottom:100px;
+  padding-top:100px;
+`
+const Feature3TopDiv  = styled.div`
   font-size: 35px;
   text-align:center;
   padding-bottom:5rem;
 
 `
 
-const Feature2BotDiv  = styled.div`
+const Feature3BotDiv  = styled.div`
   display:flex;
   justify-content: center;
 `
@@ -206,20 +254,20 @@ const Feature2BotDiv  = styled.div`
 
 
 const Span = styled.span`
-  color: #19b2f2;
+  color: #4169E1;
   ${({ theme }) => theme.mediaQueries.small} {
     font-size: ${({ theme }) => theme.fontSizes.text};
   }
   font-weight: 600;
 `;
 
-const BscLogoImage = styled.img<ImageProps>`
+const BscLogoImg = styled.img<ImageProps>`
   width:200px;
   height:200px;
   padding-right:100px;
 `
 
-const EthLogoImage = styled.img<ImageProps>`
+const EthLogoImg = styled.img<ImageProps>`
   width:200px;
   height:200px;
 `
@@ -237,51 +285,69 @@ const Index = () => {
       <Hero>
         <HeroLeft>
           <Heading> 
-            <span>HashDit Security</span>
+            <Span>HashDit Security</Span>
             for MetaMask
           </Heading>
-          <HerorLeftText>
-            Receive <Span>risk warnings</Span> and details whenever you interact with contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
-          </HerorLeftText>
+          <HeroLeftText>
+            Explore the power of HashDit Security and fortify your Metamask experience.
+            
+           </HeroLeftText>
+           <HeroLeftText>
+           Navigate the crypto space with <Span>confidence.</Span>
+           </HeroLeftText>
         </HeroLeft>
-        <InsightImage src={Insight} alt="Description of Image" style={{marginLeft: '10rem', borderRadius: '7px'}} />
+        <BannerImg src={HashDitBanner} alt="Description of Image"/>
       </Hero>
       <FeaturesHeading> 
-        Security Features  
+        <FeaturesHeadingDescription>
+          Receive <Span>risk warnings</Span> and details whenever you interact with contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
+        </FeaturesHeadingDescription>
+        <InsightImg src={WarningIcon} alt="Description of Image"/>
       </FeaturesHeading>
-        
+
       <Feature>
-        <ScreeningAndUrlImage src={ScreeningAndUrl} alt="Description of Image" style={{marginRight: '10rem', borderRadius: '7px'}} />
+        <ScreeningImg src={ScreeningScreen} alt="Description of Image" style={{marginRight: '10rem', borderRadius: '7px'}} />
         <FeatureRightDiv>
           <Heading> 
-            Hashdit Screening
+          <Span>Hashdit</Span> Screening
           </Heading>
-          HashDit API screening including <Span>transaction</Span>, <Span>destination address</Span> and <Span>url risk screening</Span>.
+          HashDit API screening including transaction, destination address and url risk screening. (TODO:Change text)
         </FeatureRightDiv>
       </Feature>
 
       <Feature1>
         <Feature1LeftDiv>
           <Heading> 
-            Transaction Insights
+          <Span>Url</Span>Screening
           </Heading>
-          Transaction insights providing details of what <Span>function</Span> is being called and the <Span>parameters</Span>.
+            Screen Urls for phishing links and malicious websites. (TODO:Change text)
         </Feature1LeftDiv>
-        <FunctionParamImage src={FunctionParam} alt="Description of Image" style={{borderRadius: '7px'}} />
-     
-        </Feature1>
+        <UrlImg src={UrlScreen} alt="Description of Image" style={{borderRadius: '7px'}} />
+      </Feature1>
 
       <Feature2>
-        
-        <Feature2TopDiv>
-          Full security screening support for <Span>BSC Mainnet</Span> and <Span>ETH Mainnet</Span> utilising the <Span>HashDit API</Span> .
-        </Feature2TopDiv>
-        <Feature2BotDiv>
-          <BscLogoImage src={bscLogo} alt="Description of Image"/>
-          <EthLogoImage src={ethLogo} alt="Description of Image"/>
-        </Feature2BotDiv>
-    
+        <FunctionParamImg src={FunctionParamScreen} alt="Description of Image" style={{borderRadius: '7px'}} />
+        <Feature2RightDiv>
+          <Heading> 
+            <Span>Transaction</Span>Insights
+          </Heading>
+          Transaction insights providing details of what function is being called and the parameters. (TODO:Change text)
+        </Feature2RightDiv>
+       
       </Feature2>
+
+      <Feature3>
+        <Feature3TopDiv>
+          Full security screening support for BSC Mainnet and ETH Mainnet utilising the Hashdit API. (TODO:Change text)
+        </Feature3TopDiv>
+        <Feature3BotDiv>
+          <BscLogoImg src={BscLogo} alt="Description of Image"/>
+          <EthLogoImg src={EthLogo} alt="Description of Image"/>
+        </Feature3BotDiv>
+      </Feature3>
+
+
+
 
     </Container>
   );
