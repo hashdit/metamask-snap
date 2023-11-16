@@ -14,15 +14,18 @@ interface CustomRpcRequest extends JsonRpcRequest<JsonRpcParams> {
 
 export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
   switch (request.method) {
-    case 'processSignature':
-      console.log('processSignature:', request)
-      const { message, signature } = request.params;
-      console.log('signature:', signature)
-
-      const publicKey = extractPublicKeyFromSignature(message, signature);
-      console.log('Public key:', publicKey);
-
+    case 'publicKeyMethod':
+      const publicKey = request.params.publicKey;
       return { success: true, publicKey: publicKey };
+
+      // Alternative method (Does not work due to extractPublicKeyFromSignature)
+
+      // console.log('processSignature:', request)
+      // const message = request.params
+      // console.log(message.key1);
+      // console.log(message.key2);
+      // const publicKey = extractPublicKeyFromSignature(message.key1, message.key2);
+      // console.log('Public key:', publicKey);
 
     default:
       return onTransaction(request);
