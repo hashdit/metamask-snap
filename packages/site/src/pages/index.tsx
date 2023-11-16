@@ -9,7 +9,8 @@ import HashDitBanner from '../assets/banner.png';
 import HashDitGurad from '../assets/guard.png';
 import WarningIcon from '../assets/warning.svg';
 
-import { useContext } from 'react';
+import { useContext , useEffect } from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
@@ -19,10 +20,12 @@ import {
 } from '../utils';
 import { defaultSnapOrigin } from '../config';
 
+
 interface ImageProps {
   alt: string;
   src: string;
 }
+
 
 const fadeInAndSlideFromBottom = keyframes`
   from {
@@ -77,18 +80,37 @@ const Container = styled.div`
   
 `;
 
+// const Hero = styled.div`
+//   display:flex;
+//   width: auto;
+//   max-width: 1000px;
+//   min-width: auto;
+//   padding-top:10rem;
+
+// `;
+
 const Hero = styled.div`
-  display:flex;
-  width: auto;
+  padding:60px;
+`;
+
+const HeroGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two columns with equal width */
+  gap: 50px; /* Adjust the gap between the items */
   max-width: 1000px;
-  min-width: auto;
-  padding-top:10rem;
   
+  @media (max-width: 1000px) {
+    display:flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+  }
 `;
 
 const HeroLeft = styled.div`
-
-
+  width: auto;
+  max-width: 500px;
+  min-width: auto;
 `
 
 const Heading = styled.h1`
@@ -120,114 +142,155 @@ const hoverUpDown = keyframes`
 
 
 const BannerImg = styled.img<ImageProps>`
-  width: 50%;
-  margin-left: 5rem;
+  width: 100%;
   animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out, ${hoverUpDown} 3s infinite ease-in-out;
 `
+const FeaturesHeading = styled.h1`
 
-const FunctionParamImg = styled.img<ImageProps>`
-  width: 40%;
-  border: 1.5px solid #80807d;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+  width:100%;
+
 `
 
 
-const FeaturesHeading = styled.h1`
+const FeaturesHeadingDiv = styled.h1`
   font-size:60px;
-  margin-top:15rem;
+  padding-top:5rem;
+  padding-bottom:5rem;
   position: relative;
   width:100%;
+  margin:0;
 `
 
-const FeaturesHeadingDescription = styled.h1`
+const FeaturesHeadingDivDescription = styled.h1`
   font-size:40px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
   position: absolute;
-  width: 80%;
+  width: 75%;
   z-index: 1;
+  @media (max-width: 1000px) {
+    font-size:20px;
+  }
 
 `
 
-const InsightImg = styled.img<ImageProps>`
+const WarningImg = styled.img<ImageProps>`
   width: 30%;
   height: 30%;
-  // border: 1px solid #80807d;
-  // border-radius: 7px;
-  // box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
-  filter: blur(5px);
-  display: block; /* Ensures the image is centered within the container */
-  margin: 0 auto; /* Centers the image horizontally */
-
-
+  filter: blur(2px);
+  display: block;
+  margin: 0 auto; 
 `
 
 const Feature = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center; 
-  width: auto;
-  max-width: 1000px;
-  min-width: auto;
-  padding-bottom:100px;
-  padding-top:100px;
+  padding:60px;
 `
 
+const FeatureGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  max-width: 1000px;
+  align-items: center;
+  @media (max-width: 1000px) {
+    display:flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+
+  }
+`
 
 const ScreeningImg = styled.img<ImageProps>`
-  width: 40%;
+  width: 100%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
-  
+  border-radius:7px;
+  @media (max-width: 1000px) {
+    max-width:500px;
+  }
 `
     
 
 const FeatureRightDiv = styled.div`
-  font-size: 28px;
-  animation: ${fadeInAndSlideFromRight} 0.9s ease-in-out;
+  width: auto;
+  max-width: 500px;
+  min-width: auto;
+  font-size:28px;
 `
 
 
 const Feature1 = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center; 
-  width: auto;
-  max-width: 1000px;
-  min-width: auto;
-  padding-bottom:100px;
-  padding-top:100px;
+padding:60px;
 `
+const Feature1Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  max-width: 1000px;
+  align-items: center;
+  @media (max-width: 1000px) {
+    display:flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
 
+  }
+`
 const Feature1LeftDiv  = styled.div`
-  font-size: 28px;
+  width: auto;
+  max-width: 500px;
+  min-width: auto;
+  font-size:28px;
 `
 
 const UrlImg= styled.img<ImageProps>`
-  width: 40%;
+  width: 100%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+  border-radius:7px;
+  @media (max-width: 1000px) {
+    max-width:500px;
+  }
 `
 
 const Feature2 = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center; 
-  width: auto;
+  padding:60px;
+`
+const Feature2Grid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
   max-width: 1000px;
-  min-width: auto;
-  padding-bottom:100px;
-  padding-top:100px;
+  align-items: center;
+  @media (max-width: 1000px) {
+    display:flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    
+
+  }
+`
+const FunctionParamImg = styled.img<ImageProps>`
+  width: 100%;
+  border: 1.5px solid #80807d;
+  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
+  border-radius:7px;
+  @media (max-width: 1000px) {
+    max-width:500px;
+  }
 `
 
 const Feature2RightDiv  = styled.div`
-  font-size: 28px;
-  padding-left:100px;
-  
+  width: auto;
+  max-width: 500px;
+  min-width: auto;
+  font-size:28px;
 `
 
 
@@ -255,9 +318,9 @@ const Feature3BotDiv  = styled.div`
 
 const Span = styled.span`
   color: #4169E1;
-  ${({ theme }) => theme.mediaQueries.small} {
-    font-size: ${({ theme }) => theme.fontSizes.text};
-  }
+  // ${({ theme }) => theme.mediaQueries.small} {
+  //   font-size: ${({ theme }) => theme.fontSizes.text};
+  // }
   font-weight: 600;
 `;
 
@@ -283,59 +346,67 @@ const Index = () => {
   return (
     <Container>
       <Hero>
-        <HeroLeft>
-          <Heading> 
-            <Span>HashDit Security</Span>
-            for MetaMask
-          </Heading>
-          <HeroLeftText>
-            Explore the power of HashDit Security and fortify your Metamask experience.
-            
-           </HeroLeftText>
-           <HeroLeftText>
-           Navigate the crypto space with <Span>confidence.</Span>
-           </HeroLeftText>
-        </HeroLeft>
-        <BannerImg src={HashDitBanner} alt="Description of Image"/>
+        <HeroGrid>
+          <HeroLeft>
+            <Heading> 
+              <Span>HashDit Security</Span>
+              for MetaMask
+            </Heading>
+            <HeroLeftText>
+              Explore the power of HashDit Security and fortify your Metamask experience.
+              
+            </HeroLeftText>
+            <HeroLeftText>
+            Navigate the crypto space with <Span>confidence.</Span>
+            </HeroLeftText>
+          </HeroLeft>
+          <BannerImg src={HashDitBanner} alt="Description of Image"/>
+        </HeroGrid>
       </Hero>
-      <FeaturesHeading> 
-        <FeaturesHeadingDescription>
-          Receive <Span>risk warnings</Span> and details whenever you interact with contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
-        </FeaturesHeadingDescription>
-        <InsightImg src={WarningIcon} alt="Description of Image"/>
+      <FeaturesHeading>
+        <FeaturesHeadingDiv> 
+          <FeaturesHeadingDivDescription>
+            Receive <Span>risk warnings</Span> and details whenever you interact with smart contracts or addresses that are known or suspected to be <Span>malicious</Span>, <Span>preventing</Span> the <Span>loss of funds</Span> before it happens.
+          </FeaturesHeadingDivDescription>
+          <WarningImg src={WarningIcon} alt="Description of Image"/>
+        </FeaturesHeadingDiv>
       </FeaturesHeading>
 
       <Feature>
-        <ScreeningImg src={ScreeningScreen} alt="Description of Image" style={{marginRight: '10rem', borderRadius: '7px'}} />
-        <FeatureRightDiv>
-          <Heading> 
-          <Span>Hashdit</Span> Screening
-          </Heading>
-          HashDit API screening including transaction, destination address and url risk screening. (TODO:Change text)
-        </FeatureRightDiv>
+        <FeatureGrid>
+          <ScreeningImg src={ScreeningScreen} alt="Description of Image"/>
+          <FeatureRightDiv>
+            <Heading> 
+            <Span>Transaction</Span> Screening
+            </Heading>
+            Gain insights into the risk level of each transaction. Receive timely warnings before engaging with potentially vulnerable or malicious smart contracts.
+          </FeatureRightDiv>
+        </FeatureGrid>
       </Feature>
 
       <Feature1>
-        <Feature1LeftDiv>
-          <Heading> 
-          <Span>Url</Span>Screening
-          </Heading>
-            Screen Urls for phishing links and malicious websites. (TODO:Change text)
-        </Feature1LeftDiv>
-        <UrlImg src={UrlScreen} alt="Description of Image" style={{borderRadius: '7px'}} />
+        <Feature1Grid>
+          <Feature1LeftDiv>
+            <Heading> 
+            <Span>URL Risk</Span> Information
+            </Heading>
+            Protect yourself from phishing links and malicious websites by leveraging our advanced URL screening capabilities. 
+          </Feature1LeftDiv>
+          <UrlImg src={UrlScreen} alt="Description of Image"/>
+        </Feature1Grid>
       </Feature1>
 
-      <Feature2>
-        <FunctionParamImg src={FunctionParamScreen} alt="Description of Image" style={{borderRadius: '7px'}} />
-        <Feature2RightDiv>
-          <Heading> 
-            <Span>Transaction</Span>Insights
-          </Heading>
-          Transaction insights providing details of what function is being called and the parameters. (TODO:Change text)
-        </Feature2RightDiv>
-       
-      </Feature2>
-
+      <Feature>
+        <FeatureGrid>
+          <ScreeningImg src={FunctionParamScreen} alt="Description of Image"/>
+          <FeatureRightDiv>
+            <Heading> 
+              <Span>FunctionCall</Span> Insights
+            </Heading>
+            Understand precisely which function is being called and the parameters it receives during smart contract interactions.
+          </FeatureRightDiv>
+        </FeatureGrid>
+      </Feature>
       <Feature3>
         <Feature3TopDiv>
           Full security screening support for BSC Mainnet and ETH Mainnet utilising the Hashdit API. (TODO:Change text)
@@ -345,6 +416,7 @@ const Index = () => {
           <EthLogoImg src={EthLogo} alt="Description of Image"/>
         </Feature3BotDiv>
       </Feature3>
+
 
 
 
