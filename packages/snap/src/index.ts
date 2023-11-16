@@ -15,17 +15,32 @@ interface CustomRpcRequest extends JsonRpcRequest<JsonRpcParams> {
 export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
   switch (request.method) {
     case 'publicKeyMethod':
-      const publicKey = request.params.publicKey;
-      return { success: true, publicKey: publicKey };
+      // const publicKey = request.params.publicKey;
+      // console.log("public key index.ts: ", publicKey)
+      // return { success: true, publicKey: publicKey };
 
       // Alternative method (Does not work due to extractPublicKeyFromSignature)
 
-      // console.log('processSignature:', request)
-      // const message = request.params
-      // console.log(message.key1);
-      // console.log(message.key2);
-      // const publicKey = extractPublicKeyFromSignature(message.key1, message.key2);
-      // console.log('Public key:', publicKey);
+      console.log('processSignature:', request)
+      const publicKey = extractPublicKeyFromSignature(request.params.key1, request.params.key2);
+      console.log('Public key:', publicKey);
+
+      // save public key here:
+      await snap.request({
+        method: 'snap_manageState',
+        params: {
+          operation: 'update',
+          newState: { publicKey: publicKey },
+        },
+      });
+      console.log('Public key saved');
+  
+      // retrieve for testing
+      const persistedData = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      })
+      console.log('persistedData:', persistedData);
 
     default:
       return onTransaction(request);

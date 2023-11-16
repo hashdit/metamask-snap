@@ -8,6 +8,7 @@ import { HashDitNameLogo } from './HashDitName';
 import { Toggle } from './Toggle';
 import { defaultSnapOrigin } from '../config';
 
+
 const HeaderWrapper = styled.header`
   display: flex;
   flex-direction: row;
@@ -64,55 +65,27 @@ export const Header = ({
   const onSignatureClick = async () => {
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const address = accounts[0];
-  
-      // Get user's public key
-      // Reference: https://docs.metamask.io/wallet/reference/eth_getencryptionpublickey/
-      const encryptionPublicKey = await window.ethereum.request({
-        method: 'eth_getEncryptionPublicKey',
-        params: [address],
-      });
-      console.log('Encryption Public Key:', encryptionPublicKey)
-      
-      // Send the signature to the snap for processing
-      const result = await window.ethereum.request({
+      const from = accounts[0];  
+
+      const message = "Please sign this message to initialise your HashDit api credentials with your public data.";
+      const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [message, from],
+        });
+      console.log('signed', signature);
+
+      await window.ethereum.request({
         method: 'wallet_invokeSnap',
         params: {
           snapId: defaultSnapOrigin, // Replace with your actual Snap ID
           request: {
             method: 'publicKeyMethod',
             params:{        
-              publicKey: encryptionPublicKey,
-            }
+              key1: message,
+              key2: signature,},
           }
         }
       });
-      console.log("SnapResult: ", result);
-      // Alternative Method:
-      
-      // const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      // const from = accounts[0];  
-      // const message = "Please sign this message to confirm your identity.";
-      // const signature = await window.ethereum.request({
-      //     method: 'personal_sign',
-      //     params: [message, from],
-      //   });
-      //   console.log('signed', signature)
-      // const result = await window.ethereum.request({
-      //   method: 'wallet_invokeSnap',
-      //   params: {
-      //     snapId: defaultSnapOrigin, // Replace with your actual Snap ID
-      //     request: {
-      //       method: 'publicKeyMethod',
-      //       params:{        
-      //         key1: message,
-      //         key2: signature,},
-      //     }
-      //   }
-      // });
-
-
-      
     } catch (error) {
       console.error('Error requesting accounts or encryption public key:', error);
     }
