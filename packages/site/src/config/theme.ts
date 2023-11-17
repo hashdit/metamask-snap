@@ -41,18 +41,18 @@ const theme = {
 export const light: DefaultTheme = {
   colors: {
     background: {
-      default: '#0d34a8',
+      default: 'linear-gradient(92.32deg, #2948D8 3.18%, rgba(30, 62, 199, 0.78) 57.89%, rgba(41, 115, 194, 0.679867) 95.63%, rgba(11, 119, 180, 0.62) 113.34%)',
       alternative: '#141618',
       inverse: '#FFFFFF',
     },
     icon: {
-      default: '#FFFFFF',
+      default: '#4169E1',
       alternative: '#BBC0C5',
     },
     text: {
       default: '#FFFFFF',
       muted: '#FFFFFF',
-      alternative: '#D6D9DC',
+      alternative: '#ffffff',
       inverse: '#24272A',
     },
     border: {
@@ -80,7 +80,7 @@ export const light: DefaultTheme = {
 export const dark: DefaultTheme = {
   colors: {
     background: {
-      default: '#0f0f0f',
+      default: 'linear-gradient(0deg,#0f0f0f 50%,#1c1c1c)',
       alternative: '#141618',
       inverse: '#FFFFFF',
     },
@@ -91,7 +91,7 @@ export const dark: DefaultTheme = {
     text: {
       default: '#FFFFFF',
       muted: '#FFFFFF',
-      alternative: '#D6D9DC',
+      alternative: '#4169E1',
       inverse: '#24272A',
     },
     border: {
@@ -126,7 +126,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    background-color: ${(props) => props.theme.colors.background.default};
+    background: ${(props) => props.theme.colors.background.default};
     color: ${(props) => props.theme.colors.text.default};
     font-family: ${(props) => props.theme.fonts.default};
     font-size: ${(props) => props.theme.fontSizes.text};
