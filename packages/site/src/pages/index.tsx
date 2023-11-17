@@ -9,6 +9,7 @@ import HashDitBanner from '../assets/banner.png';
 import HashDitGurad from '../assets/guard.png';
 import WarningIcon from '../assets/warning.svg';
 
+
 import { useContext , useEffect } from 'react';
 import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
@@ -19,6 +20,7 @@ import {
   isLocalSnap,
 } from '../utils';
 import { defaultSnapOrigin } from '../config';
+import {HeaderButtons} from '../components/Buttons'
 
 
 interface ImageProps {
@@ -67,9 +69,11 @@ const Container = styled.div`
   flex: 1;
   padding-top: 5rem;
   padding-bottom: 4rem;
+  //background: linear-gradient(0deg,#0f0f0f 50%,#1c1c1c);
 
   
   ${({ theme }) => theme.mediaQueries.small} {
+    
     padding-left: 2.4rem;
     padding-right: 2.4rem;
     margin-top: 2rem;
@@ -91,6 +95,7 @@ const Container = styled.div`
 
 const Hero = styled.div`
   padding:60px;
+
 `;
 
 const HeroGrid = styled.div`
@@ -186,6 +191,7 @@ const WarningImg = styled.img<ImageProps>`
 
 const Feature = styled.div`
   padding:60px;
+  margin-bottom:100px;
 `
 
 const FeatureGrid = styled.div`
@@ -194,14 +200,22 @@ const FeatureGrid = styled.div`
   gap: 50px;
   max-width: 1000px;
   align-items: center;
+
   @media (max-width: 1000px) {
-    display:flex;
+    display: flex;
     flex-flow: column;
     justify-content: center;
     align-items: center;
 
+    > * {
+      order: 1;
+    }
+
+    > :first-child {
+      order: 2;
+    }
   }
-`
+`;
 
 const ScreeningImg = styled.img<ImageProps>`
   width: 100%;
@@ -224,7 +238,8 @@ const FeatureRightDiv = styled.div`
 
 
 const Feature1 = styled.div`
-padding:60px;
+  padding:60px;
+  margin-bottom:100px;
 `
 const Feature1Grid = styled.div`
   display: grid;
@@ -296,16 +311,16 @@ const Feature2RightDiv  = styled.div`
 
 
 const Feature3 = styled.div`
+  
+`
+const Feature3TopDiv  = styled.div`
+  // font-size: 20px;
+  text-align:center;
+  padding-bottom:5rem;
   width: auto;
   max-width: 1000px;
   min-width: auto;
-  padding-bottom:100px;
-  padding-top:100px;
-`
-const Feature3TopDiv  = styled.div`
-  font-size: 35px;
-  text-align:center;
-  padding-bottom:5rem;
+  font-size:28px;
 
 `
 
@@ -317,22 +332,26 @@ const Feature3BotDiv  = styled.div`
 
 
 const Span = styled.span`
-  color: #4169E1;
-  // ${({ theme }) => theme.mediaQueries.small} {
-  //   font-size: ${({ theme }) => theme.fontSizes.text};
-  // }
+  color: ${(props) => (props.theme.colors.text.alternative)};
   font-weight: 600;
 `;
 
 const BscLogoImg = styled.img<ImageProps>`
-  width:200px;
-  height:200px;
-  padding-right:100px;
+  width: 15%;
+  padding-right:10%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:20%;
+  }
+  
 `
 
 const EthLogoImg = styled.img<ImageProps>`
-  width:200px;
-  height:200px;
+  width: 10%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:15%;
+  }
 `
 
 
@@ -342,9 +361,23 @@ const Index = () => {
   const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
     ? state.isFlask
     : state.snapsDetected;
-
+    const handleConnectClick = async () => {
+      try {
+        await connectSnap();
+        const installedSnap = await getSnap();
+  
+        dispatch({
+          type: MetamaskActions.SetInstalled,
+          payload: installedSnap,
+        });
+      } catch (e) {
+        console.error(e);
+        dispatch({ type: MetamaskActions.SetError, payload: e });
+      }
+    };
   return (
     <Container>
+
       <Hero>
         <HeroGrid>
           <HeroLeft>
@@ -357,12 +390,14 @@ const Index = () => {
               
             </HeroLeftText>
             <HeroLeftText>
-            Navigate the crypto space with <Span>confidence.</Span>
+              Navigate the crypto space with <Span>confidence.</Span>
+              
             </HeroLeftText>
           </HeroLeft>
           <BannerImg src={HashDitBanner} alt="Description of Image"/>
         </HeroGrid>
       </Hero>
+
       <FeaturesHeading>
         <FeaturesHeadingDiv> 
           <FeaturesHeadingDivDescription>
@@ -374,7 +409,7 @@ const Index = () => {
 
       <Feature>
         <FeatureGrid>
-          <ScreeningImg src={ScreeningScreen} alt="Description of Image"/>
+          <ScreeningImg src={ScreeningScreen} alt="Description of Image" />
           <FeatureRightDiv>
             <Heading> 
             <Span>Transaction</Span> Screening
@@ -407,9 +442,13 @@ const Index = () => {
           </FeatureRightDiv>
         </FeatureGrid>
       </Feature>
+
       <Feature3>
         <Feature3TopDiv>
-          Full security screening support for BSC Mainnet and ETH Mainnet utilising the Hashdit API. (TODO:Change text)
+          <Heading> 
+              <Span>Binance Smart Chain & Ethereum</Span>
+          </Heading>
+          Full security screening support for BSC Mainnet and ETH Mainnet.
         </Feature3TopDiv>
         <Feature3BotDiv>
           <BscLogoImg src={BscLogo} alt="Description of Image"/>
@@ -417,10 +456,8 @@ const Index = () => {
         </Feature3BotDiv>
       </Feature3>
 
-
-
-
-
+  
+      <HeaderButtons state={state} onConnectClick={handleConnectClick} />
     </Container>
   );
 };
