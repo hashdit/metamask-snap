@@ -58,14 +58,17 @@ export const Header = ({
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const from = accounts[0];  
       console.log("from: ", from)
+
       //const message = "Hashdit: Please sign this message to confirm your identity.";
-      const message = String(from);
+      const message = from + '\n';
       const signature = await window.ethereum.request({
           method: 'personal_sign',
           params: [message, from],
         });
-        console.log('signed', signature)
 
+      console.log('signed: ', signature)
+      console.log('message: ',  message)
+        
       // Send the signature to the snap for processing
       const result = await window.ethereum.request({
         method: 'wallet_invokeSnap',
