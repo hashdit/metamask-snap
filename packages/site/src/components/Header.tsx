@@ -18,15 +18,6 @@ const HeaderWrapper = styled.header`
   border-bottom: 1px solid ${(props) => props.theme.colors.border.default};
 `;
 
-const Title = styled.p`
-  font-size: ${(props) => props.theme.fontSizes.title};
-  font-weight: bold;
-  margin: 0;
-  margin-left: 1.2rem;
-  ${({ theme }) => theme.mediaQueries.small} {
-    display: none;
-  }
-`;
 
 const LogoWrapper = styled.div`
   display: flex;
