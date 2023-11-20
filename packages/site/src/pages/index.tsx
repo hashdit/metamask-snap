@@ -453,9 +453,6 @@ const Index = () => {
           <EthLogoImg src={EthLogo} alt="Description of Image"/>
         </Feature3BotDiv>
       </Feature3>
-
-  
-      <HeaderButtons state={state} onConnectClick={handleConnectClick} />
     </Container>
   );
 };
