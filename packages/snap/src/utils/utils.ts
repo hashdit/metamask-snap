@@ -51,7 +51,7 @@ export const isEthereumAddress = (address: string) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-export async function getHashDitResponse(businessName: string, transactionUrl?: any, transaction?: any, chainId?: string) {
+export async function getHashDitResponse(businessName: string, userPublicKey: any, transactionUrl?: any, transaction?: any, chainId?: string) {
   console.log("getHashDitResponse");
 
   const trace_id = uuidv4();
