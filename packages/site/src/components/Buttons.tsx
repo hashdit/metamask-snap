@@ -100,14 +100,6 @@ export const SendHelloButton = (props: ComponentProps<typeof Button>) => {
   return <Button {...props}>Send message</Button>;
 };
 
-const GetSignMessage = ({ disabled, onSignatureClick, ...props }: ComponentProps<typeof Button> & { disabled: boolean }) => {
-  return (
-    <Button {...props} disabled={disabled} onClick={onSignatureClick} style={{ opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}>
-      Setup Signature
-    </Button>
-  );
-};
-
 export const HeaderButtons = ({
   state,
   onConnectClick,
@@ -130,7 +122,6 @@ export const HeaderButtons = ({
   if (shouldDisplayReconnectButton(state.installedSnap)) {
     return (
       <>
-        <GetSignMessage disabled={isDisabled} onSignatureClick={onSignatureClick}/>
         <ReconnectButton onClick={onConnectClick} />
       </>
     );
@@ -139,7 +130,6 @@ export const HeaderButtons = ({
   return (
     <ConnectedContainer>
       <ConnectedIndicator />
-      <GetSignMessage disabled={isDisabled} onSignatureClick={onSignatureClick}/>
       <ButtonText>Connected</ButtonText>
     </ConnectedContainer>
   );

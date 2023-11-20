@@ -27,7 +27,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
             operation: 'update',
             newState: { 
               publicKey: publicKey,
-              userAddress: request.params.from
+              userAddress: request.params.from,
+              addressSignature: request.params.signature
             },
           },
         });

@@ -57,40 +57,9 @@ export const Header = ({
       // Request user to sign a message -> get user's signature -> get user's public key.
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const from = accounts[0];  
-      const message = "Hashdit: Please sign this message to confirm your identity.";
-      const signature = await window.ethereum.request({
-          method: 'personal_sign',
-          params: [message, from],
-        });
-        console.log('signed', signature)
-
-      // Send the signature to the snap for processing
-      const result = await window.ethereum.request({
-        method: 'wallet_invokeSnap',
-        params: {
-          snapId: defaultSnapOrigin, // Replace with your actual Snap ID
-          request: {
-            method: 'publicKeyMethod',
-            params:{        
-              signature: signature,
-              message: message,
-              from: from
-            }
-          }
-        }
-      });
-      console.log("SnapResult: ", result);
-    } catch (error) {
-      console.error('Error requesting accounts or encrypting public key:', error);
-    }
-  };
-
-  const onSignatureClick = async () => {
-    try {
-      // Request user to sign a message -> get user's signature -> get user's public key.
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const from = accounts[0];  
-      const message = "Hashdit: Please sign this message to confirm your identity.";
+      console.log("from: ", from)
+      //const message = "Hashdit: Please sign this message to confirm your identity.";
+      const message = String(from);
       const signature = await window.ethereum.request({
           method: 'personal_sign',
           params: [message, from],
@@ -128,7 +97,7 @@ export const Header = ({
           onToggle={handleToggleClick}
           defaultChecked={getThemePreference()}
         />
-        <HeaderButtons state={state} onConnectClick={handleConnectClick} onSignatureClick={onSignatureClick} />
+        <HeaderButtons state={state} onConnectClick={handleConnectClick}/>
       </RightContainer>
     </HeaderWrapper>
   );
