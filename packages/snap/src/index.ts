@@ -1,7 +1,7 @@
 import type { OnTransactionHandler, OnRpcRequestHandler, JsonRpcRequest, JsonRpcParams } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse, parseTransactingValue, getNativeToken } from "./utils/utils";
+import { getHashDitResponse, parseTransactingValue, getNativeToken, authenticateHashDit } from "./utils/utils";
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { CHAINS_INFO } from "./utils/chains";
 
@@ -16,7 +16,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
         throw new Error("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
       }
 
-      const publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature);
+      let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature);
+      publicKey = publicKey.substring(2);
       console.log('Public key:', publicKey);
       
       try {
@@ -28,7 +29,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
             newState: { 
               publicKey: publicKey,
               userAddress: request.params.from,
-              addressSignature: request.params.signature
+              messageSignature: request.params.signature
             },
           },
         });
@@ -44,8 +45,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
           params: { operation: 'get' },
         });
       
-        console.log('persistedData(PublicKey):', persistedData.publicKey);
-        console.log('persistedData(address):', persistedData.userAddress);
+        console.log('persistedData:', persistedData);
+        await authenticateHashDit(persistedData);
       } catch (error) {
         console.error('Error retrieving persisted data:', error);
       }
@@ -209,14 +210,14 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
   // Current chain is not BSC and not ETH. Only perform URL screening
   if(chainId !== '0x38' && chainId !== '0x1'){
     // Retrieve saved user's public key to make HashDit API call
-    const persistedUserPublicKey = await snap.request({
+    const persistedUserData = await snap.request({
       method: 'snap_manageState',
       params: { operation: 'get' },
     })
 
     let contentArray: any[] = [];
-    if(persistedUserPublicKey !== null){
-      const urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserPublicKey, transactionOrigin);
+    if(persistedUserData !== null){
+      const urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserData, transactionOrigin);
       console.log("urlRespData: ", urlRespData);
 
       contentArray = [
