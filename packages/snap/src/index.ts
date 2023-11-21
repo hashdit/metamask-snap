@@ -37,6 +37,19 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
       } catch (error) {
         console.error('Error saving public key and user address:', error);
       }
+
+      try {
+        const persistedData = await snap.request({
+          method: 'snap_manageState',
+          params: { operation: 'get' },
+        });
+      
+        console.log('persistedData:', persistedData);
+        await authenticateHashDit(persistedData); // call HashDit API to authenticate user
+      } catch (error) {
+        console.error('Error retrieving persisted data:', error);
+      }
+      
     return true;
 
     default:
