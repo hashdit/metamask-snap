@@ -51,7 +51,33 @@ export const isEthereumAddress = (address: string) => {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
 
-export async function getHashDitResponse(businessName: string, userPublicKey: any, transactionUrl?: any, transaction?: any, chainId?: string) {
+export async function authenticateHashDit(persistedUserData: any) {
+  const timestamp = Date.now();
+  const nonce = uuidv4().replace(/-/g, '');
+  const appId = persistedUserData.userAddress;
+  const appSecret = persistedUserData.messageSignature;
+
+  const response = await fetch("https://qacb.sdtaop.com/security-api/public/chain/v1/web3/signature", {
+    method: "POST", 
+    mode: "cors", 
+    cache: "no-cache", 
+    credentials: "same-origin", 
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+      "X-Signature-appid": appId,
+      "X-Signature-timestamp": timestamp.toString(),
+      "X-Signature-nonce": nonce,
+      "X-Signature-signature": appSecret
+    },
+    redirect: "follow", 
+    referrerPolicy: "no-referrer", 
+  });
+
+  const resp = await response.json();
+  console.log("response: ", resp);
+}
+
+export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
   console.log("getHashDitResponse");
 
   const trace_id = uuidv4();
@@ -102,7 +128,7 @@ export async function getHashDitResponse(businessName: string, userPublicKey: an
   const nonce = uuidv4().replace(/-/g, '');
 
   //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  const url = new URL('https://api.hashdit.io/security-api/public/app/v1/detect');
+  const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
 
   let dataToSign: string;
   if (businessName === "hashdit_native_transfer") {
@@ -111,11 +137,13 @@ export async function getHashDitResponse(businessName: string, userPublicKey: an
     dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
 
   } else {
-    appId = 'a3d194daa5b64414bbaa';
-    appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
+    //appId = 'a3d194daa5b64414bbaa';
+    //appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
+    appId = persistedUserData.userAddress;
+    appSecret = persistedUserData.publicKey;
     url.searchParams.append("business", businessName);
     const query = url.search.substring(1);
-    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${query};${JSON.stringify(postBody)}`;
+    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(postBody)}`;
   }
 
   const signature = hmacSHA256(dataToSign, appSecret);
@@ -224,6 +252,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
 
 
 async function customFetch(url: URL, postBody: any, appId: string, timestamp: number, nonce: any, signatureFinal: any){
+  console.log("url: ", url);
   const response = await fetch(url, {
     method: "POST", 
     mode: "cors", 

@@ -49,7 +49,7 @@ export const Footer = () => {
         </PoweredByContainer>
       </PoweredByButton>
       <HashDitText>
-        © 2022 HashDit. All rights reserved.
+        © 2023 HashDit. All rights reserved.
       </HashDitText>
     </FooterWrapper>
     
