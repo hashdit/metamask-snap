@@ -135,7 +135,6 @@ const HeroLeftText = styled.div`
   animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 `
 
-
 const hoverUpDown = keyframes`
   0%, 100% {
     transform: translateY(0);
@@ -155,7 +154,6 @@ const FeaturesHeading = styled.h1`
   width:100%;
 
 `
-
 
 const FeaturesHeadingDiv = styled.h1`
   font-size:60px;
@@ -193,6 +191,7 @@ const Feature = styled.div`
   padding:60px;
   margin-bottom:100px;
 `
+
 
 const FeatureGrid = styled.div`
   display: grid;
@@ -313,6 +312,7 @@ const Feature2RightDiv  = styled.div`
 const Feature3 = styled.div`
   
 `
+
 const Feature3TopDiv  = styled.div`
   // font-size: 20px;
   text-align:center;
@@ -328,8 +328,6 @@ const Feature3BotDiv  = styled.div`
   display:flex;
   justify-content: center;
 `
-
-
 
 const Span = styled.span`
   color: ${(props) => (props.theme.colors.text.alternative)};
@@ -455,9 +453,6 @@ const Index = () => {
           <EthLogoImg src={EthLogo} alt="Description of Image"/>
         </Feature3BotDiv>
       </Feature3>
-
-  
-      <HeaderButtons state={state} onConnectClick={handleConnectClick} />
     </Container>
   );
 };

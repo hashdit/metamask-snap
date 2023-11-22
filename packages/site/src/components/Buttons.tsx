@@ -38,8 +38,10 @@ const Button = styled.button`
   align-items: center;
   justify-content: center;
   margin-top: auto;
+  margin-right: 1rem;
   ${({ theme }) => theme.mediaQueries.small} {
     width: 100%;
+    margin-right: 0;
   }
 `;
 
@@ -101,10 +103,14 @@ export const SendHelloButton = (props: ComponentProps<typeof Button>) => {
 export const HeaderButtons = ({
   state,
   onConnectClick,
+  onSignatureClick
 }: {
   state: MetamaskState;
   onConnectClick(): unknown;
+  onSignatureClick?(): unknown;
 }) => {
+  const isDisabled = !state.installedSnap; // Disabled if snap is not installed
+
   if (!state.isFlask && !state.installedSnap) {
     return <InstallFlaskButton />;
   }
@@ -114,7 +120,11 @@ export const HeaderButtons = ({
   }
 
   if (shouldDisplayReconnectButton(state.installedSnap)) {
-    return <ReconnectButton onClick={onConnectClick} />;
+    return (
+      <>
+        <ReconnectButton onClick={onConnectClick} />
+      </>
+    );
   }
 
   return (
@@ -124,3 +134,6 @@ export const HeaderButtons = ({
     </ConnectedContainer>
   );
 };
+
+
+
