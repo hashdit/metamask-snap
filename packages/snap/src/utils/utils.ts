@@ -57,7 +57,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   const appId = persistedUserData.userAddress;
   const appSecret = persistedUserData.messageSignature;
 
-  const response = await fetch("https://qacb.sdtaop.com/security-api/public/chain/v1/web3/signature", {
+  const response = await fetch("https://api.hashdit.io/security-api/public/chain/v1/web3/signature", {
     method: "POST", 
     mode: "cors", 
     cache: "no-cache", 
@@ -97,7 +97,7 @@ export async function getHashDitResponse(businessName: string, persistedUserData
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     postBody.url = transactionUrl;
 
-  } else if (businessName == "hashdit_native_transfer") {
+  } else if (businessName == "internal_address_lables_tags") {
     postBody.address = transaction.to;
     postBody.chain_id = chain;
 
@@ -125,8 +125,8 @@ export async function getHashDitResponse(businessName: string, persistedUserData
   const nonce = uuidv4().replace(/-/g, '');
 
   //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
-  //const url = new URL('https://api.hashdit.io/security-api/public/chain/v1/web3/detect'); Kyle is fixing some issue with this
+  //const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
+  const url = new URL('https://api.hashdit.io/security-api/public/chain/v1/web3/detect'); 
 
   let dataToSign: string;
   if (businessName === "hashdit_native_transfer") {
@@ -174,7 +174,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
     }
   
-  } else if (businessName == "hashdit_native_transfer") {
+  } else if (businessName == "internal_address_lables_tags") {
     responseData.overall_risk = resp.risk_level;
     try {
       const black_labels = JSON.parse(resp.black_labels);
@@ -248,7 +248,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
 
 
 async function customFetch(url: URL, postBody: any, appId: string, timestamp: number, nonce: any, signatureFinal: any){
-  console.log("url: ", url);
   const response = await fetch(url, {
     method: "POST", 
     mode: "cors", 
