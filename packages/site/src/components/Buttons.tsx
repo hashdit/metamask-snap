@@ -109,8 +109,6 @@ export const HeaderButtons = ({
   onConnectClick(): unknown;
   onSignatureClick?(): unknown;
 }) => {
-  const isDisabled = !state.installedSnap; // Disabled if snap is not installed
-
   if (!state.isFlask && !state.installedSnap) {
     return <InstallFlaskButton />;
   }

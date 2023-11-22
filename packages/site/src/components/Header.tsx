@@ -41,8 +41,11 @@ export const Header = ({
 
   const handleConnectClick = async () => {
     try {
+      console.log("connectSnap before...")
       await connectSnap();
+      console.log("connectSnap after...")
       const installedSnap = await getSnap();
+      console.log("getSnap after...")
 
       dispatch({
         type: MetamaskActions.SetInstalled,

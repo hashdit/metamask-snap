@@ -78,8 +78,6 @@ export async function authenticateHashDit(persistedUserData: any) {
 }
 
 export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
-  console.log("getHashDitResponse");
-
   const trace_id = uuidv4();
 
   // formatting chainid to match api formatting
@@ -120,7 +118,6 @@ export async function getHashDitResponse(businessName: string, persistedUserData
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
-  console.log("postbody: ", postBody);
   let appId: string;
   let appSecret: string;
 
@@ -129,6 +126,7 @@ export async function getHashDitResponse(businessName: string, persistedUserData
 
   //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
   const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
+  //const url = new URL('https://api.hashdit.io/security-api/public/chain/v1/web3/detect'); Kyle is fixing some issue with this
 
   let dataToSign: string;
   if (businessName === "hashdit_native_transfer") {
@@ -137,8 +135,6 @@ export async function getHashDitResponse(businessName: string, persistedUserData
     dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
 
   } else {
-    //appId = 'a3d194daa5b64414bbaa';
-    //appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
     appId = persistedUserData.userAddress;
     appSecret = persistedUserData.publicKey;
     url.searchParams.append("business", businessName);
