@@ -124,23 +124,14 @@ export async function getHashDitResponse(businessName: string, persistedUserData
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  //const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
   const url = new URL('https://api.hashdit.io/security-api/public/chain/v1/web3/detect'); 
 
   let dataToSign: string;
-  if (businessName === "hashdit_native_transfer") {
-    appId = '42b7d48e81754984b624';
-    appSecret = '03909eb04c894bd29a79f9e1127847c6';
-    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
-
-  } else {
-    appId = persistedUserData.userAddress;
-    appSecret = persistedUserData.publicKey;
-    url.searchParams.append("business", businessName);
-    const query = url.search.substring(1);
-    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(postBody)}`;
-  }
+  appId = persistedUserData.userAddress;
+  appSecret = persistedUserData.publicKey;
+  url.searchParams.append("business", businessName);
+  const query = url.search.substring(1);
+  dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(postBody)}`;
 
   const signature = hmacSHA256(dataToSign, appSecret);
   const signatureFinal = encHex.stringify(signature);
@@ -193,9 +184,8 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       console.log("No black or white labels")
     }
 
-  } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
+  } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     if (resp.detection_result != null) {
-      console.log("detectionResults: ", resp.detection_result)
       const detectionResults = resp.detection_result.risks;
       console.log("detectionResults2: ", JSON.stringify(detectionResults, null, 2))
       responseData.overall_risk = detectionResults.risk_level;
@@ -203,7 +193,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       // Get function name and params - catch if none returned
       try {
         const paramsCopy = [...resp.detection_result.params];
-        console.log("params: ", JSON.stringify(paramsCopy, null, 2));
         
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
@@ -278,13 +267,9 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
 
 // Parse transacting value to decimals to be human-readable
 export function parseTransactingValue(transactionValue: any){ 
-  
   let valueAsDecimals = 0;
   valueAsDecimals = parseInt(transactionValue, 16);
-  
-  // Assumes 18 decimal places for native token
-  valueAsDecimals = valueAsDecimals/1e18;
-
+  valueAsDecimals = valueAsDecimals/1e18; // Assumes 18 decimal places for native token
   return valueAsDecimals;
 }
 
