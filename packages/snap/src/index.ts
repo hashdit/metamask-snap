@@ -118,12 +118,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       var respData;
       var urlRespData;
       if(persistedUserPublicKey !== null){
-        respData = await getHashDitResponse("hashdit_native_transfer", persistedUserPublicKey, transactionOrigin, transaction, chainId,);
-        console.log("respData: ", respData);
+        respData = await getHashDitResponse("internal_address_lables_tags", persistedUserPublicKey, transactionOrigin, transaction, chainId,);
   
         // We also need to add seperate URL screening, as the native transfer hashdit endpoint doesnt have url screening
         urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserPublicKey, transactionOrigin);
-        console.log("urlRespData: ", urlRespData);
 
         if (respData.overall_risk_title != "Unknown Risk") {
           contentArray = [

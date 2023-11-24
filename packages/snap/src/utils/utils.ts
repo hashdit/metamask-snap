@@ -57,7 +57,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   const appId = persistedUserData.userAddress;
   const appSecret = persistedUserData.messageSignature;
 
-  const response = await fetch("https://qacb.sdtaop.com/security-api/public/chain/v1/web3/signature", {
+  const response = await fetch("https://api.hashdit.io/security-api/public/chain/v1/web3/signature", {
     method: "POST", 
     mode: "cors", 
     cache: "no-cache", 
@@ -78,8 +78,6 @@ export async function authenticateHashDit(persistedUserData: any) {
 }
 
 export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
-  console.log("getHashDitResponse");
-
   const trace_id = uuidv4();
 
   // formatting chainid to match api formatting
@@ -99,7 +97,7 @@ export async function getHashDitResponse(businessName: string, persistedUserData
   if (businessName == "hashdit_snap_tx_api_url_detection") {
     postBody.url = transactionUrl;
 
-  } else if (businessName == "hashdit_native_transfer") {
+  } else if (businessName == "internal_address_lables_tags") {
     postBody.address = transaction.to;
     postBody.chain_id = chain;
 
@@ -120,31 +118,20 @@ export async function getHashDitResponse(businessName: string, persistedUserData
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
-  console.log("postbody: ", postBody);
   let appId: string;
   let appSecret: string;
 
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
 
-  //const url = new URL('https://cb.commonservice.io/security-api/public/app/v1/detect');
-  const url = new URL('https://qacb.sdtaop.com/security-api/public/chain/v1/web3/detect');
+  const url = new URL('https://api.hashdit.io/security-api/public/chain/v1/web3/detect'); 
 
   let dataToSign: string;
-  if (businessName === "hashdit_native_transfer") {
-    appId = '42b7d48e81754984b624';
-    appSecret = '03909eb04c894bd29a79f9e1127847c6';
-    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/app/v1/detect;${JSON.stringify(postBody)}`;
-
-  } else {
-    //appId = 'a3d194daa5b64414bbaa';
-    //appSecret = 'b9a0ce86159b4eb4ab94bbb80503139d';
-    appId = persistedUserData.userAddress;
-    appSecret = persistedUserData.publicKey;
-    url.searchParams.append("business", businessName);
-    const query = url.search.substring(1);
-    dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(postBody)}`;
-  }
+  appId = persistedUserData.userAddress;
+  appSecret = persistedUserData.publicKey;
+  url.searchParams.append("business", businessName);
+  const query = url.search.substring(1);
+  dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(postBody)}`;
 
   const signature = hmacSHA256(dataToSign, appSecret);
   const signatureFinal = encHex.stringify(signature);
@@ -178,7 +165,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       responseData.url_risk_title = "⚠️ Interaction with a suspicious site ⚠️";
     }
   
-  } else if (businessName == "hashdit_native_transfer") {
+  } else if (businessName == "internal_address_lables_tags") {
     responseData.overall_risk = resp.risk_level;
     try {
       const black_labels = JSON.parse(resp.black_labels);
@@ -197,9 +184,8 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       console.log("No black or white labels")
     }
 
-  } else if (businessName == "hashdit_snap_tx_api_transaction_request") { // Need to add "addresses" risks
+  } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     if (resp.detection_result != null) {
-      console.log("detectionResults: ", resp.detection_result)
       const detectionResults = resp.detection_result.risks;
       console.log("detectionResults2: ", JSON.stringify(detectionResults, null, 2))
       responseData.overall_risk = detectionResults.risk_level;
@@ -207,7 +193,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       // Get function name and params - catch if none returned
       try {
         const paramsCopy = [...resp.detection_result.params];
-        console.log("params: ", JSON.stringify(paramsCopy, null, 2));
         
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
@@ -252,7 +237,6 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
 
 
 async function customFetch(url: URL, postBody: any, appId: string, timestamp: number, nonce: any, signatureFinal: any){
-  console.log("url: ", url);
   const response = await fetch(url, {
     method: "POST", 
     mode: "cors", 
@@ -283,13 +267,9 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
 
 // Parse transacting value to decimals to be human-readable
 export function parseTransactingValue(transactionValue: any){ 
-  
   let valueAsDecimals = 0;
   valueAsDecimals = parseInt(transactionValue, 16);
-  
-  // Assumes 18 decimal places for native token
-  valueAsDecimals = valueAsDecimals/1e18;
-
+  valueAsDecimals = valueAsDecimals/1e18; // Assumes 18 decimal places for native token
   return valueAsDecimals;
 }
 
