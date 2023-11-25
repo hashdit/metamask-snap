@@ -38,9 +38,8 @@ const Button = styled.button`
   align-items: center;
   justify-content: center;
   margin-top: auto;
-  margin-right: 1rem;
   ${({ theme }) => theme.mediaQueries.small} {
-    width: 100%;
+    width: 85%;
     margin-right: 0;
   }
 `;

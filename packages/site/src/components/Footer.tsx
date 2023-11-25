@@ -12,6 +12,7 @@ const FooterWrapper = styled.footer`
   padding-bottom: 5rem;
   border-top: 1px solid ${(props) => props.theme.colors.border.default};
   background:${({ theme }) => theme.colors.background.default};
+  
 `;
 
 const PoweredByButton = styled.a`

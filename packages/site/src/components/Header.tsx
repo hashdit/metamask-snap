@@ -16,6 +16,7 @@ const HeaderWrapper = styled.header`
   align-items: center;
   padding: 2.4rem;
   border-bottom: 1px solid ${(props) => props.theme.colors.border.default};
+
 `;
 
 

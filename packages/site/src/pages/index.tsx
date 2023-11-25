@@ -119,8 +119,6 @@ const Heading = styled.h1`
   span {
     display: block;
   }
- 
- 
 `;
 
 const HeroLeftText = styled.div`
@@ -280,47 +278,53 @@ const Feature2LeftDiv  = styled.div`
   font-size:28px;
 `
 
+const BscLogoImg = styled.img<ImageProps>`
+  width: 100%;
+  //padding-right:10%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:40%;
+  }
+  
+`
+const EthLogoImg = styled.img<ImageProps>`
+  width: 80%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:35%;
+  }
+`
 
-const Feature3 = styled.div``
+
+const Feature3 = styled.div`
+  width: auto;
+  max-width: 600px;
+  min-width: auto;
+  font-size: 28px;
+`
 
 const Feature3TopDiv  = styled.div`
-  // font-size: 20px;
   text-align:center;
   padding-bottom:5rem;
-  width: auto;
-  max-width: 1000px;
-  min-width: auto;
-  font-size:28px;
+`
 
+const Feature3Header = styled.h1`
+  color: ${(props) => (props.theme.colors.text.alternative)};
+  font-weight: 600;
+  
 `
 
 const Feature3BotDiv  = styled.div`
   display:flex;
   justify-content: center;
+  align-item:center;
+
 `
 
 const Span = styled.span`
   color: ${(props) => (props.theme.colors.text.alternative)};
   font-weight: 600;
 `;
-
-const BscLogoImg = styled.img<ImageProps>`
-  width: 15%;
-  padding-right:10%;
-  @media (max-width: 1000px) {
-    max-width:500px;
-    width:20%;
-  }
-  
-`
-
-const EthLogoImg = styled.img<ImageProps>`
-  width: 10%;
-  @media (max-width: 1000px) {
-    max-width:500px;
-    width:15%;
-  }
-`
 
 
 const Index = () => {
@@ -437,7 +441,7 @@ const Index = () => {
         <Feature1Grid>
           <Feature1LeftDiv>
             <Heading> 
-            <Span>URL Risk</Span> Information
+              <Span>URL Risk</Span> Information
             </Heading>
             Protect yourself from phishing links and malicious websites by leveraging our advanced URL screening capabilities. 
           </Feature1LeftDiv>
@@ -469,7 +473,7 @@ const Index = () => {
         <Feature2Grid>
           <Feature2LeftDiv>
             <Heading> 
-                <Span>Binance Smart Chain & Ethereum</Span>
+                <Span>Binance Smart Chain</Span> & Ethereum
             </Heading>
             Full security screening support for BSC Mainnet and ETH Mainnet.
           </Feature2LeftDiv>
@@ -481,10 +485,13 @@ const Index = () => {
 
       <Feature3>
         <Feature3TopDiv>
-            <Heading> 
-                <Span>Stay Secured</Span>
-            </Heading>
-              With just two click, you can add an extra layer of protection and stay informed about potential risks.
+            
+                <Feature3Header>
+                  Install Now
+                </Feature3Header>
+                
+            
+              With just three click, you can add an extra layer of protection to MetaMask.
           </Feature3TopDiv>
           <Feature3BotDiv>
             <HeaderButtons state={state} onConnectClick={handleConnectClick}/>
