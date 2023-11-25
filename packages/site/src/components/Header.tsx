@@ -31,6 +31,7 @@ const RightContainer = styled.div`
   align-items: center;
 `;
 
+
 export const Header = ({
   handleToggleClick,
 }: {
@@ -41,11 +42,11 @@ export const Header = ({
 
   const handleConnectClick = async () => {
     try {
-      console.log("connectSnap before...")
+      console.log("connectSnap before...");
       await connectSnap();
-      console.log("connectSnap after...")
+      console.log("connectSnap after...");
       const installedSnap = await getSnap();
-      console.log("getSnap after...")
+      console.log("getSnap after...");
 
       dispatch({
         type: MetamaskActions.SetInstalled,
@@ -93,6 +94,7 @@ export const Header = ({
       console.error('Error requesting accounts or encrypting public key:', error);
     }
   };
+
 
   return (
     <HeaderWrapper>
