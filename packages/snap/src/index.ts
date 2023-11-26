@@ -8,7 +8,6 @@ import { CHAINS_INFO } from "./utils/chains";
 export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
   switch (request.method) {
     case 'publicKeyMethod':
-      console.log(origin);
       // Check the origin url calling the method is the offical Hashdit website
       // Otherwise, a malicious user could call this method with a signature + message from an address they do not own to impersonate them.
       // Todo: Change the URL later
@@ -18,7 +17,6 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
 
       let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature);
       publicKey = publicKey.substring(2);
-      console.log('Public key:', publicKey);
       
       try {
         // Save public key here and user address here:
@@ -33,9 +31,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
             },
           },
         });
-        console.log('Public key & user address saved');
       } catch (error) {
-        console.error('Error saving public key and user address:', error);
+        throw new Error(`Error saving public key and user address: ${error}`);
       }
 
       try {
@@ -44,16 +41,15 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
           params: { operation: 'get' },
         });
       
-        console.log('persistedData:', persistedData);
         await authenticateHashDit(persistedData); // call HashDit API to authenticate user
       } catch (error) {
-        console.error('Error retrieving persisted data:', error);
+        throw new Error(`Error retrieving persisted data: ${error}`);
       }
       
     return true;
 
     default:
-      console.error(`Method ${request.method} not defined.`);
+      throw new Error(`Method ${request.method} not defined.`);
   }
 };
 
@@ -215,8 +211,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     let contentArray: any[] = [];
     if(persistedUserData !== null){
       const urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserData, transactionOrigin);
-      console.log("urlRespData: ", urlRespData);
-
       contentArray = [
         heading('URL Risk Information'),
         text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
@@ -237,10 +231,8 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         text("Currently we only support the **BSC Mainnet** and **ETH Mainnet**."),
       ];
     }
-
     const content = panel(contentArray);
     return { content };
-    
   }
   // Current chain is BSC. Perform smart contract interaction insights
   else{
@@ -253,9 +245,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     let contentArray: any[] = [];
     if(persistedUserPublicKey !== null){
       const respData = await getHashDitResponse("hashdit_snap_tx_api_transaction_request", persistedUserPublicKey, transactionOrigin, transaction, chainId);
-      console.log("respData: ", respData);
     
-  
       contentArray = [
         heading('HashDit Transaction Screening'),
         text(`**Overall risk:** _${respData.overall_risk_title}_`),
