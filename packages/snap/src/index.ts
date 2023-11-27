@@ -122,15 +122,15 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         if (respData.overall_risk_title != "Unknown Risk") {
           contentArray = [
             heading('HashDit Transaction Screening'),
-            text(`Overall risk: **${respData.overall_risk_title}**`),
-            text(`Risk Overview: **${respData.overall_risk_detail}**`),
-            text(`Risk Details: **${respData.transaction_risk_detail}**`),
+            text(`**Overall risk:** _${respData.overall_risk_title}_`),
+            text(`**Risk Overview:** _${respData.overall_risk_detail}_`),
+            text(`**Risk Details:** _${respData.transaction_risk_detail}_`),
             divider(),
           ];
         } else {
           contentArray = [
             heading('HashDit Transaction Screening'),
-            text(`Overall risk: **${respData.overall_risk_title}**`),
+            text(`**Overall risk:** _${respData.overall_risk_title}_`),
             divider(),
           ];
         }
@@ -153,9 +153,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
           heading('HashDit Security Insights'),
           text('⚠️ The full functionality of HashDit is not working. ⚠️'),
           text('To resolve this issue, please follow these steps:'),
-          text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-          text("_(2) Install the snap by approving the required permissions._"),
-          text("_(3) Confirm your identity by signing the provided message._"),
+          divider(),
+          text("**(1)** _Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+          text("**(2)** _Install the snap by approving the required permissions._"),
+          text("**(3)** _Confirm your identity by signing the provided message._"),
           divider(),
         );
       }
@@ -225,9 +226,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         heading('HashDit Security Insights'),
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
-        text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-        text("_(2) Install the snap by approving the required permissions._"),
-        text("_(3) Confirm your identity by signing the provided message._"),
+        divider(),
+        text("**(1)** _Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+        text("**(2)** _Install the snap by approving the required permissions._"),
+        text("**(3)** _Confirm your identity by signing the provided message._"),
         divider(),
         text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
         text("Currently we only support the **BSC Mainnet** and **ETH Mainnet**."),
@@ -300,9 +302,10 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         heading('HashDit Security Insights'),
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
-        text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-        text("_(2) Install the snap by approving the required permissions._"),
-        text("_(3) Confirm your identity by signing the provided message._"),
+        divider(),
+        text("**(1)** _Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+        text("**(2)** _Install the snap by approving the required permissions._"),
+        text("**(3)** _Confirm your identity by signing the provided message._"),
       ];
     }
     

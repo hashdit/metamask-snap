@@ -216,10 +216,10 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   }
 
   if (responseData.overall_risk >= 4) {
-    responseData.overall_risk_title = "⚠️ High Risk ⚠️";
+    responseData.overall_risk_title = "⛔ High Risk ⛔";
     responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
   } else if (responseData.overall_risk >= 2) {
-    responseData.overall_risk_title = "🔎 Medium Risk 🔎";
+    responseData.overall_risk_title = "⚠️ Medium Risk ⚠️";
     responseData.overall_risk_detail = "This transaction is considered medium risk. Please review the details of this transaction.";
   } else if (responseData.overall_risk >= 0) {
     responseData.overall_risk_title = "Low Risk";
