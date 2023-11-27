@@ -12,7 +12,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
       // Otherwise, a malicious user could call this method with a signature + message from an address they do not own to impersonate them.
       // Todo: Change the URL later
       if (origin !== "http://localhost:8000") {
-        throw new Error("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
+        console.log("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
       }
 
       let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature);
@@ -32,7 +32,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
           },
         });
       } catch (error) {
-        throw new Error(`Error saving public key and user address: ${error}`);
+        console.log(`Error saving public key and user address: ${error}`)
       }
 
       try {
@@ -43,13 +43,13 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
       
         await authenticateHashDit(persistedData); // call HashDit API to authenticate user
       } catch (error) {
-        throw new Error(`Error retrieving persisted data: ${error}`);
+        console.log(`Error retrieving persisted data: ${error}`);
       }
       
     return true;
 
     default:
-      throw new Error(`Method ${request.method} not defined.`);
+      console.log(`Method ${request.method} not defined.`);
   }
 };
 
@@ -153,8 +153,9 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
           heading('HashDit Security Insights'),
           text('⚠️ The full functionality of HashDit is not working. ⚠️'),
           text('To resolve this issue, please follow these steps:'),
-          text("_(1) Click on the 'Setup Signature' button on the HashDit website._"),
-          text("_(2) Confirm your identity by approving the provided message._"),
+          text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+          text("_(2) Install the snap by approving the required permissions. _"),
+          text("_(3) Confirm your identity by signing the provided message._"),
           divider(),
         );
       }
@@ -224,8 +225,9 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         heading('HashDit Security Insights'),
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
-        text("_(1) Click on the 'Setup Signature' button on the HashDit website._"),
-        text("_(2) Confirm your identity by approving the provided message._"),
+        text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+        text("_(2) Install the snap by approving the required permissions. _"),
+        text("_(3) Confirm your identity by signing the provided message._"),
         divider(),
         text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
         text("Currently we only support the **BSC Mainnet** and **ETH Mainnet**."),
@@ -279,9 +281,12 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
             text(`**Name:** _${param.name}_`),
             text(`**Type**: _${param.type}_`),
             text(`**Value:** _${param.value}_`),
-            divider()
+            
           );
         }
+        contentArray.push(
+          divider()
+        )
       }
     
       contentArray.push(
@@ -295,8 +300,9 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         heading('HashDit Security Insights'),
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
-        text("_(1) Click on the 'Setup Signature' button on the HashDit website._"),
-        text("_(2) Confirm your identity by approving the provided message._"),
+        text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+        text("_(2) Install the snap by approving the required permissions. _"),
+        text("_(3) Confirm your identity by signing the provided message._"),
       ];
     }
     

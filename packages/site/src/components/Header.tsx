@@ -80,7 +80,7 @@ export const Header = ({
         }
       });
     } catch (error) {
-      throw new Error(`Error requesting accounts or encrypting public key: ${error}`);
+      console.log(`Error requesting accounts or encrypting public key: ${error}`);
     }
   };
 

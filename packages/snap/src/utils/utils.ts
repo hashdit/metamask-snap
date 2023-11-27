@@ -176,7 +176,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
         responseData.transaction_risk_detail = risk_detail_simple[0].value;
       }
     } catch {
-      throw new Error("No black or white labels");
+      console.log("No black or white labels");
     }
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
@@ -191,7 +191,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
       } catch {
-        throw new Error ("No params")
+        console.log("No params")
       }
 
       // Get most risky transaction risk detail - catch if none returned
@@ -199,7 +199,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
         const transactionData = [...detectionResults.transaction];
         responseData.transaction_risk_detail = transactionData[0].risk_detail;
       } catch {
-        throw new Error ("No transaction data")
+        console.log("No transaction data")
       }
 
       responseData.url_risk = detectionResults.url.risk_level;
@@ -252,7 +252,7 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
   if (resp.status == "OK" && resp.data) {
     return resp.data;
   } else {
-    throw Error("Fetch api error: " + resp.errorData);
+    console.log("Fetch api error: " + resp.errorData)
   }
 }
 

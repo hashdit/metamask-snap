@@ -18,7 +18,6 @@ export const extractPublicKeyFromSignature = (message, signature) => {
     return publicKey;
   } catch (error) {
     console.error('Error extracting public key:', error);
-    throw error;
   }
 };
 

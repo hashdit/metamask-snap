@@ -122,7 +122,6 @@ const Heading = styled.h1`
 
 const HeroLeftText = styled.div`
   font-size:28px;
-  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 
 `
 
@@ -371,7 +370,7 @@ const Index = () => {
           }
         });
       } catch (error) {
-        throw new Error(`Error requesting accounts or encrypting public key: ${error}`);
+        console.log(`Error requesting accounts or encrypting public key: ${error}`)
       }
     };
 
@@ -470,14 +469,11 @@ const Index = () => {
       </Feature>
 
       <Feature3>
-        <Feature3TopDiv>
-            
-                <Feature3Header>
-                  Install Now
-                </Feature3Header>
-                
-            
-              With just three click, you can add an extra layer of protection to MetaMask.
+        <Feature3TopDiv>      
+            <Feature3Header>
+              Install Now
+            </Feature3Header>
+            With just three clicks, you can add an extra layer of protection to MetaMask.
           </Feature3TopDiv>
           <Feature3BotDiv>
             <HeaderButtons state={state} onConnectClick={handleConnectClick}/>
