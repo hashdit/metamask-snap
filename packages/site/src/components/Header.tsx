@@ -16,6 +16,7 @@ const HeaderWrapper = styled.header`
   align-items: center;
   padding: 2.4rem;
   border-bottom: 1px solid ${(props) => props.theme.colors.border.default};
+
 `;
 
 
@@ -31,6 +32,7 @@ const RightContainer = styled.div`
   align-items: center;
 `;
 
+
 export const Header = ({
   handleToggleClick,
 }: {
@@ -41,12 +43,8 @@ export const Header = ({
 
   const handleConnectClick = async () => {
     try {
-      console.log("connectSnap before...")
       await connectSnap();
-      console.log("connectSnap after...")
       const installedSnap = await getSnap();
-      console.log("getSnap after...")
-
       dispatch({
         type: MetamaskActions.SetInstalled,
         payload: installedSnap,
@@ -60,18 +58,11 @@ export const Header = ({
       // Request user to sign a message -> get user's signature -> get user's public key.
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const from = accounts[0];  
-      console.log("from: ", from);
-      console.log("from type: ", typeof(from));
-
       const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-
       const signature = await window.ethereum.request({
           method: 'personal_sign',
           params: [message, from],
         });
-
-      console.log('signed: ', signature)
-      console.log('message: ',  message)
         
       // Send the signature to the snap for processing
       const result = await window.ethereum.request({
@@ -88,11 +79,11 @@ export const Header = ({
           }
         }
       });
-      console.log("SnapResult: ", result);
     } catch (error) {
-      console.error('Error requesting accounts or encrypting public key:', error);
+      console.log(`Error requesting accounts or encrypting public key: ${error}`);
     }
   };
+
 
   return (
     <HeaderWrapper>

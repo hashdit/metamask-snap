@@ -74,7 +74,6 @@ export async function authenticateHashDit(persistedUserData: any) {
   });
 
   const resp = await response.json();
-  console.log("response: ", resp);
 }
 
 export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
@@ -106,7 +105,6 @@ export async function getHashDitResponse(businessName: string, persistedUserData
     postBody.chain_id = chain;
     postBody.trace_id = trace_id;
     postBody.transaction = JSON.stringify(transaction);
-    console.log("transaction: ", transaction);
     postBody.url = transactionUrl;
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
@@ -143,7 +141,6 @@ export async function getHashDitResponse(businessName: string, persistedUserData
 
 // Format the HashDit API response to get the important risk details
 function formatResponse(resp: any, businessName: string, trace_id: any){
-  console.log("data: ", resp)
   let responseData: any = {
     overall_risk: -1,
     overall_risk_title: "Unknown Risk",
@@ -172,22 +169,19 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
       const white_labels = JSON.parse(resp.white_labels);
       const risk_detail_simple = JSON.parse(resp.risk_detail_simple);
       if (Array.isArray(black_labels) && black_labels.length > 0) {
-        console.log("blackLabels: ", black_labels)
         responseData.transaction_risk_detail = "Destination address is in HashDit blacklist";
       } else if (Array.isArray(white_labels) && white_labels.length > 0) {
-        console.log("whiteLabels: ", white_labels)
         responseData.transaction_risk_detail = "Destination address is in whitelisted, please still review the transaction details";
       } else if (risk_detail_simple.length > 0 && risk_detail_simple[0].hasOwnProperty('value')){
         responseData.transaction_risk_detail = risk_detail_simple[0].value;
       }
     } catch {
-      console.log("No black or white labels")
+      console.log("No black or white labels");
     }
 
   } else if (businessName == "hashdit_snap_tx_api_transaction_request") {
     if (resp.detection_result != null) {
       const detectionResults = resp.detection_result.risks;
-      console.log("detectionResults2: ", JSON.stringify(detectionResults, null, 2))
       responseData.overall_risk = detectionResults.risk_level;
 
       // Get function name and params - catch if none returned
@@ -222,10 +216,10 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
   }
 
   if (responseData.overall_risk >= 4) {
-    responseData.overall_risk_title = "⚠️ High Risk ⚠️";
+    responseData.overall_risk_title = "⛔ High Risk ⛔";
     responseData.overall_risk_detail = "This transaction is considered high risk. It is advised to reject this transcation.";
   } else if (responseData.overall_risk >= 2) {
-    responseData.overall_risk_title = "🔎 Medium Risk 🔎";
+    responseData.overall_risk_title = "⚠️ Medium Risk ⚠️";
     responseData.overall_risk_detail = "This transaction is considered medium risk. Please review the details of this transaction.";
   } else if (responseData.overall_risk >= 0) {
     responseData.overall_risk_title = "Low Risk";
@@ -255,12 +249,10 @@ async function customFetch(url: URL, postBody: any, appId: string, timestamp: nu
   });
 
   const resp = await response.json();
-  console.log("response: ", resp);
-
   if (resp.status == "OK" && resp.data) {
     return resp.data;
   } else {
-    throw Error("Fetch api error: " + resp.errorData);
+    console.log("Fetch api error: " + resp.errorData)
   }
 }
 

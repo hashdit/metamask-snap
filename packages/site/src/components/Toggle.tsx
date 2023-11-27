@@ -6,6 +6,7 @@ type CheckedProps = {
 };
 
 const ToggleWrapper = styled.div`
+
   touch-action: pan-x;
   display: inline-block;
   position: relative;
@@ -26,6 +27,7 @@ const ToggleWrapper = styled.div`
 `;
 
 const ToggleInput = styled.input`
+
   border: 0;
   clip: rect(0 0 0 0);
   height: 1px;
@@ -37,6 +39,7 @@ const ToggleInput = styled.input`
 `;
 
 const IconContainer = styled.div`
+
   position: absolute;
   width: 22px;
   height: 22px;
@@ -60,6 +63,7 @@ const IconContainer = styled.div`
 const CheckedContainer = styled(IconContainer)<CheckedProps>`
   opacity: ${({ checked }) => (checked ? 1 : 0)};
   left: 10px;
+  
 `;
 
 const UncheckedContainer = styled(IconContainer)<CheckedProps>`
@@ -68,14 +72,21 @@ const UncheckedContainer = styled(IconContainer)<CheckedProps>`
 `;
 
 const ToggleContainer = styled.div`
+
   width: 68px;
   height: 36px;
   padding: 0;
   border-radius: 36px;
   background-color: ${({ theme }) => theme.colors.background.alternative};
   transition: all 0.2s ease;
+  @media (max-width: 470px) {
+    display: none;
+  }
 `;
 const ToggleCircle = styled.div<CheckedProps>`
+@media (max-width: 470px) {
+  display: none;
+}
   transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0ms;
   position: absolute;
   top: 4px;

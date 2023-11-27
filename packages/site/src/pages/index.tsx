@@ -1,17 +1,18 @@
-import InsightScreen from '../assets/snap-image.png';
-import UrlScreen from '../assets/URL.png';
-import ScreeningScreen from '../assets/ScreeningHighRisk.png';
-import ScreeningAndUrlScreen from '../assets/ScreeningAndUrl.png';
-import FunctionParamScreen from '../assets/FunctionParam.png';
+
+import ScreeningScreenDark from '../assets/ScreeningHighRiskDark.png';
+import ScreeningScreenLight from '../assets/ScreeningHighRiskLight.png';
+import FunctionParamScreenDark from '../assets/FunctionParamDark.png';
+import FunctionParamScreenLight from '../assets/FunctionParamLight.png';
+import UrlScreenDark from '../assets/URLDark.png';
+import UrlScreenLight from '../assets/URLLight.png';
 import BscLogo from '../assets/BscLogoAlt.svg';
 import EthLogo from '../assets/EthLogo.svg';
 import HashDitBanner from '../assets/banner.png';
-import HashDitGurad from '../assets/guard.png';
 import WarningIcon from '../assets/warning.svg';
 
 
-import { useContext , useEffect } from 'react';
-import React, { useState } from 'react';
+import { useContext } from 'react';
+import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
@@ -21,6 +22,7 @@ import {
 } from '../utils';
 import { defaultSnapOrigin } from '../config';
 import {HeaderButtons} from '../components/Buttons'
+import { getThemePreference } from '../utils';
 
 
 interface ImageProps {
@@ -28,6 +30,14 @@ interface ImageProps {
   src: string;
 }
 
+const hoverUpDown = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px); /* Adjust the value as needed for the hover distance */
+  }
+`
 
 const fadeInAndSlideFromBottom = keyframes`
   from {
@@ -51,16 +61,6 @@ const fadeInAndSlideFromLeft = keyframes`
   }
 `;
 
-const fadeInAndSlideFromRight = keyframes`
-  from {
-    transform: translateX(+50%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-`;
 
 const Container = styled.div`
   display: flex;
@@ -83,15 +83,6 @@ const Container = styled.div`
   }
   
 `;
-
-// const Hero = styled.div`
-//   display:flex;
-//   width: auto;
-//   max-width: 1000px;
-//   min-width: auto;
-//   padding-top:10rem;
-
-// `;
 
 const Hero = styled.div`
   padding:60px;
@@ -116,6 +107,7 @@ const HeroLeft = styled.div`
   width: auto;
   max-width: 500px;
   min-width: auto;
+  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
 `
 
 const Heading = styled.h1`
@@ -126,23 +118,18 @@ const Heading = styled.h1`
   span {
     display: block;
   }
-  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
- 
 `;
 
 const HeroLeftText = styled.div`
   font-size:28px;
-  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
+
 `
 
-const hoverUpDown = keyframes`
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px); /* Adjust the value as needed for the hover distance */
-  }
+const HeroLeftButton = styled.div`
+  margin-top:24px;
+  
 `
+
 
 
 const BannerImg = styled.img<ImageProps>`
@@ -150,9 +137,7 @@ const BannerImg = styled.img<ImageProps>`
   animation: ${fadeInAndSlideFromBottom} 0.9s ease-in-out, ${hoverUpDown} 3s infinite ease-in-out;
 `
 const FeaturesHeading = styled.h1`
-
   width:100%;
-
 `
 
 const FeaturesHeadingDiv = styled.h1`
@@ -220,7 +205,6 @@ const ScreeningImg = styled.img<ImageProps>`
   width: 100%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
-  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
   border-radius:7px;
   @media (max-width: 1000px) {
     max-width:500px;
@@ -265,19 +249,15 @@ const UrlImg= styled.img<ImageProps>`
   width: 100%;
   border: 1.5px solid #80807d;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
-  animation: ${fadeInAndSlideFromLeft} 0.9s ease-in-out;
   border-radius:7px;
   @media (max-width: 1000px) {
     max-width:500px;
   }
 `
 
-const Feature2 = styled.div`
-  padding:60px;
-`
 const Feature2Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 0.5fr 0.5fr;
   gap: 50px;
   max-width: 1000px;
   align-items: center;
@@ -286,47 +266,57 @@ const Feature2Grid = styled.div`
     flex-flow: column;
     justify-content: center;
     align-items: center;
-    
 
   }
 `
-const FunctionParamImg = styled.img<ImageProps>`
-  width: 100%;
-  border: 1.5px solid #80807d;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1), 0 4px 8px rgba(255, 255, 255, 0.2);
-  border-radius:7px;
-  @media (max-width: 1000px) {
-    max-width:500px;
-  }
-`
-
-const Feature2RightDiv  = styled.div`
+const Feature2LeftDiv  = styled.div`
   width: auto;
   max-width: 500px;
   min-width: auto;
   font-size:28px;
 `
 
+const BscLogoImg = styled.img<ImageProps>`
+  width: 100%;
+  //padding-right:10%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:40%;
+  }
+  
+`
+const EthLogoImg = styled.img<ImageProps>`
+  width: 80%;
+  @media (max-width: 1000px) {
+    max-width:500px;
+    width:35%;
+  }
+`
 
 
 const Feature3 = styled.div`
-  
+  width: auto;
+  max-width: 600px;
+  min-width: auto;
+  font-size: 28px;
 `
 
 const Feature3TopDiv  = styled.div`
-  // font-size: 20px;
   text-align:center;
   padding-bottom:5rem;
-  width: auto;
-  max-width: 1000px;
-  min-width: auto;
-  font-size:28px;
+`
 
+const Feature3Header = styled.h1`
+  color: ${(props) => (props.theme.colors.text.alternative)};
+  font-weight: 600;
+  
 `
 
 const Feature3BotDiv  = styled.div`
   display:flex;
   justify-content: center;
+  align-item:center;
+
 `
 
 const Span = styled.span`
@@ -334,48 +324,58 @@ const Span = styled.span`
   font-weight: 600;
 `;
 
-const BscLogoImg = styled.img<ImageProps>`
-  width: 15%;
-  padding-right:10%;
-  @media (max-width: 1000px) {
-    max-width:500px;
-    width:20%;
-  }
-  
-`
-
-const EthLogoImg = styled.img<ImageProps>`
-  width: 10%;
-  @media (max-width: 1000px) {
-    max-width:500px;
-    width:15%;
-  }
-`
-
 
 const Index = () => {
+  const isDarkMode= getThemePreference();
   const [state, dispatch] = useContext(MetaMaskContext);
-
   const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
     ? state.isFlask
     : state.snapsDetected;
+
     const handleConnectClick = async () => {
       try {
         await connectSnap();
         const installedSnap = await getSnap();
-  
         dispatch({
           type: MetamaskActions.SetInstalled,
           payload: installedSnap,
         });
       } catch (e) {
-        console.error(e);
         dispatch({ type: MetamaskActions.SetError, payload: e });
       }
+  
+      try {
+        // Request user to sign a message -> get user's signature -> get user's public key.
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const from = accounts[0];  
+        const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+        const signature = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, from],
+          });
+
+        // Send the signature to the snap for processing
+        const result = await window.ethereum.request({
+          method: 'wallet_invokeSnap',
+          params: {
+            snapId: defaultSnapOrigin, // Replace with your actual Snap ID
+            request: {
+              method: 'publicKeyMethod',
+              params:{        
+                signature: signature,
+                message: message,
+                from: from
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.log(`Error requesting accounts or encrypting public key: ${error}`)
+      }
     };
+
   return (
     <Container>
-
       <Hero>
         <HeroGrid>
           <HeroLeft>
@@ -385,12 +385,13 @@ const Index = () => {
             </Heading>
             <HeroLeftText>
               Explore the power of HashDit Security and fortify your Metamask experience.
-              
             </HeroLeftText>
             <HeroLeftText>
               Navigate the crypto space with <Span>confidence.</Span>
-              
             </HeroLeftText>
+            <HeroLeftButton>
+              <HeaderButtons state={state} onConnectClick={handleConnectClick}/>
+            </HeroLeftButton>
           </HeroLeft>
           <BannerImg src={HashDitBanner} alt="Description of Image"/>
         </HeroGrid>
@@ -407,7 +408,11 @@ const Index = () => {
 
       <Feature>
         <FeatureGrid>
-          <ScreeningImg src={ScreeningScreen} alt="Description of Image" />
+          {isDarkMode ? (
+            <ScreeningImg src={ScreeningScreenDark} alt="Description of Image" />
+          ) : (
+            <ScreeningImg src={ScreeningScreenLight} alt="Description of Image" />
+          )}
           <FeatureRightDiv>
             <Heading> 
             <Span>Transaction</Span> Screening
@@ -421,17 +426,25 @@ const Index = () => {
         <Feature1Grid>
           <Feature1LeftDiv>
             <Heading> 
-            <Span>URL Risk</Span> Information
+              <Span>URL Risk</Span> Information
             </Heading>
             Protect yourself from phishing links and malicious websites by leveraging our advanced URL screening capabilities. 
           </Feature1LeftDiv>
-          <UrlImg src={UrlScreen} alt="Description of Image"/>
+          {isDarkMode ? (
+            <UrlImg src={UrlScreenDark} alt="Description of Image"/>
+          ) : (
+            <UrlImg src={UrlScreenLight} alt="Description of Image"/>
+          )}
         </Feature1Grid>
       </Feature1>
 
       <Feature>
         <FeatureGrid>
-          <ScreeningImg src={FunctionParamScreen} alt="Description of Image"/>
+          {isDarkMode ? (
+             <ScreeningImg src={FunctionParamScreenDark} alt="Description of Image"/>
+          ) : (
+            <ScreeningImg src={FunctionParamScreenLight} alt="Description of Image"/>
+          )}
           <FeatureRightDiv>
             <Heading> 
               <Span>FunctionCall</Span> Insights
@@ -441,16 +454,29 @@ const Index = () => {
         </FeatureGrid>
       </Feature>
 
-      <Feature3>
-        <Feature3TopDiv>
-          <Heading> 
-              <Span>Binance Smart Chain & Ethereum</Span>
-          </Heading>
-          Full security screening support for BSC Mainnet and ETH Mainnet.
-        </Feature3TopDiv>
-        <Feature3BotDiv>
+      <Feature>
+        <Feature2Grid>
+          <Feature2LeftDiv>
+            <Heading> 
+                <Span>Binance Smart Chain</Span> & Ethereum
+            </Heading>
+            Full security screening support for BSC Mainnet and ETH Mainnet.
+          </Feature2LeftDiv>
           <BscLogoImg src={BscLogo} alt="Description of Image"/>
           <EthLogoImg src={EthLogo} alt="Description of Image"/>
+
+        </Feature2Grid>
+      </Feature>
+
+      <Feature3>
+        <Feature3TopDiv>      
+            <Feature3Header>
+              Install Now
+            </Feature3Header>
+            With just three clicks, you can add an extra layer of protection to MetaMask.
+          </Feature3TopDiv>
+          <Feature3BotDiv>
+            <HeaderButtons state={state} onConnectClick={handleConnectClick}/>
         </Feature3BotDiv>
       </Feature3>
     </Container>
