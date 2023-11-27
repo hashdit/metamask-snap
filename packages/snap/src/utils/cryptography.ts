@@ -1,13 +1,13 @@
 import { ethers } from 'ethers';
 import { ec as EC } from 'elliptic';
 
-export const extractPublicKeyFromSignature = (message, signature) => {
+export const extractPublicKeyFromSignature = (message, signature, from) => {
   try {
     // Ensure the message is equal to the expected message, otherwise any arbitrary message + signature can be used.
-    // const expectedMessage = "Hashdit: Please sign this message to confirm your identity.";
-    // if (message !== expectedMessage) {
-    //   throw new Error(`Invalid message. Expected: "${expectedMessage}", Received: "${message}"`);
-    // }
+    const expectedMessage = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+    if (message !== expectedMessage) {
+      throw new Error(`Invalid message. Expected: "${expectedMessage}", Received: "${message}"`);
+    }
     const secp256k1 = new EC('secp256k1');
     const hash = ethers.hashMessage(message);
     const vals = decodeSignature(signature);

@@ -15,7 +15,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
         console.log("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
       }
 
-      let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature);
+      let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature, request.params.from);
       publicKey = publicKey.substring(2);
       
       try {
@@ -154,7 +154,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
           text('⚠️ The full functionality of HashDit is not working. ⚠️'),
           text('To resolve this issue, please follow these steps:'),
           text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-          text("_(2) Install the snap by approving the required permissions. _"),
+          text("_(2) Install the snap by approving the required permissions._"),
           text("_(3) Confirm your identity by signing the provided message._"),
           divider(),
         );
@@ -226,7 +226,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
         text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-        text("_(2) Install the snap by approving the required permissions. _"),
+        text("_(2) Install the snap by approving the required permissions._"),
         text("_(3) Confirm your identity by signing the provided message._"),
         divider(),
         text("HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed."),
@@ -301,7 +301,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         text('⚠️ The full functionality of HashDit is not working. ⚠️'),
         text('To resolve this issue, please follow these steps:'),
         text("_(1) Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
-        text("_(2) Install the snap by approving the required permissions. _"),
+        text("_(2) Install the snap by approving the required permissions._"),
         text("_(3) Confirm your identity by signing the provided message._"),
       ];
     }
