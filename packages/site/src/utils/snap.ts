@@ -14,6 +14,7 @@ export const getSnaps = async (
   (await (provider ?? window.ethereum).request({
     method: 'wallet_getSnaps',
   })) as unknown as GetSnapsResponse;
+
 /**
  * Connect a snap to MetaMask.
  *

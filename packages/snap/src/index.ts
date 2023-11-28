@@ -10,7 +10,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
     case 'publicKeyMethod':
       // Check the origin url calling the method is the offical Hashdit website
       // Otherwise, a malicious user could call this method with a signature + message from an address they do not own to impersonate them.
-      // Todo: Change the URL later
+      // Todo: Change the URL on release
       if (origin !== "http://localhost:8000") {
         console.log("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
       }
@@ -115,8 +115,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       var urlRespData;
       if(persistedUserPublicKey !== null){
         respData = await getHashDitResponse("internal_address_lables_tags", persistedUserPublicKey, transactionOrigin, transaction, chainId,);
-  
-        // We also need to add seperate URL screening, as the native transfer hashdit endpoint doesnt have url screening
         urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserPublicKey, transactionOrigin);
 
         if (respData.overall_risk_title != "Unknown Risk") {
@@ -238,7 +236,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     const content = panel(contentArray);
     return { content };
   }
-  // Current chain is BSC. Perform smart contract interaction insights
   else{
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserPublicKey = await snap.request({
