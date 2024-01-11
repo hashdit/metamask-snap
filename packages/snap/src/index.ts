@@ -8,13 +8,6 @@ import { CHAINS_INFO } from "./utils/chains";
 export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
   switch (request.method) {
     case 'publicKeyMethod':
-      // Check the origin url calling the method is the offical Hashdit website
-      // Otherwise, a malicious user could call this method with a signature + message from an address they do not own to impersonate them.
-      // Todo: Change the URL on release
-      if (origin !== "http://localhost:8000") {
-        console.log("Unknown website calling `onRpcRequest`. Please only use the official Hashdit snap website.");
-      }
-
       let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature, request.params.from);
       publicKey = publicKey.substring(2);
       
@@ -61,8 +54,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
    *The key `type` in object `transaction` only exists in smart contract interactions and not native transfers.
    *We can use this to determine the type of transaction (native transfer or contract interaction).
    */ 
-
-  if (transaction.hasOwnProperty('type')) {
+  if (!transaction.hasOwnProperty('data')){
     
     const chainId = await ethereum.request({ method: "eth_chainId" });
     // Check if chainId is undefined or null

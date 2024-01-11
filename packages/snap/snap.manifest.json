@@ -1,18 +1,18 @@
 {
-  "version": "0.2.1",
+  "version": "0.1.2",
   "description": "HashDit security snap to screen addresses before interaction.",
   "proposedName": "HashDit Security",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+    "url": "https://github.com/Matrix-Devs/HashDit-Snaps.git"
   },
   "source": {
-    "shasum": "uXcA5xLaS2juvr8xbRtGWEBHQ6n0Yy7cDCQtYfe9gUI=",
+    "shasum": "8VXT0xEQbKBmw/biVR/ONLDx6rcWZHVOZ4yR1MIISQM=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/hashdit.svg",
-        "packageName": "snap",
+        "packageName": "hashdit-security-snap",
         "registry": "https://registry.npmjs.org/"
       }
     }

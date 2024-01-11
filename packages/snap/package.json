@@ -1,14 +1,24 @@
 {
-  "name": "snap",
-  "version": "0.2.1",
-  "description": "The 'Hello, world!' of MetaMask Snaps, now written in TypeScript.",
+  "name": "hashdit-security-snap",
+  "version": "0.1.2",
+  "description": "The HashDit Security Snap provides transaction warnings when interacting with risky contracts.",
+  "keywords": [
+    "Binance Smart Chain",
+    "BSC",
+    "metamask",
+    "snap",
+    "metamask snap",
+    "transaction insights",
+    "ethereum"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+    "url": "https://github.com/Matrix-Devs/HashDit-Snaps.git"
   },
   "license": "(MIT-0 OR Apache-2.0)",
   "main": "./dist/bundle.js",
   "files": [
+    "src/",
     "dist/",
     "images/",
     "snap.manifest.json"
