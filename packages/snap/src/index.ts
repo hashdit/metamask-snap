@@ -1,7 +1,7 @@
 import type { OnTransactionHandler, OnRpcRequestHandler, JsonRpcRequest, JsonRpcParams } from '@metamask/snaps-types';
 import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
 import { hasProperty } from '@metamask/utils';
-import { getHashDitResponse, parseTransactingValue, getNativeToken, authenticateHashDit } from "./utils/utils";
+import { getHashDitResponse, parseTransactingValue, getNativeToken, authenticateHashDit, isEOA } from "./utils/utils";
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { CHAINS_INFO } from "./utils/chains";
 
@@ -49,13 +49,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({ transaction, transactionOrigin }) => {
-  /** 
-   *Transaction is a native token transfer. Only check if current chain is supported since the transfer will not interact with a URL.
-   *The key `type` in object `transaction` only exists in smart contract interactions and not native transfers.
-   *We can use this to determine the type of transaction (native transfer or contract interaction).
-   */ 
-  if (!transaction.hasOwnProperty('data')){
-    
+  // Transaction is a native token transfer if no contract bytecode found.
+  if (await isEOA(transaction.to)){
     const chainId = await ethereum.request({ method: "eth_chainId" });
     // Check if chainId is undefined or null
     if (typeof chainId !== 'string') {
@@ -66,16 +61,46 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       const content = panel(contentArray);
       return { content };
     }
-    // Current chain is not BSC and not ETH. Display not supported text.
+    // Current chain is not supported (not BSC or ETH). Display not supported text.
     if(chainId !== '0x38' && chainId !== '0x1'){
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
-      
-      let contentArray: any[] = [ 
-        heading('Transfer Details'),
-        text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
-        divider(),
-      ];
+
+      // Retrieve saved user's public key to make HashDit API call
+      const persistedUserPublicKey = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      })
+
+      let contentArray: any[] = [];
+      var urlRespData;
+      if(persistedUserPublicKey !== null){
+        urlRespData = await getHashDitResponse( "hashdit_snap_tx_api_url_detection", persistedUserPublicKey, transactionOrigin);
+        contentArray.push(
+          heading('URL Risk Information'),
+        );
+    
+        if (urlRespData.url_risk >= 2) {
+          contentArray.push( 
+            text(`**${urlRespData.url_risk_title}**`));
+        }
+        contentArray.push(
+          text(`The URL **${transactionOrigin}** has a risk of **${urlRespData.url_risk}**`),
+          divider(),
+        );
+      }
+      else{
+        contentArray.push(
+          heading('HashDit Security Insights'),
+          text('⚠️ The full functionality of HashDit is not working. ⚠️'),
+          text('To resolve this issue, please follow these steps:'),
+          divider(),
+          text("**(1)** _Click on the 'Reconnect' or 'Install' button on the HashDit website to install the Snap._"),
+          text("**(2)** _Install the snap by approving the required permissions._"),
+          text("**(3)** _Confirm your identity by signing the provided message._"),
+          divider(),
+        );
+      }
 
       if(CHAINS_INFO.hasOwnProperty(chainId)){
         const explorerURL = CHAINS_INFO[chainId].url;
@@ -94,7 +119,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
       const content = panel(contentArray);
       return { content };
     }
-    // Current chain is supported. Display token transfer insights
+    // Current chain is supported (BSC or ETH). Display token transfer insights
     else{
       // Retrieve saved user's public key to make HashDit API call
       const persistedUserPublicKey = await snap.request({
@@ -181,7 +206,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     }
   }
   
-  // Transaction is an interaction with a smart contract because key `type` was found in object `transaction`
+  // Transaction is an interaction with a smart contract because contract bytecode exists.
   const chainId = await ethereum.request({ method: "eth_chainId"});
   // Check if chainId is undefined or null
   if (typeof chainId !== 'string') {
@@ -237,37 +262,48 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
 
     let contentArray: any[] = [];
     if(persistedUserPublicKey !== null){
-      const respData = await getHashDitResponse("hashdit_snap_tx_api_transaction_request", persistedUserPublicKey, transactionOrigin, transaction, chainId);
-    
-      contentArray = [
-        heading('HashDit Transaction Screening'),
-        text(`**Overall risk:** _${respData.overall_risk_title}_`),
-        text(`**Risk Overview:** _${respData.overall_risk_detail}_`),
-        text(`**Risk Details:** _${respData.transaction_risk_detail}_`),
-        divider(),
-      ];
+      const interactionRespData = await getHashDitResponse("hashdit_snap_tx_api_transaction_request", persistedUserPublicKey, transactionOrigin, transaction, chainId);
+      const addressRespData = await getHashDitResponse("internal_address_lables_tags", persistedUserPublicKey, transactionOrigin, transaction, chainId,);
+      if(interactionRespData.overall_risk >= addressRespData.overall_risk){
+        contentArray = [
+          heading('HashDit Transaction Screening'),
+          text(`**Overall risk:** _${interactionRespData.overall_risk_title}_`),
+          text(`**Risk Overview:** _${interactionRespData.overall_risk_detail}_`),
+          text(`**Risk Details:** _${interactionRespData.transaction_risk_detail}_`),
+          divider(),
+        ];
+      }
+      else{
+        contentArray.push(
+          heading('HashDit Destination Screening'), //todo
+          text(`**Overall risk:** _${addressRespData.overall_risk_title}_`),
+          text(`**Risk Overview:** _${addressRespData.overall_risk_detail}_`),
+          text(`**Risk Details:** _${addressRespData.transaction_risk_detail}_`),
+          divider(),
+        );
+      }
 
       contentArray.push(
         heading('URL Risk Information'),
       );
 
-      if (respData.url_risk >= 2) {
+      if (interactionRespData.url_risk >= 2) {
         contentArray.push( 
-          text(`**${respData.url_risk_title}**`));
+          text(`**${interactionRespData.url_risk_title}**`));
         }
 
       contentArray.push(
-        text(`The URL **${transactionOrigin}** has a risk of **${respData.url_risk}**`),
+        text(`The URL **${transactionOrigin}** has a risk of **${interactionRespData.url_risk}**`),
         divider(),
       );
 
       // Display function name and parameters
-      if (respData.function_name !== "") {
+      if (interactionRespData.function_name !== "") {
         contentArray.push(
-          heading(`Function Name: ${respData.function_name}`),
+          heading(`Function Name: ${interactionRespData.function_name}`),
         );
         // Loop through each function parameter and display its values
-        for (const param of respData.function_params){
+        for (const param of interactionRespData.function_params){
           contentArray.push( 
             text(`**Name:** _${param.name}_`),
             text(`**Type**: _${param.type}_`),
@@ -282,7 +318,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
     
       contentArray.push(
         heading('HashDit Trace-ID'),
-        text(`${respData.trace_id}`),
+        text(`${interactionRespData.trace_id}`),
       );
     }
     else{

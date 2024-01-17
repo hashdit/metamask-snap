@@ -276,3 +276,20 @@ export function getNativeToken(chainId: any){
   }
   return nativeToken;
 }
+
+// Used to determine if an address is a smart contract or an EOA 
+export async function isEOA(address: any) {
+  // The 'eth_getCode' method returns the bytecode of the address. 
+  // If bytecode is '0x', then it is an EOA. Otherwise, it is a smart contract
+  const code = await ethereum.request({
+    method: 'eth_getCode',
+    params: [address, 'latest'],
+  });
+  
+  if(code == '0x'){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
