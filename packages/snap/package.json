@@ -1,5 +1,5 @@
 {
-  "name": "hashdit-snap",
+  "name": "hashdit-snap-security",
   "version": "0.1.2",
   "description": "The HashDit Security Snap provides transaction warnings when interacting with risky contracts.",
   "keywords": [
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matrix-Devs/HashDit-Snap-Audit.git"
+    "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "license": "(MIT-0 OR Apache-2.0)",
   "main": "./dist/bundle.js",

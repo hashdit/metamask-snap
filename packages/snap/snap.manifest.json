@@ -4,7 +4,7 @@
   "proposedName": "HashDit Security",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matrix-Devs/HashDit-Snap-Audit.git"
+    "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
     "shasum": "hUrgrR9N+kkUnxw2vYdGsGqmsai/eBw2e6cDWUsgDds=",
@@ -12,7 +12,7 @@
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/hashdit.svg",
-        "packageName": "hashdit-snap",
+        "packageName": "hashdit-snap-security",
         "registry": "https://registry.npmjs.org/"
       }
     }
