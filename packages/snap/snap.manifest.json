@@ -4,15 +4,15 @@
   "proposedName": "HashDit Security",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Matrix-Devs/HashDit-Snaps.git"
+    "url": "https://github.com/Matrix-Devs/HashDit-Snap-Audit.git"
   },
   "source": {
-    "shasum": "5ADqRPsxF0gh4Qxq9YR3SEVHEAJRjMdJUGCwdgpahL8=",
+    "shasum": "zRimnPq10X+c7DhdayzvXKjQ+pMnqBbDJqjS9reCPOc=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/hashdit.svg",
-        "packageName": "hashdit-security-snap",
+        "packageName": "hashdit-snap",
         "registry": "https://registry.npmjs.org/"
       }
     }
