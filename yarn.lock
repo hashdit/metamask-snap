@@ -8417,9 +8417,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"HashDit-Security-Snap@workspace:.":
+"HashDit-Snap@workspace:.":
   version: 0.0.0-use.local
-  resolution: "HashDit-Security-Snap@workspace:."
+  resolution: "HashDit-Snap@workspace:."
   dependencies:
     "@metamask/abi-utils": ^2.0.2
     "@metamask/eslint-config": ^10.0.0
@@ -15259,9 +15259,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hashdit-security-snap@workspace:packages/snap":
+"hashdit-snap@workspace:packages/snap":
   version: 0.0.0-use.local
-  resolution: "hashdit-security-snap@workspace:packages/snap"
+  resolution: "hashdit-snap@workspace:packages/snap"
   dependencies:
     "@jest/globals": ^29.5.0
     "@lavamoat/allow-scripts": ^2.0.3
