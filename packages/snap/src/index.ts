@@ -1,5 +1,5 @@
 import type { OnTransactionHandler, OnRpcRequestHandler, JsonRpcRequest, JsonRpcParams } from '@metamask/snaps-types';
-import { heading, panel, text, copyable, divider } from '@metamask/snaps-ui';
+import { heading, panel, text, copyable, divider, address, row } from '@metamask/snaps-sdk';// Todo: Remove @metamaks/snaps-ui 
 import { hasProperty } from '@metamask/utils';
 import { getHashDitResponse, parseTransactingValue, getNativeToken, authenticateHashDit, isEOA } from "./utils/utils";
 import { extractPublicKeyFromSignature } from './utils/cryptography';
@@ -181,7 +181,11 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
 
       contentArray.push(
         heading('Transfer Details'),
-        text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
+        //text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
+        row("Your Address", address(transaction.from)),
+        row("Amount", text(transactingValue.toString())),
+        row("To", address(transaction.to)),
+        
         divider()
       );
 
