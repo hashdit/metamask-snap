@@ -22,7 +22,7 @@ export const getSnaps = async (
  * @param params - The params to pass with the snap to connect.
  */
 export const connectSnap = async (
-  snapId: string = defaultSnapOrigin,
+  snapId: string = 'npm:hashdit-snap-security',
   params: Record<'version' | string, unknown> = {},
 ) => {
   await window.ethereum.request({
@@ -45,7 +45,7 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 
     return Object.values(snaps).find(
       (snap) =>
-        snap.id === defaultSnapOrigin && (!version || snap.version === version),
+        snap.id === 'npm:hashdit-snap-security' && (!version || snap.version === version),
     );
   } catch (e) {
     console.log('Failed to obtain installed snap', e);

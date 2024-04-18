@@ -74,6 +74,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   });
 
   const resp = await response.json();
+  console.log("Authenticate Resp", resp);
 }
 
 export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {

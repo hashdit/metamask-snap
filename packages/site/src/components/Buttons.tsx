@@ -108,9 +108,9 @@ export const HeaderButtons = ({
   onConnectClick(): unknown;
   onSignatureClick?(): unknown;
 }) => {
-  if (!state.isFlask && !state.installedSnap) {
-    return <InstallFlaskButton />;
-  }
+  // if (!state.isFlask && !state.installedSnap) {
+  //   return <InstallFlaskButton />;
+  // }
 
   if (!state.installedSnap) {
     return <ConnectButton onClick={onConnectClick} />;
