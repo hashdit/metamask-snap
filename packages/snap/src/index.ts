@@ -8,6 +8,7 @@ import { CHAINS_INFO } from "./utils/chains";
 export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => {
   switch (request.method) {
     case 'publicKeyMethod':
+
       let publicKey = extractPublicKeyFromSignature(request.params.message, request.params.signature, request.params.from);
       publicKey = publicKey.substring(2);
       
@@ -181,11 +182,9 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
 
       contentArray.push(
         heading('Transfer Details'),
-        //text(`You are transfering **${transactingValue}** **${nativeToken}** to **${transaction.to}**`),
         row("Your Address", address(transaction.from)),
-        row("Amount", text(transactingValue.toString())),
+        row("Amount", text(`${transactingValue} ${nativeToken}`)),
         row("To", address(transaction.to)),
-        
         divider()
       );
 
@@ -300,6 +299,20 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, transac
         text(`The URL **${transactionOrigin}** has a risk of **${interactionRespData.url_risk}**`),
         divider(),
       );
+
+      const transactingValue = parseTransactingValue(transaction.value);
+      const nativeToken = getNativeToken(chainId);
+
+      if(transactingValue >= 0){
+        contentArray.push(
+          heading('Transfer Details'),
+          row("Your Address", address(transaction.from)),
+          row("Amount", text(`${transactingValue} ${nativeToken}`)),
+          row("To", address(transaction.to)),
+          divider()
+        );
+      }
+
 
       // Display function name and parameters
       if (interactionRespData.function_name !== "") {
