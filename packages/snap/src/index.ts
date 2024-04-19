@@ -1,8 +1,6 @@
 import type {
   OnTransactionHandler,
   OnRpcRequestHandler,
-  JsonRpcRequest,
-  JsonRpcParams,
 } from '@metamask/snaps-types';
 import {
   heading,
@@ -12,8 +10,7 @@ import {
   divider,
   address,
   row,
-} from '@metamask/snaps-sdk'; // Todo: Remove @metamaks/snaps-ui
-import { hasProperty } from '@metamask/utils';
+} from '@metamask/snaps-sdk';
 import {
   getHashDitResponse,
   parseTransactingValue,
@@ -22,7 +19,6 @@ import {
   isEOA,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
-import { CHAINS_INFO } from './utils/chains';
 
 export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
@@ -146,16 +142,6 @@ export const onTransaction: OnTransactionHandler = async ({
         divider(),
       );
 
-
-      // if (CHAINS_INFO.hasOwnProperty(chainId)) {
-      //   const explorerURL = CHAINS_INFO[chainId].url;
-      //   contentArray.push(
-      //     heading(`View Destination Address On Explorer`),
-      //     copyable(`${explorerURL}${transaction.to}`),
-      //     divider(),
-      //   );
-      // }
-
       contentArray.push(
         text('HashDit Security Insights is not fully supported on this chain.'),
         text(
@@ -194,15 +180,15 @@ export const onTransaction: OnTransactionHandler = async ({
         if (respData.overall_risk_title != 'Unknown Risk') {
           contentArray = [
             heading('HashDit Transaction Screening'),
-            text(`**Overall risk:** _${respData.overall_risk_title}_`),
-            text(`**Risk Overview:** _${respData.overall_risk_detail}_`),
-            text(`**Risk Details:** _${respData.transaction_risk_detail}_`),
+            text(`**Overall Risk:** ${respData.overall_risk_title}`),
+            text(`**Risk Overview:** ${respData.overall_risk_detail}`),
+            text(`**Risk Details:** ${respData.transaction_risk_detail}`),
             divider(),
           ];
         } else {
           contentArray = [
             heading('HashDit Transaction Screening'),
-            text(`**Overall risk:** _${respData.overall_risk_title}_`),
+            text(`**Overall Risk:** ${respData.overall_risk_title}`),
             divider(),
           ];
         }
@@ -247,15 +233,6 @@ export const onTransaction: OnTransactionHandler = async ({
         row('To', address(transaction.to)),
         divider(),
       );
-
-      // if (CHAINS_INFO[chainId].url) {
-      //   const explorerURL = CHAINS_INFO[chainId].url;
-      //   contentArray.push(
-      //     heading(`View Destination Address On Explorer`),
-      //     copyable(`${explorerURL}${transaction.to}`),
-      //     divider(),
-      //   );
-      // }
 
       if (respData !== undefined) {
         contentArray.push(
@@ -360,23 +337,19 @@ export const onTransaction: OnTransactionHandler = async ({
       if (interactionRespData.overall_risk >= addressRespData.overall_risk) {
         contentArray = [
           heading('HashDit Transaction Screening'),
-          text(`**Overall risk:** _${interactionRespData.overall_risk_title}_`),
+          text(`**Overall Risk:** ${interactionRespData.overall_risk_title}`),
+          text(`**Risk Overview:** ${interactionRespData.overall_risk_detail}`),
           text(
-            `**Risk Overview:** _${interactionRespData.overall_risk_detail}_`,
-          ),
-          text(
-            `**Risk Details:** _${interactionRespData.transaction_risk_detail}_`,
+            `**Risk Details:** ${interactionRespData.transaction_risk_detail}`,
           ),
           divider(),
         ];
       } else {
         contentArray.push(
           heading('HashDit Destination Screening'), //todo
-          text(`**Overall risk:** _${addressRespData.overall_risk_title}_`),
-          text(`**Risk Overview:** _${addressRespData.overall_risk_detail}_`),
-          text(
-            `**Risk Details:** _${addressRespData.transaction_risk_detail}_`,
-          ),
+          text(`**Overall risk:** ${addressRespData.overall_risk_title}`),
+          text(`**Risk Overview:** ${addressRespData.overall_risk_detail}`),
+          text(`**Risk Details:** ${addressRespData.transaction_risk_detail}`),
           divider(),
         );
       }
@@ -397,6 +370,8 @@ export const onTransaction: OnTransactionHandler = async ({
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
 
+      // Only dispaly Transfer Details if transferring more than 0 native tokens
+      // This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
       if (transactingValue >= 0) {
         contentArray.push(
           heading('Transfer Details'),
