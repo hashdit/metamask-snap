@@ -91,9 +91,6 @@ export const onTransaction: OnTransactionHandler = async ({
     }
     // Current chain is not supported (not BSC or ETH). Display not supported text.
     if (chainId !== '0x38' && chainId !== '0x1') {
-      const transactingValue = parseTransactingValue(transaction.value);
-      const nativeToken = getNativeToken(chainId);
-
       // Retrieve saved user's public key to make HashDit API call
       const persistedUserPublicKey = await snap.request({
         method: 'snap_manageState',
@@ -138,14 +135,26 @@ export const onTransaction: OnTransactionHandler = async ({
         );
       }
 
-      if (CHAINS_INFO.hasOwnProperty(chainId)) {
-        const explorerURL = CHAINS_INFO[chainId].url;
-        contentArray.push(
-          heading(`View Destination Address On Explorer`),
-          copyable(`${explorerURL}${transaction.to}`),
-          divider(),
-        );
-      }
+      const transactingValue = parseTransactingValue(transaction.value);
+      const nativeToken = getNativeToken(chainId);
+
+      contentArray.push(
+        heading('Transfer Details'),
+        row('Your Address', address(transaction.from)),
+        row('Amount', text(`${transactingValue} ${nativeToken}`)),
+        row('To', address(transaction.to)),
+        divider(),
+      );
+
+
+      // if (CHAINS_INFO.hasOwnProperty(chainId)) {
+      //   const explorerURL = CHAINS_INFO[chainId].url;
+      //   contentArray.push(
+      //     heading(`View Destination Address On Explorer`),
+      //     copyable(`${explorerURL}${transaction.to}`),
+      //     divider(),
+      //   );
+      // }
 
       contentArray.push(
         text('HashDit Security Insights is not fully supported on this chain.'),
@@ -239,14 +248,14 @@ export const onTransaction: OnTransactionHandler = async ({
         divider(),
       );
 
-      if (CHAINS_INFO[chainId].url) {
-        const explorerURL = CHAINS_INFO[chainId].url;
-        contentArray.push(
-          heading(`View Destination Address On Explorer`),
-          copyable(`${explorerURL}${transaction.to}`),
-          divider(),
-        );
-      }
+      // if (CHAINS_INFO[chainId].url) {
+      //   const explorerURL = CHAINS_INFO[chainId].url;
+      //   contentArray.push(
+      //     heading(`View Destination Address On Explorer`),
+      //     copyable(`${explorerURL}${transaction.to}`),
+      //     divider(),
+      //   );
+      // }
 
       if (respData !== undefined) {
         contentArray.push(

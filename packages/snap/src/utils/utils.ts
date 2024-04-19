@@ -269,11 +269,11 @@ export function parseTransactingValue(transactionValue: any){
 // Get native token of chain. If not specified, defaults to `Native Tokens`
 export function getNativeToken(chainId: any){
   if(chainId === undefined || chainId === null){
-    return "Native Tokens"
+    return '';
   }
   let nativeToken = CHAINS_INFO[chainId]?.nativeToken;
   if(nativeToken == undefined){
-    return 'Native Tokens';
+    return '';
   }
   return nativeToken;
 }
