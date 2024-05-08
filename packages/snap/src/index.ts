@@ -372,7 +372,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
       // Only dispaly Transfer Details if transferring more than 0 native tokens
       // This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-      if (transactingValue >= 0) {
+      if (transactingValue > 0) {
         contentArray.push(
           heading('Transfer Details'),
           row('Your Address', address(transaction.from)),
