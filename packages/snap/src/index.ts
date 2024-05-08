@@ -390,10 +390,21 @@ export const onTransaction: OnTransactionHandler = async ({
         // Loop through each function parameter and display its values
         for (const param of interactionRespData.function_params) {
           contentArray.push(
-            text(`**Name:** _${param.name}_`),
-            text(`**Type**: _${param.type}_`),
-            text(`**Value:** _${param.value}_`),
-          );
+            row('Name:', text(param.name)),
+            row('Type:' , text(param.type))
+          )
+          // If the parameter is 'address' type, then we use address UI for the value
+          if(param.type == "address"){
+            contentArray.push(
+              row('Value:' , address(param.value))
+            );
+          }
+          else{
+            contentArray.push(
+              row('Value:' , text(param.value))
+            );
+          }
+
         }
         contentArray.push(divider());
       }
