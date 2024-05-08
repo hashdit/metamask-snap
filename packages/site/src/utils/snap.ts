@@ -45,7 +45,7 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 
     return Object.values(snaps).find(
       (snap) =>
-        snap.id === defaultSnapOrigin && (!version || snap.version === version),
+        snap.id === 'defaultSnapOrigin' && (!version || snap.version === version), // Replace 'defaultSnapOrigin' with 'npm:hashdit-snap-security' to test live version of snap
     );
   } catch (e) {
     console.log('Failed to obtain installed snap', e);
@@ -57,11 +57,6 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
  * Invoke the "hello" method from the example snap.
  */
 
-export const sendHello = async () => {
-  await window.ethereum.request({
-    method: 'wallet_invokeSnap',
-    params: { snapId: defaultSnapOrigin, request: { method: 'hello' } },
-  });
-};
+
 
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');

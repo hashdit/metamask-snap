@@ -328,9 +328,9 @@ const Span = styled.span`
 const Index = () => {
   const isDarkMode= getThemePreference();
   const [state, dispatch] = useContext(MetaMaskContext);
-  const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
-    ? state.isFlask
-    : state.snapsDetected;
+  // const isMetaMaskReady = isLocalSnap(defaultSnapOrigin)
+  //   ? state.isFlask
+  //   : state.snapsDetected;
 
     const handleConnectClick = async () => {
       try {
@@ -358,7 +358,7 @@ const Index = () => {
         const result = await window.ethereum.request({
           method: 'wallet_invokeSnap',
           params: {
-            snapId: defaultSnapOrigin, // Replace with your actual Snap ID
+            snapId: defaultSnapOrigin, // Replace defaultSnapOrigin with 'npm:hashdit-snap-security' to test live version of snap
             request: {
               method: 'publicKeyMethod',
               params:{        

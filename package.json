@@ -49,7 +49,7 @@
     "node": ">=18.6.0"
   },
   "dependencies": {
-    "@metamask/abi-utils": "^2.0.2",
+    "@metamask/snaps-sdk": "^4.0.1",
     "crypto-js": "^4.2",
     "ethers": "^6.8.1",
     "snaps-cli": "^0.4.2",

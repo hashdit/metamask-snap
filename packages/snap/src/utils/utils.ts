@@ -74,6 +74,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   });
 
   const resp = await response.json();
+  console.log("Authenticate Resp", resp);
 }
 
 export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
@@ -268,11 +269,11 @@ export function parseTransactingValue(transactionValue: any){
 // Get native token of chain. If not specified, defaults to `Native Tokens`
 export function getNativeToken(chainId: any){
   if(chainId === undefined || chainId === null){
-    return "Native Tokens"
+    return '';
   }
   let nativeToken = CHAINS_INFO[chainId]?.nativeToken;
   if(nativeToken == undefined){
-    return 'Native Tokens';
+    return '';
   }
   return nativeToken;
 }
