@@ -1,6 +1,7 @@
 import type {
   OnTransactionHandler,
   OnRpcRequestHandler,
+  OnInstallHandler,
 } from '@metamask/snaps-types';
 import {
   heading,
@@ -20,52 +21,108 @@ import {
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 
+export const onInstall: OnInstallHandler = async () => {
+	// Request user's addresses -> Request user to sign a message -> 
+	// Save user's signature and public key -> save them -> authentiacte hashdit
+  try {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const from = accounts[0];
+    const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+    const signature = await ethereum.request({
+      method: 'personal_sign',
+      params: [message, from],
+    });
+    let publicKey = extractPublicKeyFromSignature(message, signature, from);
+    publicKey = publicKey.substring(2);
+  } catch (error) {
+    console.log(`Error onInstall: ${error}`);
+  }
+
+  try {
+    // Save public key here and user address here:
+    await snap.request({
+      method: 'snap_manageState',
+      params: {
+        operation: 'update',
+        newState: {
+          publicKey: publicKey,
+          userAddress: from,
+          messageSignature: signature,
+        },
+      },
+    });
+  } catch (error) {
+    console.log(`Error saving public key and user address: ${error}`);
+  }
+
+  try {
+    const persistedData = await snap.request({
+      method: 'snap_manageState',
+      params: { operation: 'get' },
+    });
+
+    await authenticateHashDit(persistedData); // call HashDit API to authenticate user
+  } catch (error) {
+    console.log(`Error retrieving persisted data: ${error}`);
+  }
+
+  return true;
+};
+
+// await snap.request({
+//   method: "snap_dialog",
+//   params: {
+//     type: "alert",
+//     content: panel([
+//       heading("Installation successful"),
+//       text(
+//         "To use this Snap, visit the companion dapp at [metamask.io](https://metamask.io).",
+//       ),
+//     ]),
+//   },
+// });
+
 export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
-  switch (request.method) {
-    case 'publicKeyMethod':
-      let publicKey = extractPublicKeyFromSignature(
-        request.params.message,
-        request.params.signature,
-        request.params.from,
-      );
-      publicKey = publicKey.substring(2);
-
-      try {
-        // Save public key here and user address here:
-        await snap.request({
-          method: 'snap_manageState',
-          params: {
-            operation: 'update',
-            newState: {
-              publicKey: publicKey,
-              userAddress: request.params.from,
-              messageSignature: request.params.signature,
-            },
-          },
-        });
-      } catch (error) {
-        console.log(`Error saving public key and user address: ${error}`);
-      }
-
-      try {
-        const persistedData = await snap.request({
-          method: 'snap_manageState',
-          params: { operation: 'get' },
-        });
-
-        await authenticateHashDit(persistedData); // call HashDit API to authenticate user
-      } catch (error) {
-        console.log(`Error retrieving persisted data: ${error}`);
-      }
-
-      return true;
-
-    default:
-      console.log(`Method ${request.method} not defined.`);
-  }
+  // switch (request.method) {
+  //   case 'publicKeyMethod':
+  //     let publicKey = extractPublicKeyFromSignature(
+  //       request.params.message,
+  //       request.params.signature,
+  //       request.params.from,
+  //     );
+  //     publicKey = publicKey.substring(2);
+  //     try {
+  //       // Save public key here and user address here:
+  //       await snap.request({
+  //         method: 'snap_manageState',
+  //         params: {
+  //           operation: 'update',
+  //           newState: {
+  //             publicKey: publicKey,
+  //             userAddress: request.params.from,
+  //             messageSignature: request.params.signature,
+  //           },
+  //         },
+  //       });
+  //     } catch (error) {
+  //       console.log(`Error saving public key and user address: ${error}`);
+  //     }
+  //     try {
+  //       const persistedData = await snap.request({
+  //         method: 'snap_manageState',
+  //         params: { operation: 'get' },
+  //       });
+  //       await authenticateHashDit(persistedData); // call HashDit API to authenticate user
+  //     } catch (error) {
+  //       console.log(`Error retrieving persisted data: ${error}`);
+  //     }
+  //     return true;
+  //   default:
+  //     console.log(`Method ${request.method} not defined.`);
+  // }
 };
 
 // Handle outgoing transactions.
@@ -73,6 +130,11 @@ export const onTransaction: OnTransactionHandler = async ({
   transaction,
   transactionOrigin,
 }) => {
+  const accounts = await ethereum.request({
+    method: 'eth_accounts',
+    params: [],
+  });
+  console.log('accounts: ', accounts);
   // Transaction is a native token transfer if no contract bytecode found.
   if (await isEOA(transaction.to)) {
     const chainId = await ethereum.request({ method: 'eth_chainId' });
@@ -391,20 +453,14 @@ export const onTransaction: OnTransactionHandler = async ({
         for (const param of interactionRespData.function_params) {
           contentArray.push(
             row('Name:', text(param.name)),
-            row('Type:' , text(param.type))
-          )
+            row('Type:', text(param.type)),
+          );
           // If the parameter is 'address' type, then we use address UI for the value
-          if(param.type == "address"){
-            contentArray.push(
-              row('Value:' , address(param.value))
-            );
+          if (param.type == 'address') {
+            contentArray.push(row('Value:', address(param.value)));
+          } else {
+            contentArray.push(row('Value:', text(param.value)));
           }
-          else{
-            contentArray.push(
-              row('Value:' , text(param.value))
-            );
-          }
-
         }
         contentArray.push(divider());
       }

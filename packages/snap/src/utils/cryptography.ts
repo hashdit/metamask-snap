@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { ec as EC } from 'elliptic';
 
-export const extractPublicKeyFromSignature = (message, signature, from) => {
+export const extractPublicKeyFromSignature = (message: any, signature: any, from: any) => {
   try {
     // Ensure the message is equal to the expected message, otherwise any arbitrary message + signature can be used.
     const expectedMessage = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;

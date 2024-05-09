@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "XVgARc5SF/AFt/iDQtbUNTm9fNoG1dy+RnET93/pDmg=",
+    "shasum": "/s6/kSPlpJkD82zHZXdN4DIKBuFc1TsR7jMg0uH4hYQ=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -27,7 +27,9 @@
     "endowment:rpc": {
       "dapps": true,
       "snaps": false
-    }
+    },
+    "endowment:lifecycle-hooks": {},
+    "snap_dialog": {}
   },
   "manifestVersion": "0.1"
 }
