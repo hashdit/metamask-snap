@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "XVgARc5SF/AFt/iDQtbUNTm9fNoG1dy+RnET93/pDmg=",
+    "shasum": "tODn1H2lP2dG/AyD7SLHDhmAItK0hblrpWsw3kSL7+Y=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -27,6 +27,9 @@
     "endowment:rpc": {
       "dapps": true,
       "snaps": false
+    },
+    "endowment:signature-insight": {
+      "allowSignatureOrigin": true
     }
   },
   "manifestVersion": "0.1"

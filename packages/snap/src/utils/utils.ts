@@ -77,7 +77,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   console.log("Authenticate Resp", resp);
 }
 
-export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string) {
+export async function getHashDitResponse(businessName: string, persistedUserData: any, transactionUrl?: any, transaction?: any, chainId?: string, signaturePayload?: any) {
   const trace_id = uuidv4();
 
   // formatting chainid to match api formatting
@@ -110,10 +110,10 @@ export async function getHashDitResponse(businessName: string, persistedUserData
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
     // This will be utilised in v2
-    postBody.address = transaction.to;
+    postBody.address = signaturePayload.from;
     postBody.chain_id = chain;
-    postBody.message = "0xdeadbeef";
-    postBody.method = "eth_sign";
+    postBody.message = signaturePayload.data;
+    postBody.method = signaturePayload.signatureMethod;
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
@@ -213,7 +213,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any){
     }
 
   } else if (businessName == "hashdit_snap_tx_api_signature_request") {
-    // This will be utilised in v2
+    return resp;
   }
 
   if (responseData.overall_risk >= 4) {

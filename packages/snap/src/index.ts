@@ -2,6 +2,7 @@ import type {
   OnTransactionHandler,
   OnRpcRequestHandler,
 } from '@metamask/snaps-types';
+import type { OnSignatureHandler } from '@metamask/snaps-sdk';
 import {
   heading,
   panel,
@@ -65,6 +66,58 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     default:
       console.log(`Method ${request.method} not defined.`);
+  }
+};
+
+export const onSignature: OnSignatureHandler = async ({
+  signature,
+  signatureOrigin,
+}) => {
+  /*
+   * The object `signature` has the following values
+   * `from` - The address that is signing the signautre
+   * `data` - The hexadecimal value being signed
+   * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
+   * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
+   */
+  console.log('ONSIGNATURE:', signature.from, signatureOrigin);
+  const chainId = await ethereum.request({ method: 'eth_chainId' });
+  // Check if chainId is undefined or null, and a supported networkc (BSC / ETH)
+  let contentArray: any[] = [];
+
+  if (typeof chainId == 'string') {
+    if (chainId == '0x38' || chainId == '0x1') {
+      // Retrieve saved user's public key to make HashDit API call
+      const persistedUserPublicKey = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      });
+
+      console.log('Persisted', persistedUserPublicKey);
+
+      let contentArray: any[] = [];
+      var urlRespData;
+      if (persistedUserPublicKey !== null) {
+        urlRespData = await getHashDitResponse(
+          'hashdit_snap_tx_api_signature_request',
+          persistedUserPublicKey,
+          signatureOrigin,
+          undefined,
+          chainId,
+          signature,
+        );
+        console.log('urlRespData', urlRespData);
+        contentArray.push(text('test'));
+      }
+    }
+    const content = panel(contentArray);
+    return {
+      content: panel([
+        heading('My Signature Insights'),
+        text('Here are the insights:'),
+      ]),
+      severity: "critical",
+    };
   }
 };
 
@@ -391,20 +444,14 @@ export const onTransaction: OnTransactionHandler = async ({
         for (const param of interactionRespData.function_params) {
           contentArray.push(
             row('Name:', text(param.name)),
-            row('Type:' , text(param.type))
-          )
+            row('Type:', text(param.type)),
+          );
           // If the parameter is 'address' type, then we use address UI for the value
-          if(param.type == "address"){
-            contentArray.push(
-              row('Value:' , address(param.value))
-            );
+          if (param.type == 'address') {
+            contentArray.push(row('Value:', address(param.value)));
+          } else {
+            contentArray.push(row('Value:', text(param.value)));
           }
-          else{
-            contentArray.push(
-              row('Value:' , text(param.value))
-            );
-          }
-
         }
         contentArray.push(divider());
       }
