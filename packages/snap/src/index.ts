@@ -80,10 +80,11 @@ export const onSignature: OnSignatureHandler = async ({
    * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
    * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
    */
-  console.log('ONSIGNATURE:', signature.from, signatureOrigin);
+  console.log('ONSIGNATURE:', JSON.stringify(signature), signatureOrigin);
   const chainId = await ethereum.request({ method: 'eth_chainId' });
   // Check if chainId is undefined or null, and a supported networkc (BSC / ETH)
   let contentArray: any[] = [];
+	let content;
 
   if (typeof chainId == 'string') {
     if (chainId == '0x38' || chainId == '0x1') {
@@ -106,19 +107,23 @@ export const onSignature: OnSignatureHandler = async ({
           chainId,
           signature,
         );
-        console.log('urlRespData', urlRespData);
-        contentArray.push(text('test'));
+        console.log('urlRespData', JSON.stringify(urlRespData));
+        contentArray.push(text(urlRespData.risks));
       }
     }
-    const content = panel(contentArray);
-    return {
-      content: panel([
-        heading('My Signature Insights'),
-        text('Here are the insights:'),
-      ]),
-      severity: "critical",
-    };
+    content = panel(contentArray);
   }
+	// Note: Currently during a signature request, if a user signs the message quickly, this function will not return anything.
+	// The signature request does not wait for onSignature to finish. Therefere insight might not show.
+	return {
+		content: panel([
+			heading('My Signature Insights'),
+			text('Here are the insights:'),
+		]),
+		severity: 'critical',
+	};
+
+
 };
 
 // Handle outgoing transactions.
