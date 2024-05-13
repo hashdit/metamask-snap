@@ -85,7 +85,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   );
 
   const resp = await response.json();
-  console.log('Authenticate Resp', resp);
+  //console.log('Authenticate Resp', resp);
 }
 
 export async function getHashDitResponse(
@@ -204,7 +204,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any) {
         responseData.transaction_risk_detail = risk_detail_simple[0].value;
       }
     } catch {
-      console.log('No black or white labels');
+      //console.log('No black or white labels');
     }
   } else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
     if (resp.detection_result != null) {
@@ -218,7 +218,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any) {
         responseData.function_name = resp.detection_result.function_name;
         responseData.function_params = paramsCopy;
       } catch {
-        console.log('No params');
+        //console.log('No params');
       }
 
       // Get most risky transaction risk detail - catch if none returned
@@ -226,7 +226,7 @@ function formatResponse(resp: any, businessName: string, trace_id: any) {
         const transactionData = [...detectionResults.transaction];
         responseData.transaction_risk_detail = transactionData[0].risk_detail;
       } catch {
-        console.log('No transaction data');
+        //console.log('No transaction data');
       }
 
       responseData.url_risk = detectionResults.url.risk_level;
@@ -288,7 +288,7 @@ async function customFetch(
   if (resp.status == 'OK' && resp.data) {
     return resp.data;
   } else {
-    console.log('Fetch api error: ' + resp.errorData);
+    //console.log('Fetch api error: ' + resp.errorData);
   }
 }
 
@@ -388,38 +388,38 @@ function detectSimilarity(
       }
 
       // Compare last 5 hex
-      const addressLength = userAddressConvert.length-1;
-      for (var i = addressLength; i > addressLength-5; i--) {
-        if (
-          userAddressConvert[i] ==
-          targetAddressCovert[i]
-        ) {
+      const addressLength = userAddressConvert.length - 1;
+      for (var i = addressLength; i > addressLength - 5; i--) {
+        if (userAddressConvert[i] == targetAddressCovert[i]) {
           similarityScorePostfix += 1;
         }
       }
-      console.log("Similarity score for each", userAddress, targetAddress, similarityScorePrefix, similarityScorePostfix);
+      //console.log("Similarity score for each", userAddress, targetAddress, similarityScorePrefix, similarityScorePostfix);
 
       // If there are more than 3 similar prefix or postfix characters, we send a warning to the user.
       if (similarityScorePrefix >= 3 || similarityScorePostfix >= 3) {
-        const maxScore = Math.max(similarityScorePrefix,similarityScorePostfix);
+        const maxScore = Math.max(
+          similarityScorePrefix,
+          similarityScorePostfix,
+        );
         let similarityRiskLevel;
         // Score = 3, Low risk warning
         // Score = 4, Medium Risk warning
         // Score = 5, High Risk Warning
-        switch(maxScore) {
+        switch (maxScore) {
           case 3:
-            similarityRiskLevel = "Low Risk"
+            similarityRiskLevel = 'Low Risk';
             break;
           case 4:
-            similarityRiskLevel = "⚠️ Medium Risk ⚠️"
+            similarityRiskLevel = '⚠️ Medium Risk ⚠️';
             break;
           case 5:
-            similarityRiskLevel = "⛔ High Risk ⛔"
+            similarityRiskLevel = '⛔ High Risk ⛔';
             break;
           default:
-            similarityRiskLevel = "Unknown"
+            similarityRiskLevel = 'Unknown';
             break;
-      }
+        }
         similarityScoreResultArray.push({
           userAddress,
           targetAddress,

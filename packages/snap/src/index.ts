@@ -23,40 +23,48 @@ import {
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 
 export const onInstall: OnInstallHandler = async () => {
-
-	// Show install instructions and links
-	await snap.request({
-    method: "snap_dialog",
+  // Show install instructions and links
+  await snap.request({
+    method: 'snap_dialog',
     params: {
-      type: "alert",
+      type: 'alert',
       content: panel([
-        heading("🛠️ Next Steps For Your Installation"),
-				text("**Step 1**"),
-				text(" To ensure the most secure experience, please connect all your MetaMask accounts with the HashDit Snap."),
-				text("**Step 2**"),
-				text("Sign the Hashdit Security message request. This is required to enable the HashDit API to enable a complete experience."),
-				divider(),
-				heading("🔗 Links"),
-				text("HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)."),
-				text("HashDit Snap Documentation: [GitBook](https://hashdit.gitbook.io/hashdit-snap)."),
-				text("HashDit Snap MetaMask Store Page: [Snap Store](https://snaps.metamask.io/snap/npm/hashdit-snap-security/)"),
-				divider(),
-				heading("Thank you for using HashDit Snap!"),
+        heading('🛠️ Next Steps For Your Installation'),
+        text('**Step 1**'),
+        text(
+          ' To ensure the most secure experience, please connect all your MetaMask accounts with the HashDit Snap.',
+        ),
+        text('**Step 2**'),
+        text(
+          'Sign the Hashdit Security message request. This is required to enable the HashDit API to enable a complete experience.',
+        ),
+        divider(),
+        heading('🔗 Links'),
+        text(
+          'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap).',
+        ),
+        text(
+          'HashDit Snap Documentation: [GitBook](https://hashdit.gitbook.io/hashdit-snap).',
+        ),
+        text(
+          'HashDit Snap MetaMask Store Page: [Snap Store](https://snaps.metamask.io/snap/npm/hashdit-snap-security/)',
+        ),
+        divider(),
+        heading('Thank you for using HashDit Snap!'),
       ]),
     },
   });
   try {
-		// Get user's accounts
+    // Get user's accounts
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const from = accounts[0];
 
-		// Request user to sign a message -> get user's signature -> get user's public key.
-    const message = `HashDit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+    // Request user to sign a message -> get user's signature -> get user's public key.
+    const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
     const signature = await ethereum.request({
       method: 'personal_sign',
       params: [message, from],
     });
-    console.log(signature);
     let publicKey = extractPublicKeyFromSignature(message, signature, from);
     publicKey = publicKey.substring(2);
 
@@ -74,7 +82,7 @@ export const onInstall: OnInstallHandler = async () => {
         },
       });
     } catch (error) {
-      console.log(`Error saving public key and user address: ${error}`);
+      //console.log(`Error saving public key and user address: ${error}`);
     }
 
     try {
@@ -85,15 +93,13 @@ export const onInstall: OnInstallHandler = async () => {
 
       await authenticateHashDit(persistedData); // call HashDit API to authenticate user
     } catch (error) {
-      console.log(`Error retrieving persisted data: ${error}`);
+      //console.log(`Error retrieving persisted data: ${error}`);
     }
-
     return true;
   } catch (error) {
-    console.log(`Error onInstall: ${error}`);
+    //console.log(`Error onInstall: ${error}`);
   }
 };
-
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
@@ -104,7 +110,6 @@ export const onTransaction: OnTransactionHandler = async ({
     method: 'eth_accounts',
     params: [],
   });
-  console.log('accounts: ', accounts);
   // Transaction is a native token transfer if no contract bytecode found.
   if (await isEOA(transaction.to)) {
     const chainId = await ethereum.request({ method: 'eth_chainId' });
@@ -206,7 +211,6 @@ export const onTransaction: OnTransactionHandler = async ({
         const poisonResultArray = addressPoisoningDetection(accounts, [
           transaction.to,
         ]);
-        console.log(poisonResultArray);
         if (poisonResultArray.length != 0) {
           contentArray = poisonResultArray;
         }
@@ -369,24 +373,26 @@ export const onTransaction: OnTransactionHandler = async ({
         chainId,
       );
 
-			// Retrieve all addresses from the function's parameters to `targetAddresses[]`. Perform poison detection on these parameters.
-			if(interactionRespData.function_name !== ''){
-				let targetAddresses = [];
-				// Add destination address to targets
-				targetAddresses.push(transaction.to);
-				// Loop through each function parameter
-				for (const param of interactionRespData.function_params) {
-					// Store only the values of type `address`
-					if(param.type == "address"){
-						targetAddresses.push(param.value);
-					}
-				}
-        const poisonResultArray = addressPoisoningDetection(accounts, targetAddresses);
+      // Retrieve all addresses from the function's parameters to `targetAddresses[]`. Perform poison detection on these parameters.
+      if (interactionRespData.function_name !== '') {
+        let targetAddresses = [];
+        // Add destination address to targets
+        targetAddresses.push(transaction.to);
+        // Loop through each function parameter
+        for (const param of interactionRespData.function_params) {
+          // Store only the values of type `address`
+          if (param.type == 'address') {
+            targetAddresses.push(param.value);
+          }
+        }
+        const poisonResultArray = addressPoisoningDetection(
+          accounts,
+          targetAddresses,
+        );
         if (poisonResultArray.length != 0) {
           contentArray = poisonResultArray;
         }
-
-			}
+      }
       const addressRespData = await getHashDitResponse(
         'internal_address_lables_tags',
         persistedUserPublicKey,
