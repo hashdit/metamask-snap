@@ -18,112 +18,82 @@ import {
   getNativeToken,
   authenticateHashDit,
   isEOA,
+  addressPoisoningDetection,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 
 export const onInstall: OnInstallHandler = async () => {
-	// Request user's addresses -> Request user to sign a message -> 
-	// Save user's signature and public key -> save them -> authentiacte hashdit
+
+	// Show install instructions and links
+	await snap.request({
+    method: "snap_dialog",
+    params: {
+      type: "alert",
+      content: panel([
+        heading("🛠️ Next Steps For Your Installation"),
+				text("**Step 1**"),
+				text(" To ensure the most secure experience, please connect all your MetaMask accounts with the HashDit Snap."),
+				text("**Step 2**"),
+				text("Sign the Hashdit Security message request. This is required to enable the HashDit API to enable a complete experience."),
+				divider(),
+				heading("🔗 Links"),
+				text("HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)."),
+				text("HashDit Snap Documentation: [GitBook](https://hashdit.gitbook.io/hashdit-snap)."),
+				text("HashDit Snap MetaMask Store Page: [Snap Store](https://snaps.metamask.io/snap/npm/hashdit-snap-security/)"),
+				divider(),
+				heading("Thank you for using HashDit Snap!"),
+      ]),
+    },
+  });
   try {
+		// Get user's accounts
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const from = accounts[0];
-    const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+
+		// Request user to sign a message -> get user's signature -> get user's public key.
+    const message = `HashDit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
     const signature = await ethereum.request({
       method: 'personal_sign',
       params: [message, from],
     });
+    console.log(signature);
     let publicKey = extractPublicKeyFromSignature(message, signature, from);
     publicKey = publicKey.substring(2);
+
+    try {
+      // Save public key here and user address here:
+      await snap.request({
+        method: 'snap_manageState',
+        params: {
+          operation: 'update',
+          newState: {
+            publicKey: publicKey,
+            userAddress: from,
+            messageSignature: signature,
+          },
+        },
+      });
+    } catch (error) {
+      console.log(`Error saving public key and user address: ${error}`);
+    }
+
+    try {
+      const persistedData = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      });
+
+      await authenticateHashDit(persistedData); // call HashDit API to authenticate user
+    } catch (error) {
+      console.log(`Error retrieving persisted data: ${error}`);
+    }
+
+    return true;
   } catch (error) {
     console.log(`Error onInstall: ${error}`);
   }
-
-  try {
-    // Save public key here and user address here:
-    await snap.request({
-      method: 'snap_manageState',
-      params: {
-        operation: 'update',
-        newState: {
-          publicKey: publicKey,
-          userAddress: from,
-          messageSignature: signature,
-        },
-      },
-    });
-  } catch (error) {
-    console.log(`Error saving public key and user address: ${error}`);
-  }
-
-  try {
-    const persistedData = await snap.request({
-      method: 'snap_manageState',
-      params: { operation: 'get' },
-    });
-
-    await authenticateHashDit(persistedData); // call HashDit API to authenticate user
-  } catch (error) {
-    console.log(`Error retrieving persisted data: ${error}`);
-  }
-
-  return true;
 };
 
-// await snap.request({
-//   method: "snap_dialog",
-//   params: {
-//     type: "alert",
-//     content: panel([
-//       heading("Installation successful"),
-//       text(
-//         "To use this Snap, visit the companion dapp at [metamask.io](https://metamask.io).",
-//       ),
-//     ]),
-//   },
-// });
-
-export const onRpcRequest: OnRpcRequestHandler = async ({
-  origin,
-  request,
-}) => {
-  // switch (request.method) {
-  //   case 'publicKeyMethod':
-  //     let publicKey = extractPublicKeyFromSignature(
-  //       request.params.message,
-  //       request.params.signature,
-  //       request.params.from,
-  //     );
-  //     publicKey = publicKey.substring(2);
-  //     try {
-  //       // Save public key here and user address here:
-  //       await snap.request({
-  //         method: 'snap_manageState',
-  //         params: {
-  //           operation: 'update',
-  //           newState: {
-  //             publicKey: publicKey,
-  //             userAddress: request.params.from,
-  //             messageSignature: request.params.signature,
-  //           },
-  //         },
-  //       });
-  //     } catch (error) {
-  //       console.log(`Error saving public key and user address: ${error}`);
-  //     }
-  //     try {
-  //       const persistedData = await snap.request({
-  //         method: 'snap_manageState',
-  //         params: { operation: 'get' },
-  //       });
-  //       await authenticateHashDit(persistedData); // call HashDit API to authenticate user
-  //     } catch (error) {
-  //       console.log(`Error retrieving persisted data: ${error}`);
-  //     }
-  //     return true;
-  //   default:
-  //     console.log(`Method ${request.method} not defined.`);
-  // }
-};
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
@@ -158,6 +128,13 @@ export const onTransaction: OnTransactionHandler = async ({
       let contentArray: any[] = [];
       var urlRespData;
       if (persistedUserPublicKey !== null) {
+        const poisonResultArray = addressPoisoningDetection(accounts, [
+          transaction.to,
+        ]);
+        if (poisonResultArray.length != 0) {
+          contentArray = poisonResultArray;
+        }
+
         urlRespData = await getHashDitResponse(
           'hashdit_snap_tx_api_url_detection',
           persistedUserPublicKey,
@@ -226,6 +203,14 @@ export const onTransaction: OnTransactionHandler = async ({
       var respData;
       var urlRespData;
       if (persistedUserPublicKey !== null) {
+        const poisonResultArray = addressPoisoningDetection(accounts, [
+          transaction.to,
+        ]);
+        console.log(poisonResultArray);
+        if (poisonResultArray.length != 0) {
+          contentArray = poisonResultArray;
+        }
+
         respData = await getHashDitResponse(
           'internal_address_lables_tags',
           persistedUserPublicKey,
@@ -240,19 +225,19 @@ export const onTransaction: OnTransactionHandler = async ({
         );
 
         if (respData.overall_risk_title != 'Unknown Risk') {
-          contentArray = [
-            heading('HashDit Transaction Screening'),
+          contentArray.push(
+            heading('Transaction Screening'),
             text(`**Overall Risk:** ${respData.overall_risk_title}`),
             text(`**Risk Overview:** ${respData.overall_risk_detail}`),
             text(`**Risk Details:** ${respData.transaction_risk_detail}`),
             divider(),
-          ];
+          );
         } else {
-          contentArray = [
-            heading('HashDit Transaction Screening'),
+          contentArray.push(
+            heading('Transaction Screening'),
             text(`**Overall Risk:** ${respData.overall_risk_title}`),
             divider(),
-          ];
+          );
         }
 
         contentArray.push(heading('URL Risk Information'));
@@ -296,13 +281,6 @@ export const onTransaction: OnTransactionHandler = async ({
         divider(),
       );
 
-      if (respData !== undefined) {
-        contentArray.push(
-          heading('HashDit Trace-ID'),
-          text(`${respData.trace_id}`),
-        );
-      }
-
       const content = panel(contentArray);
       return { content };
     }
@@ -319,7 +297,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   }
-  // Current chain is not BSC and not ETH. Only perform URL screening
+  // Current chain is not supported (Not BSC and not ETH). Only perform URL screening
   if (chainId !== '0x38' && chainId !== '0x1') {
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserData = await snap.request({
@@ -374,6 +352,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   } else {
+    // Current chain is supported (BSC and ETH).
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserPublicKey = await snap.request({
       method: 'snap_manageState',
@@ -389,6 +368,25 @@ export const onTransaction: OnTransactionHandler = async ({
         transaction,
         chainId,
       );
+
+			// Retrieve all addresses from the function's parameters to `targetAddresses[]`. Perform poison detection on these parameters.
+			if(interactionRespData.function_name !== ''){
+				let targetAddresses = [];
+				// Add destination address to targets
+				targetAddresses.push(transaction.to);
+				// Loop through each function parameter
+				for (const param of interactionRespData.function_params) {
+					// Store only the values of type `address`
+					if(param.type == "address"){
+						targetAddresses.push(param.value);
+					}
+				}
+        const poisonResultArray = addressPoisoningDetection(accounts, targetAddresses);
+        if (poisonResultArray.length != 0) {
+          contentArray = poisonResultArray;
+        }
+
+			}
       const addressRespData = await getHashDitResponse(
         'internal_address_lables_tags',
         persistedUserPublicKey,
@@ -397,18 +395,18 @@ export const onTransaction: OnTransactionHandler = async ({
         chainId,
       );
       if (interactionRespData.overall_risk >= addressRespData.overall_risk) {
-        contentArray = [
-          heading('HashDit Transaction Screening'),
+        contentArray.push(
+          heading('Transaction Screening'),
           text(`**Overall Risk:** ${interactionRespData.overall_risk_title}`),
           text(`**Risk Overview:** ${interactionRespData.overall_risk_detail}`),
           text(
             `**Risk Details:** ${interactionRespData.transaction_risk_detail}`,
           ),
           divider(),
-        ];
+        );
       } else {
         contentArray.push(
-          heading('HashDit Destination Screening'), //todo
+          heading('HashDit Screening'), //todo
           text(`**Overall risk:** ${addressRespData.overall_risk_title}`),
           text(`**Risk Overview:** ${addressRespData.overall_risk_detail}`),
           text(`**Risk Details:** ${addressRespData.transaction_risk_detail}`),
@@ -432,9 +430,9 @@ export const onTransaction: OnTransactionHandler = async ({
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
 
-      // Only dispaly Transfer Details if transferring more than 0 native tokens
+      // Only display Transfer Details if transferring more than 0 native tokens
       // This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-      if (transactingValue >= 0) {
+      if (transactingValue > 0) {
         contentArray.push(
           heading('Transfer Details'),
           row('Your Address', address(transaction.from)),
@@ -444,7 +442,7 @@ export const onTransaction: OnTransactionHandler = async ({
         );
       }
 
-      // Display function name and parameters
+      // Display function call insight (function names and parameters)
       if (interactionRespData.function_name !== '') {
         contentArray.push(
           heading(`Function Name: ${interactionRespData.function_name}`),
@@ -461,14 +459,9 @@ export const onTransaction: OnTransactionHandler = async ({
           } else {
             contentArray.push(row('Value:', text(param.value)));
           }
+          contentArray.push(divider());
         }
-        contentArray.push(divider());
       }
-
-      contentArray.push(
-        heading('HashDit Trace-ID'),
-        text(`${interactionRespData.trace_id}`),
-      );
     } else {
       // User public key not found, display error message to snap
       contentArray = [
