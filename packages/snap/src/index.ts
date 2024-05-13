@@ -1,6 +1,5 @@
 import type {
   OnTransactionHandler,
-  OnRpcRequestHandler,
   OnInstallHandler,
 } from '@metamask/snaps-types';
 import {
