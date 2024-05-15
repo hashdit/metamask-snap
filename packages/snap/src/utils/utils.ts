@@ -354,10 +354,12 @@ export function addressPoisoningDetection(
   }
   return resultArray;
 }
+
 /**
  * The function compares the first and last 5 hexadecimals of two Ethereum addresses.
  * It assesses their prefix and postfix similarity and returns a score ranging from 0 (no similarity) to 5 (complete match).
- * Returns score of 0 if the addresses are the same
+ * Score increments only when both the 1st character of prefix & suffix match the target address.
+ * Skip if the addresses are the same.
  */
 function detectSimilarity(
   userAddressArray: string[],
@@ -377,55 +379,41 @@ function detectSimilarity(
         continue;
       }
 
-      let similarityScorePrefix = 0;
-      let similarityScorePostfix = 0;
+      let similarityScore = 0;
+      const addressLength = 39;
 
       // Compare first 5 hex
       for (var i = 0; i < 5; i++) {
-        if (userAddressConvert[i] == targetAddressCovert[i]) {
-          similarityScorePrefix += 1;
+        console.log(userAddressConvert[i], targetAddressCovert[i], userAddressConvert[addressLength - i], targetAddressCovert[addressLength - i]);
+        if (userAddressConvert[i] == targetAddressCovert[i] && userAddressConvert[addressLength - i] == targetAddressCovert[addressLength - i]) {
+          similarityScore += 1;
         }
       }
 
-      // Compare last 5 hex
-      const addressLength = userAddressConvert.length - 1;
-      for (var i = addressLength; i > addressLength - 5; i--) {
-        if (userAddressConvert[i] == targetAddressCovert[i]) {
-          similarityScorePostfix += 1;
-        }
-      }
-      //console.log("Similarity score for each", userAddress, targetAddress, similarityScorePrefix, similarityScorePostfix);
-
-      // If there are more than 3 similar prefix or postfix characters, we send a warning to the user.
-      if (similarityScorePrefix >= 3 || similarityScorePostfix >= 3) {
-        const maxScore = Math.max(
-          similarityScorePrefix,
-          similarityScorePostfix,
-        );
+      // If there are more than 3 matching prefix or postfix characters, we send a warning to the user.
+      if(similarityScore >= 3){
         let similarityRiskLevel;
-        // Score = 3, Low risk warning
-        // Score = 4, Medium Risk warning
-        // Score = 5, High Risk Warning
-        switch (maxScore) {
+        switch(similarityScore){
           case 3:
-            similarityRiskLevel = 'Low Risk';
-            break;
+            similarityRiskLevel = "⛔ High Risk ⛔"
+            break
           case 4:
-            similarityRiskLevel = '⚠️ Medium Risk ⚠️';
-            break;
+            similarityRiskLevel = "⛔ High Risk ⛔"
+            break
           case 5:
-            similarityRiskLevel = '⛔ High Risk ⛔';
-            break;
-          default:
-            similarityRiskLevel = 'Unknown';
-            break;
+            similarityRiskLevel = "🚫 **Critical Risk** 🚫"
+            break
         }
+  
+  
         similarityScoreResultArray.push({
           userAddress,
           targetAddress,
           similarityRiskLevel,
         });
       }
+
+      
     }
   }
   return similarityScoreResultArray;
