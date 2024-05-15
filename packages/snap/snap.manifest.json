@@ -25,7 +25,8 @@
     "endowment:ethereum-provider": {},
     "snap_manageState": {},
     "endowment:lifecycle-hooks": {},
-    "snap_dialog": {}
+    "snap_dialog": {},
+    "endowment:page-home": {}
   },
   "manifestVersion": "0.1"
 }
