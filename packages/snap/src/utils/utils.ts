@@ -384,7 +384,6 @@ function detectSimilarity(
 
       // Compare first 5 hex
       for (var i = 0; i < 5; i++) {
-        console.log(userAddressConvert[i], targetAddressCovert[i], userAddressConvert[addressLength - i], targetAddressCovert[addressLength - i]);
         if (userAddressConvert[i] == targetAddressCovert[i] && userAddressConvert[addressLength - i] == targetAddressCovert[addressLength - i]) {
           similarityScore += 1;
         }
