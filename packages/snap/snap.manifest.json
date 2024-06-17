@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "HashDit security snap to screen addresses before interaction.",
   "proposedName": "HashDit Security",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "Yu+drxyvP9hiG4anZwc6Rhp+MWfsm6XJ92QVsExku1I=",
+    "shasum": "dKhAW+kMEErpOUCnSH7jfLSYyoCH8DE+GvLcj63iBYM=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
