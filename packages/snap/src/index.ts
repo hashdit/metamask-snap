@@ -146,7 +146,7 @@ export const onTransaction: OnTransactionHandler = async ({
       const content = panel(contentArray);
       return { content };
     }
-    // Current chain is not supported (not BSC or ETH). Display not supported text.
+    // Current chain is not supported (not BSC or ETH). Native Token Transfer.
     if (chainId !== '0x38' && chainId !== '0x1') {
       // Retrieve saved user's public key to make HashDit API call
       const persistedUserPublicKey = await snap.request({
@@ -217,7 +217,7 @@ export const onTransaction: OnTransactionHandler = async ({
       const content = panel(contentArray);
       return { content };
     }
-    // Current chain is supported (BSC or ETH). Display token transfer insights
+    // Current chain is supported (BSC or ETH). Native Token Transfer.
     else {
       // Retrieve saved user's public key to make HashDit API call
       const persistedUserPublicKey = await snap.request({
@@ -323,7 +323,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   }
-  // Current chain is not supported (Not BSC and not ETH). Only perform URL Screening
+  // Current chain is not supported (Not BSC and not ETH). Smart Contract Interaction. 
   if (chainId !== '0x38' && chainId !== '0x1') {
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserData = await snap.request({
@@ -333,6 +333,12 @@ export const onTransaction: OnTransactionHandler = async ({
 
     let contentArray: any[] = [];
     if (persistedUserData !== null) {
+      const poisonResultArray = addressPoisoningDetection(accounts, [
+        transaction.to,
+      ]);
+      if (poisonResultArray.length != 0) {
+        contentArray = poisonResultArray;
+      }
       // URL Screening call
       const urlRespData = await getHashDitResponse(
         'hashdit_snap_tx_api_url_detection',
@@ -346,7 +352,7 @@ export const onTransaction: OnTransactionHandler = async ({
         text(urlRespData.url_risk_detail),
         divider(),
         text(
-          'HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed.',
+          'HashDit Security Insights is not fully supported on this chain.',
         ),
         text(
           'Currently we only support the **BSC Mainnet** and **ETH Mainnet**.',
@@ -379,7 +385,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   } else {
-    // Current chain is supported (BSC and ETH).
+    // Current chain is supported (BSC and ETH). Smart Contract Interaction. 
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserPublicKey = await snap.request({
       method: 'snap_manageState',
@@ -408,7 +414,6 @@ export const onTransaction: OnTransactionHandler = async ({
       // Add all addresses from the function's parameters to `targetAddresses[]`
       if (interactionRespData.function_name != null && interactionRespData.function_name != '') {
         // Loop through each function parameter
-        console.log("Poisoning" , interactionRespData.function_name)
         for (const param of interactionRespData.function_params) {
           // Store only the values of type `address`
           if (param.type == 'address') {
@@ -488,7 +493,6 @@ export const onTransaction: OnTransactionHandler = async ({
       }
 
       // Display function call insight (function names and parameters)
-      
       if (interactionRespData.function_name != null && interactionRespData.function_name != '') {
         console.log("FUnction call insight" , interactionRespData.function_name)
         contentArray.push(
