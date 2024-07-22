@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "dKhAW+kMEErpOUCnSH7jfLSYyoCH8DE+GvLcj63iBYM=",
+    "shasum": "O0D64Krp4lw4oaWnj/K4HQ+pM+Uc07bMXXnS4F415iM=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -26,7 +26,18 @@
     "snap_manageState": {},
     "endowment:lifecycle-hooks": {},
     "snap_dialog": {},
-    "endowment:page-home": {}
+    "endowment:page-home": {},
+    "snap_notify": {},
+    "endowment:cronjob": {
+      "jobs": [
+        {
+          "expression": "* * * * *",
+          "request": {
+            "method": "execute"
+          }
+        }
+      ]
+    }
   },
   "manifestVersion": "0.1"
 }

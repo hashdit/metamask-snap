@@ -123,7 +123,7 @@ export async function getHashDitResponse(
     postBody.transaction = JSON.stringify(transaction);
     postBody.url = transactionUrl;
   } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
-    // This will be utilised in v2
+    // This will be utilized when signature requests is supported
     postBody.address = transaction.to;
     postBody.chain_id = chain;
     postBody.message = '0xdeadbeef';
@@ -131,6 +131,7 @@ export async function getHashDitResponse(
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
+
   let appId: string;
   let appSecret: string;
 
@@ -161,30 +162,30 @@ export async function getHashDitResponse(
     nonce,
     signatureFinal,
   );
-  return formatResponse(response, businessName, trace_id);
+  return formatResponse(response, businessName, transactionUrl);
 }
 
 // Format the HashDit API response to get the important risk details
-function formatResponse(resp: any, businessName: string, trace_id: any) {
+function formatResponse(resp: any, businessName: string, transactionUrl: string) {
   let responseData: any = {
     overall_risk: -1,
-    overall_risk_title: 'Unknown Risk',
+    overall_risk_title: 'Unknown',
     overall_risk_detail: 'No details',
-    url_risk: -1,
+    url_risk_level: 'Unknown',
+    url_risk_detail: 'Unknown',
     function_name: '',
     function_param1: '',
     function_param2: '',
     transaction_risk_detail: 'None found',
   };
 
+  // URL Screening, checks the risk level of the website / url that initiated the transaction
   if (businessName == 'hashdit_snap_tx_api_url_detection') {
-    responseData.url_risk = resp.risk_level;
-
-    if (responseData.url_risk >= 4) {
-      responseData.url_risk_title = '⚠️ Interaction with a dangerous site ⚠️';
-    } else if (responseData.url_risk >= 2) {
-      responseData.url_risk_title = '⚠️ Interaction with a suspicious site ⚠️';
-    }
+    const [url_risk_level, url_risk_detail] = determineUrlRiskInfo(resp.risk_level);
+    responseData.url_risk_level = url_risk_level;
+    responseData.url_risk_detail = url_risk_detail;
+  
+  // Destination Screening, checks if destination address is in blacklist or whitelist
   } else if (businessName == 'internal_address_lables_tags') {
     responseData.overall_risk = resp.risk_level;
     try {
@@ -206,6 +207,8 @@ function formatResponse(resp: any, businessName: string, trace_id: any) {
     } catch {
       //console.log('No black or white labels');
     }
+    
+  // Transaction Screening, checks transaction data.
   } else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
     if (resp.detection_result != null) {
       const detectionResults = resp.detection_result.risks;
@@ -228,30 +231,23 @@ function formatResponse(resp: any, businessName: string, trace_id: any) {
       } catch {
         //console.log('No transaction data');
       }
-
-      responseData.url_risk = detectionResults.url.risk_level;
-
-      if (responseData.url_risk >= 4) {
-        responseData.url_risk_title = '⚠️ Interaction with a dangerous site ⚠️';
-      } else if (responseData.url_risk >= 2) {
-        responseData.url_risk_title =
-          '⚠️ Interaction with a suspicious site ⚠️';
-      }
     }
-  } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
-    // This will be utilised in v2
   }
+  // TODO: This will be utilised once signature requests is supported
+  // (businessName == 'hashdit_snap_tx_api_signature_request')
 
+
+  // TODO: wtf is this Refactor this
   if (responseData.overall_risk >= 4) {
-    responseData.overall_risk_title = '⛔ High Risk ⛔';
+    responseData.overall_risk_title = '⛔ High ⛔';
     responseData.overall_risk_detail =
       'This transaction is considered high risk. It is advised to reject this transcation.';
   } else if (responseData.overall_risk >= 2) {
-    responseData.overall_risk_title = '⚠️ Medium Risk ⚠️';
+    responseData.overall_risk_title = '⚠️ Medium ⚠️';
     responseData.overall_risk_detail =
       'This transaction is considered medium risk. Please review the details of this transaction.';
   } else if (responseData.overall_risk >= 0) {
-    responseData.overall_risk_title = 'Low Risk';
+    responseData.overall_risk_title = 'Low';
     responseData.overall_risk_detail =
       'This transaction is considered low risk. Please review the details of this transaction.';
   }
@@ -341,7 +337,6 @@ export function addressPoisoningDetection(
       text(
         `You are about to interact with an address that appears similar to one of your personal addresses. This could be an attempt to steal your funds. Please verify the addresses before proceeding.`,
       ),
-      divider(),
     );
     for (var i = 0; i < similarityResult.length; i++) {
       resultArray.push(
@@ -404,7 +399,6 @@ function detectSimilarity(
             break
         }
   
-  
         similarityScoreResultArray.push({
           userAddress,
           targetAddress,
@@ -416,4 +410,38 @@ function detectSimilarity(
     }
   }
   return similarityScoreResultArray;
+}
+
+// Determine the risk title and description for each risk level. Used by URL screening. 
+function determineUrlRiskInfo(urlRiskLevel: number): string[] {
+  if (urlRiskLevel == 0) {
+    return ["Safe", "The website is safe or whitelisted by HashDit, indicating high community credibility or longevity."];
+  } else if (urlRiskLevel == 1) {
+    return ["No Risk", "The website appears safe with no obvious risks, but no guarantee of being risk-free. Default risk level."];
+  } else if (urlRiskLevel == 2) {
+    return ["⚠️ Medium ⚠️", "The website is reported as risky and blacklisted by HashDit. We suggest rejecting the transaction."];
+  } else if (urlRiskLevel == 3) {
+    return ["⚠️ Medium ⚠️", "The website is reported as risky and blacklisted by HashDit. We suggest rejecting the transaction."];
+  } else if (urlRiskLevel == 4) {
+    return ["⛔ High ⛔", "The website is highly risky and blacklisted by HashDit. Interaction may lead to loss of funds. We suggest rejecting the transaction."];
+  } else if (urlRiskLevel == 5) {
+    return ["⛔ High ⛔", "The website is highly risky and blacklisted by HashDit. Interaction may lead to catastrophic loss of funds. We suggest rejecting the transaction."];
+  } else {
+    return ["Unknown", "The risk level of the website is undetermined. Proceed with caution."];
+  }
+}
+
+//TODO: Seperate for more precise descriptions?
+export function determineTransactionAndDestinationRiskInfo(riskLevel:number){
+  if (riskLevel >= 4) {
+    return['⛔ High ⛔', 'This transaction is considered high risk. It is advised to reject this transcation.'];
+  } else if (riskLevel >= 2) {
+    return['⚠️ Medium ⚠️', 'This transaction is considered medium risk. Please review the details of this transaction.'];
+  } else if (riskLevel >= 0) {
+    return['Low','This transaction is considered low risk. Please review the details of this transaction.'];
+  }
+  else{
+    return ['Unknown', 'The risk level of this transaction is unknown. Please proceed with caution.'];
+  }
+ 
 }
