@@ -72,6 +72,7 @@ export const onInstall: OnInstallHandler = async () => {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const from = accounts[0];
 
+    // TODO: Make this more user-friendly?
     // Request user to sign a message -> get user's signature -> get user's public key.
     const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
     const signature = await ethereum.request({
@@ -237,20 +238,22 @@ export const onTransaction: OnTransactionHandler = async ({
         }
 
         // TODO: PARALLELIZE API CALLS
-        // Destination Screening call
-        respData = await getHashDitResponse(
-          'internal_address_lables_tags',
-          persistedUserPublicKey,
-          transactionOrigin,
-          transaction,
-          chainId,
-        );
-        // URL Screening call
-        urlRespData = await getHashDitResponse(
-          'hashdit_snap_tx_api_url_detection',
-          persistedUserPublicKey,
-          transactionOrigin,
-        );
+        // Destination Screening call and URL Screening call
+        const [respData, urlRespData] = await Promise.all([
+          getHashDitResponse(
+            'internal_address_lables_tags',
+            persistedUserPublicKey,
+            transactionOrigin,
+            transaction,
+            chainId,
+          ),
+          getHashDitResponse(
+            'hashdit_snap_tx_api_url_detection',
+            persistedUserPublicKey,
+            transactionOrigin,
+          )
+        ]);
+      
 
         if (respData.overall_risk != "-1") {
           const [riskTitle, riskOverview] = determineTransactionAndDestinationRiskInfo(respData.overall_risk);
@@ -395,17 +398,31 @@ export const onTransaction: OnTransactionHandler = async ({
     let contentArray: any[] = [];
     if (persistedUserPublicKey !== null) {
 
-      /*
-      Transaction Screening call
-      NOTE: The API 'hashdit_snap_tx_api_transaction_request' performs both transaction screening and URL screening. No need to call URL screening API.
-      */
-      const interactionRespData = await getHashDitResponse(
-        'hashdit_snap_tx_api_transaction_request',
-        persistedUserPublicKey,
-        transactionOrigin,
-        transaction,
-        chainId,
-      );
+      
+      //TODO: Test if promise.all is faster than seperate calls.
+      // ... calls
+      const [interactionRespData, addressRespData, urlRespData] = await Promise.all([
+        getHashDitResponse(
+          'hashdit_snap_tx_api_transaction_request',
+          persistedUserPublicKey,
+          transactionOrigin,
+          transaction,
+          chainId,
+        ),
+        getHashDitResponse(
+          'internal_address_lables_tags',
+          persistedUserPublicKey,
+          transactionOrigin,
+          transaction,
+          chainId,
+        ),
+        getHashDitResponse(
+          'hashdit_snap_tx_api_url_detection',
+          persistedUserPublicKey,
+          transactionOrigin,
+        )
+      ]);
+    
 
       // Address Poisoning Detection on destination address and function parameters
       let targetAddresses = [];
@@ -430,14 +447,7 @@ export const onTransaction: OnTransactionHandler = async ({
         contentArray = poisonResultArray;
       }
 
-      // Destination Screening call
-      const addressRespData = await getHashDitResponse(
-        'internal_address_lables_tags',
-        persistedUserPublicKey,
-        transactionOrigin,
-        transaction,
-        chainId,
-      );
+
 
       // We display the bigger risk between Transaction screening and Destination screening
       if (interactionRespData.overall_risk >= addressRespData.overall_risk) {
@@ -460,12 +470,7 @@ export const onTransaction: OnTransactionHandler = async ({
           text(`**Risk Details:** ${addressRespData.transaction_risk_detail}`),
         );
       }
-      // URL Screening call
-      urlRespData = await getHashDitResponse(
-        'hashdit_snap_tx_api_url_detection',
-        persistedUserPublicKey,
-        transactionOrigin,
-      );
+
       // Display URL screening results
       contentArray.push(
         divider(),
@@ -494,7 +499,6 @@ export const onTransaction: OnTransactionHandler = async ({
 
       // Display function call insight (function names and parameters)
       if (interactionRespData.function_name != null && interactionRespData.function_name != '') {
-        console.log("FUnction call insight" , interactionRespData.function_name)
         contentArray.push(
           divider(),
           heading(`Function Name: ${interactionRespData.function_name}`),
