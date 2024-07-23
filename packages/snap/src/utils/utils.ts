@@ -242,20 +242,6 @@ function formatResponse(
   // TODO: This will be utilised once signature requests is supported
   // (businessName == 'hashdit_snap_tx_api_signature_request')
 
-  // if (responseData.overall_risk >= 4) {
-  //   responseData.overall_risk_title = '⛔ High ⛔';
-  //   responseData.overall_risk_detail =
-  //     'This transaction is considered high risk. It is advised to reject this transcation.';
-  // } else if (responseData.overall_risk >= 2) {
-  //   responseData.overall_risk_title = '⚠️ Medium ⚠️';
-  //   responseData.overall_risk_detail =
-  //     'This transaction is considered medium risk. Please review the details of this transaction.';
-  // } else if (responseData.overall_risk >= 0) {
-  //   responseData.overall_risk_title = 'Low';
-  //   responseData.overall_risk_detail =
-  //     'This transaction is considered low risk. Please review the details of this transaction.';
-  // }
-
   return responseData;
 }
 
