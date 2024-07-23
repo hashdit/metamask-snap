@@ -4,7 +4,6 @@ import type {
   OnHomePageHandler,
   OnRpcRequestHandler,
   OnCronjobHandler,
-  
 } from '@metamask/snaps-sdk';
 import {
   heading,
@@ -14,7 +13,7 @@ import {
   address,
   row,
   UnauthorizedError,
-  MethodNotFoundError, 
+  MethodNotFoundError,
   NotificationType,
 } from '@metamask/snaps-sdk';
 import {
@@ -111,18 +110,18 @@ export const onInstall: OnInstallHandler = async () => {
 
 export const onCronjob: OnCronjobHandler = async ({ request }) => {
   switch (request.method) {
-    case "execute":
+    case 'execute':
       // Cron jobs can execute any method that is available to the Snap.
       return snap.request({
-        method: "snap_notify",
+        method: 'snap_notify',
         params: {
-          type: "native",
-          message: "Native Hello, world!",
+          type: 'native',
+          message: 'Native Hello, world!',
         },
       });
 
     default:
-      throw new Error("Method not found.");
+      throw new Error('Method not found.');
   }
 };
 
@@ -173,8 +172,8 @@ export const onTransaction: OnTransactionHandler = async ({
         );
         contentArray.push(
           heading('URL Screening'),
-          row("Website", text(transactionOrigin)),
-          row("Risk Level", text(urlRespData.url_risk_level)),
+          row('Website', text(transactionOrigin)),
+          row('Risk Level', text(urlRespData.url_risk_level)),
           text(urlRespData.url_risk_detail),
           divider(),
         );
@@ -205,7 +204,7 @@ export const onTransaction: OnTransactionHandler = async ({
         row('Your Address', address(transaction.from)),
         row('Amount', text(`${transactingValue} ${nativeToken}`)),
         row('To', address(transaction.to)),
-        divider()
+        divider(),
       );
 
       contentArray.push(
@@ -251,12 +250,12 @@ export const onTransaction: OnTransactionHandler = async ({
             'hashdit_snap_tx_api_url_detection',
             persistedUserPublicKey,
             transactionOrigin,
-          )
+          ),
         ]);
-      
 
-        if (respData.overall_risk != "-1") {
-          const [riskTitle, riskOverview] = determineTransactionAndDestinationRiskInfo(respData.overall_risk);
+        if (respData.overall_risk != '-1') {
+          const [riskTitle, riskOverview] =
+            determineTransactionAndDestinationRiskInfo(respData.overall_risk);
           contentArray.push(
             heading('Destination Screening'),
             text(`**Risk Level:** ${riskTitle}`),
@@ -268,15 +267,17 @@ export const onTransaction: OnTransactionHandler = async ({
           contentArray.push(
             heading('Destination Screening'),
             text(`**Risk Level:** Unknown`),
-            text(`**Risk Overview:** The risk level of this transaction is unknown. Please proceed with caution.`),
+            text(
+              `**Risk Overview:** The risk level of this transaction is unknown. Please proceed with caution.`,
+            ),
             divider(),
           );
         }
 
         contentArray.push(
           heading('URL Screening'),
-          row("Website", text(transactionOrigin)),
-          row("Risk Level", text(urlRespData.url_risk_level)),
+          row('Website', text(transactionOrigin)),
+          row('Risk Level', text(urlRespData.url_risk_level)),
           text(urlRespData.url_risk_detail),
           divider(),
         );
@@ -307,7 +308,6 @@ export const onTransaction: OnTransactionHandler = async ({
         row('Your Address', address(transaction.from)),
         row('Amount', text(`${transactingValue} ${nativeToken}`)),
         row('To', address(transaction.to)),
-        
       );
 
       const content = panel(contentArray);
@@ -326,7 +326,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   }
-  // Current chain is not supported (Not BSC and not ETH). Smart Contract Interaction. 
+  // Current chain is not supported (Not BSC and not ETH). Smart Contract Interaction.
   if (chainId !== '0x38' && chainId !== '0x1') {
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserData = await snap.request({
@@ -350,13 +350,11 @@ export const onTransaction: OnTransactionHandler = async ({
       );
       contentArray = [
         heading('URL Screening'),
-        row("Website", text(transactionOrigin)),
-        row("Risk Level", text(urlRespData.url_risk_level)),
+        row('Website', text(transactionOrigin)),
+        row('Risk Level', text(urlRespData.url_risk_level)),
         text(urlRespData.url_risk_detail),
         divider(),
-        text(
-          'HashDit Security Insights is not fully supported on this chain.',
-        ),
+        text('HashDit Security Insights is not fully supported on this chain.'),
         text(
           'Currently we only support the **BSC Mainnet** and **ETH Mainnet**.',
         ),
@@ -388,7 +386,7 @@ export const onTransaction: OnTransactionHandler = async ({
     const content = panel(contentArray);
     return { content };
   } else {
-    // Current chain is supported (BSC and ETH). Smart Contract Interaction. 
+    // Current chain is supported (BSC and ETH). Smart Contract Interaction.
     // Retrieve saved user's public key to make HashDit API call
     const persistedUserPublicKey = await snap.request({
       method: 'snap_manageState',
@@ -397,39 +395,40 @@ export const onTransaction: OnTransactionHandler = async ({
 
     let contentArray: any[] = [];
     if (persistedUserPublicKey !== null) {
-
-      
       //TODO: Test if promise.all is faster than seperate calls.
       // ... calls
-      const [interactionRespData, addressRespData, urlRespData] = await Promise.all([
-        getHashDitResponse(
-          'hashdit_snap_tx_api_transaction_request',
-          persistedUserPublicKey,
-          transactionOrigin,
-          transaction,
-          chainId,
-        ),
-        getHashDitResponse(
-          'internal_address_lables_tags',
-          persistedUserPublicKey,
-          transactionOrigin,
-          transaction,
-          chainId,
-        ),
-        getHashDitResponse(
-          'hashdit_snap_tx_api_url_detection',
-          persistedUserPublicKey,
-          transactionOrigin,
-        )
-      ]);
-    
+      const [interactionRespData, addressRespData, urlRespData] =
+        await Promise.all([
+          getHashDitResponse(
+            'hashdit_snap_tx_api_transaction_request',
+            persistedUserPublicKey,
+            transactionOrigin,
+            transaction,
+            chainId,
+          ),
+          getHashDitResponse(
+            'internal_address_lables_tags',
+            persistedUserPublicKey,
+            transactionOrigin,
+            transaction,
+            chainId,
+          ),
+          getHashDitResponse(
+            'hashdit_snap_tx_api_url_detection',
+            persistedUserPublicKey,
+            transactionOrigin,
+          ),
+        ]);
 
       // Address Poisoning Detection on destination address and function parameters
       let targetAddresses = [];
       // Add destination address to `targetAddresses[]`
       targetAddresses.push(transaction.to);
       // Add all addresses from the function's parameters to `targetAddresses[]`
-      if (interactionRespData.function_name != null && interactionRespData.function_name != '') {
+      if (
+        interactionRespData.function_name != null &&
+        interactionRespData.function_name != ''
+      ) {
         // Loop through each function parameter
         for (const param of interactionRespData.function_params) {
           // Store only the values of type `address`
@@ -442,16 +441,17 @@ export const onTransaction: OnTransactionHandler = async ({
         accounts,
         targetAddresses,
       );
-      
+
       if (poisonResultArray.length != 0) {
         contentArray = poisonResultArray;
       }
 
-
-
       // We display the bigger risk between Transaction screening and Destination screening
       if (interactionRespData.overall_risk >= addressRespData.overall_risk) {
-        const [riskTitle, riskOverview] = determineTransactionAndDestinationRiskInfo(interactionRespData.overall_risk);
+        const [riskTitle, riskOverview] =
+          determineTransactionAndDestinationRiskInfo(
+            interactionRespData.overall_risk,
+          );
         contentArray.push(
           heading('Transaction Screening'),
           text(`**Risk Level:** ${riskTitle}`),
@@ -459,10 +459,12 @@ export const onTransaction: OnTransactionHandler = async ({
           text(
             `**Risk Details:** ${interactionRespData.transaction_risk_detail}`,
           ),
-
         );
       } else {
-        const [riskTitle, riskOverview] = determineTransactionAndDestinationRiskInfo(interactionRespData.overall_risk);
+        const [riskTitle, riskOverview] =
+          determineTransactionAndDestinationRiskInfo(
+            interactionRespData.overall_risk,
+          );
         contentArray.push(
           heading('Destination Screening'),
           text(`**Risk Level:** ${riskTitle}`),
@@ -475,11 +477,10 @@ export const onTransaction: OnTransactionHandler = async ({
       contentArray.push(
         divider(),
         heading('URL Screening'),
-        row("Website", text(transactionOrigin)),
-        row("Risk Level", text(urlRespData.url_risk_level)),
+        row('Website', text(transactionOrigin)),
+        row('Risk Level', text(urlRespData.url_risk_level)),
         text(urlRespData.url_risk_detail),
       );
-
 
       /*
       Only display Transfer Details if transferring more than 0 native tokens
@@ -498,7 +499,10 @@ export const onTransaction: OnTransactionHandler = async ({
       }
 
       // Display function call insight (function names and parameters)
-      if (interactionRespData.function_name != null && interactionRespData.function_name != '') {
+      if (
+        interactionRespData.function_name != null &&
+        interactionRespData.function_name != ''
+      ) {
         contentArray.push(
           divider(),
           heading(`Function Name: ${interactionRespData.function_name}`),
@@ -580,4 +584,3 @@ export const onHomePage: OnHomePageHandler = async () => {
     ]),
   };
 };
-
