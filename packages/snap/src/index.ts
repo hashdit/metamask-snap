@@ -236,8 +236,7 @@ export const onTransaction: OnTransactionHandler = async ({
           contentArray = poisonResultArray;
         }
 
-        // TODO: PARALLELIZE API CALLS
-        // Destination Screening call and URL Screening call
+        // Parallelize Destination Screening call and URL Screening call
         const [respData, urlRespData] = await Promise.all([
           getHashDitResponse(
             'internal_address_lables_tags',
@@ -395,8 +394,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
     let contentArray: any[] = [];
     if (persistedUserPublicKey !== null) {
-      //TODO: Test if promise.all is faster than seperate calls.
-      // ... calls
+      // Parallelize Transaction, Destination, and URL screening calls
       const [interactionRespData, addressRespData, urlRespData] =
         await Promise.all([
           getHashDitResponse(
