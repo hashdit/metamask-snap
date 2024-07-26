@@ -71,7 +71,6 @@ export const onInstall: OnInstallHandler = async () => {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const from = accounts[0];
 
-    // TODO: Make this more user-friendly?
     // Request user to sign a message -> get user's signature -> get user's public key.
     const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
     const signature = await ethereum.request({
