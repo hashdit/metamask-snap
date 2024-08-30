@@ -16,6 +16,7 @@ import {
   row,
 } from '@metamask/snaps-sdk';
 
+
 export async function authenticateHashDit(persistedUserData: any) {
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
@@ -233,6 +234,49 @@ async function customFetch(
   } else {
     //console.log('Fetch api error: ' + resp.errorData);
   }
+}
+
+export async function getTokenApprovals(){
+  try {
+    // Get user's accounts
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const from = accounts[0];
+
+    const url = 'https://api.diting.pro/v1/auth';
+
+    // Define the body parameters
+    const bodyParameters = {
+      // Replace with your actual body parameters
+      userAddr: from,
+      signature: "TODO",
+    };
+		console.log(bodyParameters);
+
+    try {
+      // Send a POST request to the API
+      const response = await fetch(url, {
+        method: 'POST', // Use POST method
+        headers: {
+          'Content-Type': 'application/json', // Set content type to JSON
+        },
+        body: JSON.stringify(bodyParameters), // Convert the body parameters to a JSON string
+      });
+
+      // Parse the JSON response
+      const data = await response.json();
+
+      // Handle the response data
+      console.log('Response:', data);
+      if(data.diting_result){
+        if(data.diting_result.approval_status){
+          
+        }
+      }
+    } catch (error) {
+      // Handle errors
+      console.error('Error:', error);
+    }
+  } catch (error) {}
 }
 
 // Parse transacting value to decimals to be human-readable
