@@ -26,6 +26,7 @@ import {
   determineTransactionAndDestinationRiskInfo,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
+import {onInstallContent,onHomePageContent} from "./utils/content";
 
 export const onInstall: OnInstallHandler = async () => {
   // Show install instructions and links
@@ -33,43 +34,14 @@ export const onInstall: OnInstallHandler = async () => {
     method: 'snap_dialog',
     params: {
       type: 'alert',
-      content: panel([
-        heading('🛠️ Next Steps For Your Installation'),
-        text('**Step 1**'),
-        text(
-          ' To ensure the most secure experience, please connect all your MetaMask accounts with the HashDit Snap.',
-        ),
-        text('**Step 2**'),
-        text(
-          'Sign the Hashdit Security message request. This is required to enable the HashDit API to enable a complete experience.',
-        ),
-        divider(),
-        heading('🔗 Links'),
-        text(
-          'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)',
-        ),
-        text(
-          'Installation Guide: [Installation](https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap)',
-        ),
-        text(
-          'How To Use Hashdit Snap: [Usage](https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap)',
-        ),
-        text('Documentation: [Docs](https://hashdit.gitbook.io/hashdit-snap)'),
-        text(
-          'FAQ/Knowledge Base: [FAQ](https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base)',
-        ),
-        text(
-          'MetaMask Store Page: [Snap Store](https://snaps.metamask.io/snap/npm/hashdit-snap-security/)',
-        ),
-        divider(),
-        heading('Thank you for using HashDit Snap!'),
-      ]),
+      content: panel(onInstallContent),
     },
   });
   try {
     // Get user's accounts
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const from = accounts[0];
+
 
     // Request user to sign a message -> get user's signature -> get user's public key.
     const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
@@ -79,7 +51,7 @@ export const onInstall: OnInstallHandler = async () => {
     });
     let publicKey = extractPublicKeyFromSignature(message, signature, from);
     publicKey = publicKey.substring(2);
-
+		console.log("pubkey",publicKey);
     try {
       // Save public key here and user address here:
       await snap.request({
@@ -103,26 +75,12 @@ export const onInstall: OnInstallHandler = async () => {
 
       await authenticateHashDit(persistedData); // call HashDit API to authenticate user
     } catch (error) {}
-    return true;
+    
   } catch (error) {}
+
+
 };
 
-export const onCronjob: OnCronjobHandler = async ({ request }) => {
-  switch (request.method) {
-    case 'execute':
-      // Cron jobs can execute any method that is available to the Snap.
-      return snap.request({
-        method: 'snap_notify',
-        params: {
-          type: 'native',
-          message: 'Native Hello, world!',
-        },
-      });
-
-    default:
-      throw new Error('Method not found.');
-  }
-};
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
@@ -480,9 +438,9 @@ export const onTransaction: OnTransactionHandler = async ({
       );
 
       /*
-      Only display Transfer Details if transferring more than 0 native tokens
-      This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-      */
+	  Only display Transfer Details if transferring more than 0 native tokens
+	  This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
+	  */
       const transactingValue = parseTransactingValue(transaction.value);
       const nativeToken = getNativeToken(chainId);
       if (transactingValue > 0) {
@@ -553,31 +511,6 @@ export const onTransaction: OnTransactionHandler = async ({
 
 export const onHomePage: OnHomePageHandler = async () => {
   return {
-    content: panel([
-      heading('HashDit Snap'),
-      text(
-        'Explore the power of HashDit Security and fortify your MetaMask experience. Navigate the crypto space with confidence.',
-      ),
-      divider(),
-      heading('🔗 Links'),
-      text(
-        'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)',
-      ),
-      text(
-        'Installation Guide: [Installation](https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap)',
-      ),
-      text(
-        'How To Use Hashdit Snap: [Usage](https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap)',
-      ),
-      text('Documentation: [Docs](https://hashdit.gitbook.io/hashdit-snap)'),
-      text(
-        'FAQ/Knowledge Base: [FAQ](https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base)',
-      ),
-      text(
-        'MetaMask Store Page: [Snap Store](https://snaps.metamask.io/snap/npm/hashdit-snap-security/)',
-      ),
-      divider(),
-      heading('Thank you for using HashDit Snap!'),
-    ]),
+    content: panel(onHomePageContent),
   };
 };
