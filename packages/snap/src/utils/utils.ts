@@ -16,11 +16,11 @@ import {
   row,
 } from '@metamask/snaps-sdk';
 
-export async function authenticateHashDit(persistedUserData: any) {
+export async function authenticateHashDit(userAddress:string, messageSignature:string) {
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
-  const appId = persistedUserData.userAddress;
-  const appSecret = persistedUserData.messageSignature;
+  // const appId = userAddress;
+  // const appSecret = messageSignature;
 
   const response = await fetch(
     'https://api.hashdit.io/security-api/public/chain/v1/web3/signature',
@@ -31,10 +31,10 @@ export async function authenticateHashDit(persistedUserData: any) {
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json;charset=UTF-8',
-        'X-Signature-appid': appId,
+        'X-Signature-appid': userAddress,
         'X-Signature-timestamp': timestamp.toString(),
         'X-Signature-nonce': nonce,
-        'X-Signature-signature': appSecret,
+        'X-Signature-signature': messageSignature,
       },
       redirect: 'follow',
       referrerPolicy: 'no-referrer',
@@ -42,7 +42,31 @@ export async function authenticateHashDit(persistedUserData: any) {
   );
 
   const resp = await response.json();
-  //console.log('Authenticate Resp', resp);
+  console.log('Authenticate Resp', resp);
+}
+
+export async function authenticateDiTing(userAddress:string, signature:string){
+  const requestBody = {
+    "userAddr": userAddress,
+    "signature": signature
+  }
+  console.log(requestBody);
+
+  const response = await fetch(
+    
+    'https://api.diting.pro/v1/auth',
+    {
+      method:'POST',
+      headers:{
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    }
+  )
+  const resp = await response.json();
+  console.log('ditingResp', resp);
+  return resp;
+
 }
 
 export async function getHashDitResponse(
