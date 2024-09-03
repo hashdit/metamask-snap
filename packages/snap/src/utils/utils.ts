@@ -16,6 +16,31 @@ import {
   row,
 } from '@metamask/snaps-sdk';
 
+
+export async function getApprovals(userAddress:string, DiTingApiKey:string){
+  const requestBody = {
+    chain_id: "56",
+    owner: userAddress,
+  }
+  console.log(requestBody);
+
+  const response = await fetch(
+    
+    'https://api.diting.pro/v1/diting/token-approval-security',
+    {
+      method:'POST',
+      headers:{
+        'Content-Type': 'application/json',
+        'X-API-Key': DiTingApiKey,
+      },
+      body: JSON.stringify(requestBody)
+    }
+  )
+  const resp = await response.json();
+  console.log('Approval Response', resp);
+  return resp;
+}
+
 export async function authenticateHashDit(userAddress:string, messageSignature:string) {
   const timestamp = Date.now();
   const nonce = uuidv4().replace(/-/g, '');
@@ -47,8 +72,8 @@ export async function authenticateHashDit(userAddress:string, messageSignature:s
 
 export async function authenticateDiTing(userAddress:string, signature:string){
   const requestBody = {
-    "userAddr": userAddress,
-    "signature": signature
+    userAddr: userAddress,
+    signature: signature
   }
   console.log(requestBody);
 

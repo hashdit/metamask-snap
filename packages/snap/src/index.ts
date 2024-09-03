@@ -25,6 +25,7 @@ import {
   isEOA,
   addressPoisoningDetection,
   determineTransactionAndDestinationRiskInfo,
+  getApprovals,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 
@@ -133,8 +134,36 @@ export const onInstall: OnInstallHandler = async () => {
 
 export const onCronjob: OnCronjobHandler = async ({ request }) => {
   switch (request.method) {
-    case 'execute':
-      // Cron jobs can execute any method that is available to the Snap.
+    case 'getApprovals':
+      try{
+        const persistedUserData = await snap.request({
+          method: 'snap_manageState',
+          params: { operation: 'get' },
+        });
+        try{
+          const 
+          approvalResult = await getApprovals(persistedUserData.userAddress, persistedUserData.DiTingApiKey);
+          //approvalResult = await getApprovals("0xe2fc31f816a9b94326492132018c3aecc4a93ae1", persistedUserData.DiTingApiKey);
+          if(approvalResult.message = "success"){
+            if(Array.isArray(approvalResult.diting_result.approval_status)){
+              console.log(approvalResult.diting_result.approval_status)
+              
+            }
+            else{
+              console.log("No tokens approved")
+            }
+          }
+        }
+        catch(error){
+  
+        }
+      }
+      catch(error){
+        
+
+      }
+      
+
       return snap.request({
         method: 'snap_notify',
         params: {
@@ -144,7 +173,8 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
       });
 
     default:
-      throw new Error('Method not found.');
+      console.log(request, request.method)
+      throw new Error(`Method not found.,${request}`);
   }
 };
 
