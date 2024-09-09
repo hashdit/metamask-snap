@@ -159,7 +159,7 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 						persistedUserData.DiTingApiKey,
 					);
 					//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
-					console.log("ApprovalResult:",approvalResult);
+					console.log('ApprovalResult:', approvalResult);
 					return snap.request({
 						method: 'snap_notify',
 						params: {
