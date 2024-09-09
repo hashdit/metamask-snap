@@ -35,24 +35,35 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 		},
 	);
 	const resp = await response.json();
-	if ((resp.message = 'success')) {
+
+	if (resp.message === 'success') { 
 		if (Array.isArray(resp.diting_result.approval_status)) {
 			console.log(resp.diting_result.approval_status);
 			const numberOfApprovals = resp.diting_result.approval_status.length;
-			console.log('len', resp.diting_result.approval_status.length);
-			const totalAffectedUSD = 0;
-			// for(const approval in resp.diting_result.approval_status){
+			console.log('len', numberOfApprovals);
 
-			// }
-			return `${numberOfApprovals} found. $${totalAffectedUSD} is at risk.`;
+			let totalAffectedUSD = 0;
+			for (const approval of resp.diting_result.approval_status) {
+				totalAffectedUSD += approval.affected_usd_amount;
+			}
+			const formattedTotalAffectedUSD = formatDollarAmount(totalAffectedUSD);
+			const notificationString = `${numberOfApprovals} approvals found, $${formattedTotalAffectedUSD} is at risk`
+			if(notificationString.length >= 50){
+				return `Approvals found, ${formattedTotalAffectedUSD} is at risk`
+			}
+			else{
+				return notificationString;
+			}
+			
 		} else {
-			console.log('No tokens approved');
-			return 'No token approvals found! You are safe.';
+			return 'No token approvals found! You are safe.';  
 		}
 	} else {
-		console.log('error with tokekn approval api TODO');
+		console.log('error with token approval api TODO');
+		return 'Error with token approval API';  
 	}
 }
+
 
 export async function authenticateHashDit(
 	userAddress: string,
@@ -433,6 +444,18 @@ function detectSimilarity(
 		}
 	}
 	return similarityScoreResultArray;
+}
+
+function formatDollarAmount(amount: number): string {
+	if (amount >= 1_000_000_000) {
+	  return `$${(amount / 1_000_000_000).toFixed(1)}B`; // For billions
+	} else if (amount >= 1_000_000) {
+	  return `$${(amount / 1_000_000).toFixed(1)}M`; // For millions
+	} else if (amount >= 1_000) {
+	  return `$${(amount / 1_000).toFixed(1)}K`; // For thousands
+	} else {
+	  return `$${amount.toFixed(2)}`; // For amounts less than 1,000
+	}
 }
 
 // Determine the risk title and description for each risk level. Used by URL screening.

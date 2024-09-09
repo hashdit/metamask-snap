@@ -158,17 +158,21 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 						persistedUserData.userAddress,
 						persistedUserData.DiTingApiKey,
 					);
-					//approvalResult = await getApprovals("0xe2fc31f816a9b94326492132018c3aecc4a93ae1", persistedUserData.DiTingApiKey);
-
+					//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
+					console.log("ApprovalResult:",approvalResult);
 					return snap.request({
 						method: 'snap_notify',
 						params: {
-							type: 'native',
+							type: 'inApp',
 							message: approvalResult,
 						},
 					});
-				} catch (error) {}
-			} catch (error) {}
+				} catch (error) {
+					console.error('Error during approval fetching:', error);
+				}
+			} catch (error) {
+				console.error('Error getting persisted user data:', error);
+			}
 
 		default:
 			console.log(request, request.method);
