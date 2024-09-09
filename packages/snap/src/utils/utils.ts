@@ -46,6 +46,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   //console.log('Authenticate Resp', resp);
 }
 
+
 export async function getHashDitResponse(
   businessName: string,
   persistedUserData: any,
@@ -53,6 +54,7 @@ export async function getHashDitResponse(
   transaction?: any,
   chainId?: string,
 ) {
+
   const trace_id = uuidv4();
 
   // formatting chainid to match api formatting
@@ -80,12 +82,16 @@ export async function getHashDitResponse(
     postBody.trace_id = trace_id;
     postBody.transaction = JSON.stringify(transaction);
     postBody.url = transactionUrl;
+
   } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
     // This will be utilized when signature requests is supported
     postBody.address = transaction.to;
     postBody.chain_id = chain;
     postBody.message = '0xdeadbeef';
     postBody.method = 'eth_sign';
+
+
+
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
@@ -196,6 +202,10 @@ function formatResponse(
         //console.log('No transaction data');
       }
     }
+
+  } else if (businessName == "hashdit_snap_tx_api_signature_request") {
+    return resp;
+
   }
   // TODO: This will be utilised once signature requests is supported
   // (businessName == 'hashdit_snap_tx_api_signature_request')

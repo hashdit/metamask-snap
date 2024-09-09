@@ -3,8 +3,12 @@ import type {
   OnInstallHandler,
   OnHomePageHandler,
   OnRpcRequestHandler,
+
   OnCronjobHandler,
 } from '@metamask/snaps-sdk';
+
+import type { OnSignatureHandler } from '@metamask/snaps-sdk';
+
 import {
   heading,
   panel,
@@ -81,6 +85,63 @@ export const onInstall: OnInstallHandler = async () => {
 
 };
 
+
+export const onSignature: OnSignatureHandler = async ({
+  signature,
+  signatureOrigin,
+}) => {
+  /*
+   * The object `signature` has the following values
+   * `from` - The address that is signing the signautre
+   * `data` - The hexadecimal value being signed
+   * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
+   * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
+   */
+  console.log('ONSIGNATURE:', JSON.stringify(signature), signatureOrigin);
+  const chainId = await ethereum.request({ method: 'eth_chainId' });
+  // Check if chainId is undefined or null, and a supported networkc (BSC / ETH)
+  let contentArray: any[] = [];
+	let content;
+
+  if (typeof chainId == 'string') {
+    if (chainId == '0x38' || chainId == '0x1') {
+      // Retrieve saved user's public key to make HashDit API call
+      const persistedUserPublicKey = await snap.request({
+        method: 'snap_manageState',
+        params: { operation: 'get' },
+      });
+
+      console.log('Persisted', persistedUserPublicKey);
+
+      let contentArray: any[] = [];
+      var urlRespData;
+      if (persistedUserPublicKey !== null) {
+        urlRespData = await getHashDitResponse(
+          'hashdit_snap_tx_api_signature_request',
+          persistedUserPublicKey,
+          signatureOrigin,
+          undefined,
+          chainId,
+          signature,
+        );
+        console.log('urlRespData', JSON.stringify(urlRespData));
+        contentArray.push(text(urlRespData.risks));
+      }
+    }
+    content = panel(contentArray);
+  }
+	// Note: Currently during a signature request, if a user signs the message quickly, this function will not return anything.
+	// The signature request does not wait for onSignature to finish. Therefere insight might not show.
+	return {
+		content: panel([
+			heading('My Signature Insights'),
+			text('Here are the insights:'),
+		]),
+		severity: 'critical',
+	};
+
+
+};
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
@@ -468,6 +529,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
         params.forEach((param, index) => {
           contentArray.push(
+
             row('Name', text(param.name)),
             row('Type', text(param.type)),
           );
@@ -484,6 +546,7 @@ export const onTransaction: OnTransactionHandler = async ({
             contentArray.push(divider());
           }
         });
+
       }
     } else {
       // User public key not found, display error message to snap
