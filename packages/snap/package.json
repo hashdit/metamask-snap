@@ -1,6 +1,6 @@
 {
   "name": "hashdit-snap-security",
-  "version": "0.1.2",
+  "version": "0.2.1",
   "description": "The HashDit Security Snap provides transaction warnings when interacting with risky contracts.",
   "keywords": [
     "Binance Smart Chain",
@@ -36,8 +36,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@metamask/snaps-types": "^3.1.0",
     "@metamask/snaps-sdk": "^4.1.0",
-    "@metamask/snaps-types": "^2.0.0",
     "@metamask/snaps-ui": "^2.0.0",
     "buffer": "^6.0.3"
   },

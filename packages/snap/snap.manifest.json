@@ -1,5 +1,5 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.1",
   "description": "HashDit security snap to screen addresses before interaction.",
   "proposedName": "HashDit Security",
   "repository": {
@@ -7,7 +7,9 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "hzW5VqLftE9aNNZos78wuc5CtgG3UISudccw8r22Y10=",
+
+    "shasum": "MvDrrKMzNVeF1a4Zq0Ibkw0uaotNG4VVu1zE7BkIzpk=",
+
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -24,9 +26,20 @@
     "endowment:network-access": {},
     "endowment:ethereum-provider": {},
     "snap_manageState": {},
-    "endowment:rpc": {
-      "dapps": true,
-      "snaps": false
+
+    "endowment:lifecycle-hooks": {},
+    "snap_dialog": {},
+    "endowment:page-home": {},
+    "snap_notify": {},
+    "endowment:cronjob": {
+      "jobs": [
+        {
+          "expression": "* * * * *",
+          "request": {
+            "method": "execute"
+          }
+        }
+      ]
     },
     "endowment:signature-insight": {
       "allowSignatureOrigin": true

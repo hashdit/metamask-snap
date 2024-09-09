@@ -6,6 +6,10 @@ Explore the power of HashDit Security and fortify your MetaMask experience. Navi
 
 Receive risk warnings and details whenever you interact with smart contracts or addresses that are known or suspected to be malicious, preventing the loss of funds before it happens.
 
+### Address Poisoning
+
+Check for similarities between all of the user's addresses and the addresses they are interacting with. If any similarity is detected, a warning will be displayed to the user.
+
 ### Transaction Screening
 
 Gain insights into the risk level of each transaction. Receive timely warnings before engaging with potentially vulnerable or malicious smart contracts.
@@ -13,8 +17,6 @@ Gain insights into the risk level of each transaction. Receive timely warnings b
 ### URL Risk Information
 
 Protect yourself from phishing links and malicious websites by leveraging our advanced URL screening capabilities.
-
-<img src="packages/site/src/assets/ScreeningAndUrlDark.png" alt="Screening" width="400"/>
 
 ### FunctionCall Insights
 
