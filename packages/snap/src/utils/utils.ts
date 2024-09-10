@@ -14,6 +14,8 @@ import {
   divider,
   address,
   row,
+  EthSignature,
+  Signature,
 } from '@metamask/snaps-sdk';
 
 
@@ -53,6 +55,8 @@ export async function getHashDitResponse(
   transactionUrl?: any,
   transaction?: any,
   chainId?: string,
+  signaturePayload?: Signature,
+
 ) {
 
   const trace_id = uuidv4();
@@ -85,13 +89,10 @@ export async function getHashDitResponse(
 
   } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
     // This will be utilized when signature requests is supported
-    postBody.address = transaction.to;
+    postBody.address = signaturePayload.from;
     postBody.chain_id = chain;
-    postBody.message = '0xdeadbeef';
-    postBody.method = 'eth_sign';
-
-
-
+    postBody.message = signaturePayload.data;
+    postBody.method = signaturePayload.signatureMethod;
     postBody.trace_id = trace_id;
     postBody.url = transactionUrl;
   }
@@ -207,8 +208,7 @@ function formatResponse(
     return resp;
 
   }
-  // TODO: This will be utilised once signature requests is supported
-  // (businessName == 'hashdit_snap_tx_api_signature_request')
+
 
   return responseData;
 }

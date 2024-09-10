@@ -36,8 +36,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@metamask/snaps-sdk": "^6.3.0",
     "@metamask/snaps-types": "^3.1.0",
-    "@metamask/snaps-sdk": "^4.1.0",
     "@metamask/snaps-ui": "^2.0.0",
     "buffer": "^6.0.3"
   },
