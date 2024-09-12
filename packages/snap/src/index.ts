@@ -1,92 +1,195 @@
 import type {
-  OnTransactionHandler,
-  OnInstallHandler,
-  OnHomePageHandler,
-  OnRpcRequestHandler,
-  OnCronjobHandler,
+	OnTransactionHandler,
+	OnInstallHandler,
+	OnHomePageHandler,
+	OnRpcRequestHandler,
+	OnCronjobHandler,
 } from '@metamask/snaps-sdk';
 import {
-  heading,
-  panel,
-  text,
-  divider,
-  address,
-  row,
-  UnauthorizedError,
-  MethodNotFoundError,
-  NotificationType,
+	heading,
+	panel,
+	text,
+	divider,
+	address,
+	row,
+	UnauthorizedError,
+	MethodNotFoundError,
+	NotificationType,
 } from '@metamask/snaps-sdk';
 import {
-  getHashDitResponse,
-  parseTransactingValue,
-  getNativeToken,
-  authenticateHashDit,
-  isEOA,
-  addressPoisoningDetection,
-  determineTransactionAndDestinationRiskInfo,
+	getHashDitResponse,
+	parseTransactingValue,
+	getNativeToken,
+	authenticateHashDit,
+	authenticateDiTing,
+	isEOA,
+	addressPoisoningDetection,
+	determineTransactionAndDestinationRiskInfo,
+	getApprovals,
+	checkBlacklistedAddresses,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {onInstallContent,onHomePageContent} from "./utils/content";
 
 export const onInstall: OnInstallHandler = async () => {
-  // Show install instructions and links
-  await snap.request({
-    method: 'snap_dialog',
-    params: {
-      type: 'alert',
-      content: panel(onInstallContent),
-    },
-  });
-  try {
-    // Get user's accounts
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    const from = accounts[0];
 
+	// Show install instructions and links
+	await snap.request({
+		method: 'snap_dialog',
+		params: {
+			type: 'alert',
+			 content: panel(onInstallContent),
+		},
+	});
 
-    // Request user to sign a message -> get user's signature -> get user's public key.
-    const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-    const signature = await ethereum.request({
-      method: 'personal_sign',
-      params: [message, from],
-    });
-    let publicKey = extractPublicKeyFromSignature(message, signature, from);
-    publicKey = publicKey.substring(2);
-		console.log("pubkey",publicKey);
-    try {
-      // Save public key here and user address here:
-      await snap.request({
-        method: 'snap_manageState',
-        params: {
-          operation: 'update',
-          newState: {
-            publicKey: publicKey,
-            userAddress: from,
-            messageSignature: signature,
-          },
-        },
-      });
-    } catch (error) {}
+	try {
+		// Get user's accounts
+		const accounts = await ethereum.request({
+			method: 'eth_requestAccounts',
+		});
+		const from = accounts[0];
 
-    try {
-      const persistedData = await snap.request({
-        method: 'snap_manageState',
-        params: { operation: 'get' },
-      });
+		// Request user to sign a message -> get user's signature -> get user's public key.
+		const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+		const signature = (await ethereum.request({
+			method: 'personal_sign',
+			params: [message, from],
+		})) as string;
 
-      await authenticateHashDit(persistedData); // call HashDit API to authenticate user
-    } catch (error) {}
-    
-  } catch (error) {}
+		let publicKey = extractPublicKeyFromSignature(
+			message,
+			signature,
+			from,
+		).substring(2);
 
+		// Initialize state to update later
+		const newState: any = {
+			publicKey: publicKey,
+			userAddress: from,
+		};
+
+		// Call HashDit API to authenticate user
+		try {
+			await authenticateHashDit(from, signature);
+		} catch (error) {
+			console.error('Error during HashDit API authentication:', error);
+		}
+
+		// Call DiTing Auth API to retrieve personal API key
+		try {
+			const DiTingResult = await authenticateDiTing(from, signature);
+			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
+				newState.DiTingApiKey = DiTingResult.apiKey;
+			} else {
+				throw new Error(
+					`Authentication failed: ${DiTingResult.message}`,
+				);
+			}
+		} catch (error) {
+			console.error(
+				'An error occurred during DiTing authentication:',
+				error,
+			);
+		}
+
+		// Finally, update the state with all the collected data
+		await snap.request({
+			method: 'snap_manageState',
+			params: {
+				operation: 'update',
+				newState: newState,
+			},
+		});
+
+		// Optionally, fetch and log the updated state
+		const updatedData = await snap.request({
+			method: 'snap_manageState',
+			params: { operation: 'get' },
+		});
+		console.log(updatedData);
+	} catch (error) {
+		console.error(
+			'An error occurred during the installation process:',
+			error,
+		);
+	}
+};
+
+// Run the `getApprovals` job every X days
+export const onCronjob: OnCronjobHandler = async ({ request }) => {
+	console.log('Received request method:', request.method); // Debugging statement
+	switch (request.method) {
+		//TODO
+		// case 'getAllApprovals':
+		case 'test':
+			try {
+				const persistedUserData = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				try {
+					const approvalResult = await getApprovals(
+						persistedUserData.userAddress,
+						persistedUserData.DiTingApiKey,
+					);
+					//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
+					console.log('ApprovalResult:', approvalResult);
+					return snap.request({
+						method: 'snap_notify',
+						params: {
+							type: 'inApp',
+							message: approvalResult,
+						},
+					});
+				} catch (error) {
+					console.error('Error during approval fetching:', error);
+				}
+			} catch (error) {
+				console.error('Error getting persisted user data:', error);
+			}
+
+		//TODO
+		//case 'getRiskyApprovals':
+		case 'test1':
+			try {
+				const persistedUserData = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				try {
+					const approvalResult = await checkBlacklistedAddresses(
+						persistedUserData.userAddress,
+						persistedUserData.publicKey,
+						persistedUserData.DiTingApiKey,
+					);
+					console.log('ApprovalResult:', approvalResult);
+					return snap.request({
+						method: 'snap_notify',
+						params: {
+							type: 'inApp',
+							message: approvalResult,
+						},
+					});
+				} catch (error) {
+					console.error('Error during approval fetching:', error);
+				}
+			} catch (error) {
+				console.error('Error getting persisted user data:', error);
+			}
+		default:
+			console.log(request, request.method);
+			throw new Error(`Method not found.,${request}`);
+	}
 
 };
 
 
 // Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
-  transaction,
-  transactionOrigin,
+	transaction,
+	transactionOrigin,
 }) => {
+
   const accounts = await ethereum.request({
     method: 'eth_accounts',
     params: [],
