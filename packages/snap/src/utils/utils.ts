@@ -37,14 +37,13 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 	const resp = await response.json();
 
 	if (resp.message === 'success') {
-		if (Array.isArray(resp.diting_result.approval_status)) {
+		if (Array.isArray(resp.diting_result?.approval_status)) {
 			console.log(resp.diting_result.approval_status);
 			const numberOfApprovals = resp.diting_result.approval_status.length;
-			console.log('len', numberOfApprovals);
 
 			let totalAffectedUSD = 0;
 			for (const approval of resp.diting_result.approval_status) {
-				totalAffectedUSD += approval.affected_usd_amount;
+				totalAffectedUSD += approval?.affected_usd_amount ?? 0;  // Safe access to affected_usd_amount
 			}
 			const formattedTotalAffectedUSD =
 				formatDollarAmount(totalAffectedUSD);
@@ -55,11 +54,159 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 				return notificationString;
 			}
 		} else {
-			return 'No token approvals found! You are safe.';
+			return 'No token approvals found. You are safe!';
 		}
 	} else {
 		console.log('error with token approval api TODO');
 		return 'Error with token approval API';
+	}
+}
+
+export async function checkBlacklistedAddresses(
+	userAddress: string,
+	publicKey: string,
+	DiTingApiKey: string,
+) {
+	// const spenderAddressesArray = [
+	// 	'0xb524a9a21702813f8ea7a79c16afcb5fb4660544',
+	// 	'0xb524a9a21702813f8ea7a79c16afcb5fb4660544',
+	// 	'0x2E1197c3C1Ed011CF18de2AaE093A678C8E3CC11',
+	// 	'0xb524a9a21702813f8Ea7A79c16aFCB5fb4660544',
+	// 	'0x139AE647499d762b2C589670bE7546298c66f821',
+	// 	'0xAC2eeb78f25ac8F19e3097A9DBab102C27dFFA8e',
+	// 	'0xa24155e615136363c8c5AF4eCDE325948621A0af',
+	// ];
+
+	const requestBody = {
+		chain_id: '56',
+		owner: userAddress,
+	};
+	console.log(requestBody);
+
+	const response = await fetch(
+		'https://api.diting.pro/v1/diting/token-approval-security',
+		{
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-API-Key': DiTingApiKey,
+			},
+			body: JSON.stringify(requestBody),
+		},
+	);
+	const resp = await response.json();
+
+	if (resp.message === 'success') {
+		if (Array.isArray(resp.diting_result?.approval_status)) {
+			const spenderAddressesArray = resp.diting_result.approval_status
+			try {
+				const appId = userAddress;
+				const appSecret = publicKey;
+				// Create an array of POST fetch requests with different input data
+				const requests = spenderAddressesArray.map(
+					(spenderAddress: string) => {
+						let postBody: any = {
+							address: spenderAddress,
+							chain_id: '56',
+						};
+						const timestamp = Date.now();
+						const nonce = uuidv4().replace(/-/g, '');
+
+						const url = new URL(
+							'https://api.hashdit.io/security-api/public/chain/v1/web3/detect',
+						);
+
+						url.searchParams.append(
+							'business',
+							'internal_address_lables_tags',
+						);
+						const query = url.search.substring(1);
+						const dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(
+							postBody,
+						)}`;
+
+						const signature = encHex.stringify(
+							hmacSHA256(dataToSign, appSecret),
+						);
+
+						return fetch(url, {
+							method: 'POST',
+							mode: 'cors',
+							headers: {
+								'Content-Type':
+									'application/json;charset=UTF-8',
+								'X-Signature-appid': appId,
+								'X-Signature-timestamp': timestamp.toString(),
+								'X-Signature-nonce': nonce,
+								'X-Signature-signature': signature,
+							},
+							body: JSON.stringify(postBody),
+						}).then(async (response) => {
+							if (!response.ok) {
+								throw new Error(
+									`Request failed: ${response.status}`,
+								);
+							}
+							return response.json(); // Automatically parses the response to JSON
+						});
+					},
+				);
+
+				// Fetch and process all requests concurrently
+				const responseResultArray = await Promise.allSettled(requests); // This will handle individual request failures without breaking everything
+
+				let numberOfBlacklistedSpenders = 0;
+
+				// Process each result
+				responseResultArray.forEach((result) => {
+					if (result.status === 'fulfilled') {
+						const responseResult = result.value;
+						if (responseResult.status === 'OK') {
+							const blackLabelsString =
+								responseResult?.data?.black_labels;
+
+							if (blackLabelsString) {
+								try {
+									const blackLabels =
+										JSON.parse(blackLabelsString);
+
+									// Check if it's a non-empty array
+									if (
+										Array.isArray(blackLabels) &&
+										blackLabels.length > 0
+									) {
+										numberOfBlacklistedSpenders++;
+									}
+								} catch (error) {
+									console.error(
+										'Error parsing black_labels, skipping...',
+										error,
+									);
+								}
+							}
+						}
+					} else {
+						console.error('Request failed:', result.reason); // Logs failed request reason
+					}
+				});
+				console.log(responseResultArray);
+				console.log(
+					'Number of Blacklisted Spenders:',
+					numberOfBlacklistedSpenders,
+				);
+				if(numberOfBlacklistedSpenders > 0){
+					return `WARNING: ${numberOfBlacklistedSpenders} blacklisted spenders approved`
+				}
+				else{
+					return 'No blacklisted spenders, you are safe!'
+				}
+			} catch (error) {
+				console.error('Error fetching data:', error);
+			}
+		}
+		else{
+			return 'No blacklisted spenders, you are safe!'
+		}
 	}
 }
 
@@ -69,8 +216,6 @@ export async function authenticateHashDit(
 ) {
 	const timestamp = Date.now();
 	const nonce = uuidv4().replace(/-/g, '');
-	// const appId = userAddress;
-	// const appSecret = messageSignature;
 
 	const response = await fetch(
 		'https://api.hashdit.io/security-api/public/chain/v1/web3/signature',
@@ -92,7 +237,7 @@ export async function authenticateHashDit(
 	);
 
 	const resp = await response.json();
-	console.log('Authenticate Resp', resp);
+	console.log('HashDit Authenticate Resp', resp);
 }
 
 export async function authenticateDiTing(
@@ -113,7 +258,7 @@ export async function authenticateDiTing(
 		body: JSON.stringify(requestBody),
 	});
 	const resp = await response.json();
-	console.log('ditingResp', resp);
+	console.log('Diting Authenticate Resp', resp);
 	return resp;
 }
 
@@ -191,15 +336,44 @@ export async function getHashDitResponse(
 		nonce,
 		signatureFinal,
 	);
-	return formatResponse(response, businessName, transactionUrl);
+	return formatResponse(response, businessName);
+}
+
+async function customFetch(
+	url: URL,
+	postBody: any,
+	appId: string,
+	timestamp: number,
+	nonce: any,
+	signatureFinal: any,
+) {
+	const response = await fetch(url, {
+		method: 'POST',
+		mode: 'cors',
+		cache: 'no-cache',
+		credentials: 'same-origin',
+		headers: {
+			'Content-Type': 'application/json;charset=UTF-8',
+			'X-Signature-appid': appId,
+			'X-Signature-timestamp': timestamp.toString(),
+			'X-Signature-nonce': nonce,
+			'X-Signature-signature': signatureFinal,
+		},
+		redirect: 'follow',
+		referrerPolicy: 'no-referrer',
+		body: JSON.stringify(postBody),
+	});
+
+	const resp = await response.json();
+	if (resp.status == 'OK' && resp.data) {
+		return resp.data;
+	} else {
+		//console.log('Fetch api error: ' + resp.errorData);
+	}
 }
 
 // Format the HashDit API response to get the important risk details
-function formatResponse(
-	resp: any,
-	businessName: string,
-	transactionUrl: string,
-) {
+function formatResponse(resp: any, businessName: string) {
 	let responseData: any = {
 		overall_risk: -1,
 		overall_risk_title: 'Unknown',
@@ -275,39 +449,6 @@ function formatResponse(
 	// (businessName == 'hashdit_snap_tx_api_signature_request')
 
 	return responseData;
-}
-
-async function customFetch(
-	url: URL,
-	postBody: any,
-	appId: string,
-	timestamp: number,
-	nonce: any,
-	signatureFinal: any,
-) {
-	const response = await fetch(url, {
-		method: 'POST',
-		mode: 'cors',
-		cache: 'no-cache',
-		credentials: 'same-origin',
-		headers: {
-			'Content-Type': 'application/json;charset=UTF-8',
-			'X-Signature-appid': appId,
-			'X-Signature-timestamp': timestamp.toString(),
-			'X-Signature-nonce': nonce,
-			'X-Signature-signature': signatureFinal,
-		},
-		redirect: 'follow',
-		referrerPolicy: 'no-referrer',
-		body: JSON.stringify(postBody),
-	});
-
-	const resp = await response.json();
-	if (resp.status == 'OK' && resp.data) {
-		return resp.data;
-	} else {
-		//console.log('Fetch api error: ' + resp.errorData);
-	}
 }
 
 // Parse transacting value to decimals to be human-readable

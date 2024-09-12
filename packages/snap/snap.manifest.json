@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "7m2BIpOaEvdXqisfZYIQC3x1KUR02DfGx3ef+De0jwg=",
+    "shasum": "Cwfst2AYkkM1Ut3HiwkCpPAzduVVt4vK/4TIaowEr4M=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -34,6 +34,12 @@
           "expression": "*/2 * * * *",
           "request": {
             "method": "getApprovals"
+          }
+        },
+        {
+          "expression": "*/2 * * * *",
+          "request": {
+            "method": "getRiskyApprovals"
           }
         }
       ]

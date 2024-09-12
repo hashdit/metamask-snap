@@ -26,6 +26,7 @@ import {
 	addressPoisoningDetection,
 	determineTransactionAndDestinationRiskInfo,
 	getApprovals,
+	checkBlacklistedAddresses,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 
@@ -146,8 +147,11 @@ export const onInstall: OnInstallHandler = async () => {
 
 // Run the `getApprovals` job every X days
 export const onCronjob: OnCronjobHandler = async ({ request }) => {
+	console.log('Received request method:', request.method); // Debugging statement
 	switch (request.method) {
-		case 'getApprovals':
+		//TODO
+		// case 'getAllApprovals':
+		case 'test':
 			try {
 				const persistedUserData = await snap.request({
 					method: 'snap_manageState',
@@ -174,6 +178,34 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 				console.error('Error getting persisted user data:', error);
 			}
 
+		//TODO
+		//case 'getRiskyApprovals':
+		case 'test1':
+			try {
+				const persistedUserData = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				try {
+					const approvalResult = await checkBlacklistedAddresses(
+						persistedUserData.userAddress,
+						persistedUserData.publicKey,
+						persistedUserData.DiTingApiKey,
+					);
+					console.log('ApprovalResult:', approvalResult);
+					return snap.request({
+						method: 'snap_notify',
+						params: {
+							type: 'inApp',
+							message: approvalResult,
+						},
+					});
+				} catch (error) {
+					console.error('Error during approval fetching:', error);
+				}
+			} catch (error) {
+				console.error('Error getting persisted user data:', error);
+			}
 		default:
 			console.log(request, request.method);
 			throw new Error(`Method not found.,${request}`);
@@ -189,6 +221,17 @@ export const onTransaction: OnTransactionHandler = async ({
 		method: 'eth_accounts',
 		params: [],
 	});
+
+
+
+	const persistedUserData = await snap.request({
+		method: 'snap_manageState',
+		params: { operation: 'get' },
+	});
+
+
+
+
 	// Transaction is a native token transfer if no contract bytecode found.
 	if (await isEOA(transaction.to)) {
 		const chainId = await ethereum.request({ method: 'eth_chainId' });
