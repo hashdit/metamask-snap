@@ -16,7 +16,6 @@ import {
 	row,
 } from '@metamask/snaps-sdk';
 
-
 export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 	const requestBody = {
 		chain_id: '56',
@@ -44,7 +43,7 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 
 			let totalAffectedUSD = 0;
 			for (const approval of resp.diting_result.approval_status) {
-				totalAffectedUSD += approval?.affected_usd_amount ?? 0;  // Safe access to affected_usd_amount
+				totalAffectedUSD += approval?.affected_usd_amount ?? 0; // Safe access to affected_usd_amount
 			}
 			const formattedTotalAffectedUSD =
 				formatDollarAmount(totalAffectedUSD);
@@ -61,7 +60,6 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 		console.log('error with token approval api TODO');
 		return 'Error with token approval API';
 	}
-
 }
 
 export async function checkBlacklistedAddresses(
@@ -100,7 +98,7 @@ export async function checkBlacklistedAddresses(
 
 	if (resp.message === 'success') {
 		if (Array.isArray(resp.diting_result?.approval_status)) {
-			const spenderAddressesArray = resp.diting_result.approval_status
+			const spenderAddressesArray = resp.diting_result.approval_status;
 			try {
 				const appId = userAddress;
 				const appSecret = publicKey;
@@ -196,18 +194,16 @@ export async function checkBlacklistedAddresses(
 					'Number of Blacklisted Spenders:',
 					numberOfBlacklistedSpenders,
 				);
-				if(numberOfBlacklistedSpenders > 0){
-					return `WARNING: ${numberOfBlacklistedSpenders} blacklisted spenders approved`
-				}
-				else{
-					return 'No blacklisted spenders, you are safe!'
+				if (numberOfBlacklistedSpenders > 0) {
+					return `WARNING: ${numberOfBlacklistedSpenders} blacklisted spenders approved`;
+				} else {
+					return 'No blacklisted spenders, you are safe!';
 				}
 			} catch (error) {
 				console.error('Error fetching data:', error);
 			}
-		}
-		else{
-			return 'No blacklisted spenders, you are safe!'
+		} else {
+			return 'No blacklisted spenders, you are safe!';
 		}
 	}
 }
@@ -453,47 +449,48 @@ function formatResponse(resp: any, businessName: string) {
 	return responseData;
 }
 
-export async function getTokenApprovals(){
-  try {
-    // Get user's accounts
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-    const from = accounts[0];
+export async function getTokenApprovals() {
+	try {
+		// Get user's accounts
+		const accounts = await ethereum.request({
+			method: 'eth_requestAccounts',
+		});
+		const from = accounts[0];
 
-    const url = 'https://api.diting.pro/v1/auth';
+		const url = 'https://api.diting.pro/v1/auth';
 
-    // Define the body parameters
-    const bodyParameters = {
-      // Replace with your actual body parameters
-      userAddr: from,
-      signature: "TODO",
-    };
+		// Define the body parameters
+		const bodyParameters = {
+			// Replace with your actual body parameters
+			userAddr: from,
+			signature: 'TODO',
+		};
 		console.log(bodyParameters);
 
-    try {
-      // Send a POST request to the API
-      const response = await fetch(url, {
-        method: 'POST', // Use POST method
-        headers: {
-          'Content-Type': 'application/json', // Set content type to JSON
-        },
-        body: JSON.stringify(bodyParameters), // Convert the body parameters to a JSON string
-      });
+		try {
+			// Send a POST request to the API
+			const response = await fetch(url, {
+				method: 'POST', // Use POST method
+				headers: {
+					'Content-Type': 'application/json', // Set content type to JSON
+				},
+				body: JSON.stringify(bodyParameters), // Convert the body parameters to a JSON string
+			});
 
-      // Parse the JSON response
-      const data = await response.json();
+			// Parse the JSON response
+			const data = await response.json();
 
-      // Handle the response data
-      console.log('Response:', data);
-      if(data.diting_result){
-        if(data.diting_result.approval_status){
-          
-        }
-      }
-    } catch (error) {
-      // Handle errors
-      console.error('Error:', error);
-    }
-  } catch (error) {}
+			// Handle the response data
+			console.log('Response:', data);
+			if (data.diting_result) {
+				if (data.diting_result.approval_status) {
+				}
+			}
+		} catch (error) {
+			// Handle errors
+			console.error('Error:', error);
+		}
+	} catch (error) {}
 }
 
 // Parse transacting value to decimals to be human-readable
@@ -684,27 +681,25 @@ function determineUrlRiskInfo(urlRiskLevel: number): string[] {
 
 //TODO: Seperate for more precise descriptions?
 export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
-
-  if (riskLevel >= 4) {
-    return [
-      '⛔ High ⛔',
-      'This transaction is considered high risk. It is advised to reject this transcation.',
-    ];
-  } else if (riskLevel >= 2) {
-    return [
-      '⚠️ Medium ⚠️',
-      'This transaction is considered medium risk. Please review the details of this transaction.',
-    ];
-  } else if (riskLevel >= 0) {
-    return [
-      'Low',
-      'This transaction is considered low risk. Please review the details of this transaction.',
-    ];
-  } else {
-    return [
-      'Unknown',
-      'The risk level of this transaction is unknown. Please proceed with caution.',
-    ];
-  }
+	if (riskLevel >= 4) {
+		return [
+			'⛔ High ⛔',
+			'This transaction is considered high risk. It is advised to reject this transcation.',
+		];
+	} else if (riskLevel >= 2) {
+		return [
+			'⚠️ Medium ⚠️',
+			'This transaction is considered medium risk. Please review the details of this transaction.',
+		];
+	} else if (riskLevel >= 0) {
+		return [
+			'Low',
+			'This transaction is considered low risk. Please review the details of this transaction.',
+		];
+	} else {
+		return [
+			'Unknown',
+			'The risk level of this transaction is unknown. Please proceed with caution.',
+		];
+	}
 }
-
