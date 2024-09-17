@@ -1,4 +1,16 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["src"]
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",               // Add this
+    "jsxImportSource": "@metamask/snaps-sdk"  // Add this
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"                         // Change this line to include .tsx files
+  ]
 }

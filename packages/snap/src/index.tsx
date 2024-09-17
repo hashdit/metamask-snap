@@ -4,6 +4,7 @@ import type {
 	OnHomePageHandler,
 	OnRpcRequestHandler,
 	OnCronjobHandler,
+	OnUserInputHandler,
 } from '@metamask/snaps-sdk';
 import {
 	heading,
@@ -15,6 +16,7 @@ import {
 	UnauthorizedError,
 	MethodNotFoundError,
 	NotificationType,
+	UserInputEventType,
 } from '@metamask/snaps-sdk';
 import {
 	getHashDitResponse,
@@ -29,7 +31,87 @@ import {
 	checkBlacklistedAddresses,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
-import { onInstallContent, onHomePageContent } from './utils/content';
+import {
+	onInstallContent,
+	onHomePageContent,
+	InteractiveFormState,
+} from './utils/content';
+import {
+	Box,
+	Heading,
+	Address,
+	Text,
+	Divider,
+	Bold,
+	Link,
+	Dropdown,
+	Option,
+	Button,
+	Field,
+	Radio,
+	RadioGroup,
+	Selector,
+	SelectorOption,
+	Card,
+	Form,
+} from '@metamask/snaps-sdk/jsx';
+import { Result } from './utils/Results';
+
+/**
+ * Handle incoming user events coming from the MetaMask clients open interfaces.
+ *
+ * @param params - The event parameters.
+ * @param params.id - The Snap interface ID where the event was fired.
+ * @param params.event - The event object containing the event type, name and value.
+ * @param params.context - The Snap interface context.
+ * @see https://docs.metamask.io/snaps/reference/exports/#onuserinput
+ */
+
+type ResultProps = {
+	values: InteractiveFormState;
+};
+
+export const onUserInput: OnUserInputHandler = async ({
+	id,
+	event,
+	context,
+}) => {
+	if (
+		event.type === UserInputEventType.FormSubmitEvent &&
+		event.name === 'example-form'
+	) {
+		const value = event.value as InteractiveFormState;
+		console.log('onUserInput here', id, event, value);
+
+		let tempState = await snap.request({
+			method: 'snap_manageState',
+			params: { operation: 'get' },
+		});
+		// If tempState is null, initialize it to an empty object
+		if (!tempState) {
+			tempState = {};
+		}
+
+		console.log('tempState', tempState);
+		tempState.notificationValue = value.exampleDropdown;
+
+		console.log('TempState add', tempState);
+
+		await snap.request({
+			method: 'snap_manageState',
+			params: {
+				operation: 'update',
+				newState: tempState,
+			},
+		});
+
+		const updatedData = await snap.request({
+			method: 'snap_manageState',
+			params: { operation: 'get' },
+		});
+		console.log('Updated State', updatedData);
+	}
+};
 
 export const onInstall: OnInstallHandler = async () => {
 	// Show install instructions and links
@@ -37,7 +119,7 @@ export const onInstall: OnInstallHandler = async () => {
 		method: 'snap_dialog',
 		params: {
 			type: 'alert',
-			content: panel(onInstallContent),
+			content: onInstallContent,
 		},
 	});
 
@@ -627,7 +709,84 @@ export const onTransaction: OnTransactionHandler = async ({
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
+	const state = await snap.request({
+		method: 'snap_manageState',
+		params: { operation: 'get' },
+	});
+	// Check if notificationValue exists in the state and use it, otherwise default to "Off"
+	const dropdownValue = state?.notificationValue || 'Off';
+
 	return {
-		content: panel(onHomePageContent),
+		content: (
+			<Box>
+				<Heading>HashDit Snap</Heading>
+				<Form name="example-form">
+					<Text>
+						Explore the power of HashDit Security and fortify your
+						MetaMask experience. Navigate the crypto space with
+						confidence.
+					</Text>
+					<Divider />
+					<Heading>Notification Settings</Heading>
+					<Dropdown name="exampleDropdown" value={dropdownValue}>
+						<Option value="Off">Off</Option>
+						<Option value="option1">Every Day</Option>
+						<Option value="option2">Every Week</Option>
+						<Option value="option3">Every Month</Option>
+					</Dropdown>
+					<Button type="submit" name="submit">
+						Save
+					</Button>
+
+					<Divider />
+					<Heading>🔗 Links</Heading>
+					<Text>
+						Please help improve HashDit Snap by taking our 1 minute
+						survey:{' '}
+						<Link href="https://forms.gle/fgjAgVjUSyjuDS5BA">
+							Survey
+						</Link>
+					</Text>
+					<Text>
+						HashDit Snap Official Website:{' '}
+						<Link href="https://www.hashdit.io/en/snap">
+							Hashdit
+						</Link>
+					</Text>
+					<Text>
+						Installation Guide:{' '}
+						<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap">
+							Installation
+						</Link>
+					</Text>
+					<Text>
+						How To Use HashDit Snap:{' '}
+						<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap">
+							Usage
+						</Link>
+					</Text>
+					<Text>
+						Documentation:{' '}
+						<Link href="https://hashdit.gitbook.io/hashdit-snap">
+							Docs
+						</Link>
+					</Text>
+					<Text>
+						FAQ/Knowledge Base:{' '}
+						<Link href="https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base">
+							FAQ
+						</Link>
+					</Text>
+					<Text>
+						MetaMask Store Page:{' '}
+						<Link href="https://snaps.metamask.io/snap/npm/hashdit-snap-security/">
+							Snap Store
+						</Link>
+					</Text>
+					<Divider />
+					<Heading>Thank you for using HashDit Snap!</Heading>
+				</Form>
+			</Box>
+		),
 	};
 };
