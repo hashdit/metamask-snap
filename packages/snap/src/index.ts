@@ -3,7 +3,6 @@ import type {
     OnInstallHandler,
     OnHomePageHandler,
     OnRpcRequestHandler,
-    OnCronjobHandler,
 } from '@metamask/snaps-sdk';
 
 
@@ -100,10 +99,10 @@ export const onSignature: OnSignatureHandler = async ({
     * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
     */
     const chainId = await ethereum.request({ method: 'eth_chainId' });
-    // Check if chainId is undefined or null, and a supported network (BSC / ETH)
+    
     let contentArray: any[] = [];
     let content;
-
+    // Check if chainId is undefined or null, and a supported network (BSC / ETH)   
     if (typeof chainId == 'string') {
         if (chainId == '0x38' || chainId == '0x1') {
             // Retrieve saved user's public key to make HashDit API call
@@ -111,9 +110,6 @@ export const onSignature: OnSignatureHandler = async ({
                 method: 'snap_manageState',
                 params: { operation: 'get' },
             });
-
-
-            let contentArray: any[] = [];
             var signatureRespData;
             if (persistedUserPublicKey !== null) {
                 signatureRespData = await getHashDitResponse(
@@ -130,15 +126,14 @@ export const onSignature: OnSignatureHandler = async ({
                 );
                 //contentArray.push(text(signatureRespData.risks));
             }
-            console.log("Here1");
         }
-        console.log("Here2");
         //content = panel(contentArray);
     }
-    console.log("Here3")
+    console.log("Complete");
     // Note: Currently during a signature request, if a user signs the message quickly, this function will not return anything.
-    // The signature request does not wait for onSignature to finish. Therefore insight might not show.
+    // The signature request does not wait for onSignature to finish. Therefore signature insight might not show.
     return {
+        // TODO: Pass in the risk value returned by the getHashDitResponse API call here
         content: panel([
             heading('My Signature Insights'),
             text('Here are the insights:'),

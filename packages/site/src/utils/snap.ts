@@ -45,7 +45,7 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 
     return Object.values(snaps).find(
       (snap) =>
-        snap.id === 'defaultSnapOrigin' && (!version || snap.version === version), // Replace 'defaultSnapOrigin' with 'npm:hashdit-snap-security' to test live version of snap
+        snap.id === defaultSnapOrigin && (!version || snap.version === version), // Replace 'defaultSnapOrigin' with 'npm:hashdit-snap-security' to test live version of snap
     );
   } catch (e) {
     console.log('Failed to obtain installed snap', e);
