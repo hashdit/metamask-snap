@@ -29,6 +29,7 @@ import {
 	determineTransactionAndDestinationRiskInfo,
 	getApprovals,
 	checkBlacklistedAddresses,
+	intervalToMilliseconds,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -55,7 +56,6 @@ import {
 	Card,
 	Form,
 } from '@metamask/snaps-sdk/jsx';
-import { Result } from './utils/Results';
 
 /**
  * Handle incoming user events coming from the MetaMask clients open interfaces.
@@ -67,18 +67,15 @@ import { Result } from './utils/Results';
  * @see https://docs.metamask.io/snaps/reference/exports/#onuserinput
  */
 
-type ResultProps = {
-	values: InteractiveFormState;
-};
-
 export const onUserInput: OnUserInputHandler = async ({
 	id,
 	event,
 	context,
 }) => {
+	// Detect user submits form `allApprovalsForm`
 	if (
 		event.type === UserInputEventType.FormSubmitEvent &&
-		event.name === 'example-form'
+		event.name === 'allApprovalsForm'
 	) {
 		const value = event.value as InteractiveFormState;
 		console.log('onUserInput here', id, event, value);
@@ -92,10 +89,8 @@ export const onUserInput: OnUserInputHandler = async ({
 			tempState = {};
 		}
 
-		console.log('tempState', tempState);
-		tempState.notificationValue = value.exampleDropdown;
+		tempState.allApprovalsDropdown = value.allApprovalsDropdown;
 
-		console.log('TempState add', tempState);
 
 		await snap.request({
 			method: 'snap_manageState',
@@ -105,15 +100,54 @@ export const onUserInput: OnUserInputHandler = async ({
 			},
 		});
 
-		const updatedData = await snap.request({
+		// TODO: Remove
+		// const updatedData = await snap.request({
+		// 	method: 'snap_manageState',
+		// 	params: { operation: 'get' },
+		// });
+
+	}
+	// Detect user submits form `riskyApprovalsForm`
+	else if (
+		event.type === UserInputEventType.FormSubmitEvent &&
+		event.name === 'riskyApprovalsForm'
+	) {
+		const value = event.value as InteractiveFormState;
+		console.log('onUserInput here', id, event, value);
+
+		let tempState = await snap.request({
 			method: 'snap_manageState',
 			params: { operation: 'get' },
 		});
-		console.log('Updated State', updatedData);
+		// If tempState is null, initialize it to an empty object
+		if (!tempState) {
+			tempState = {};
+		}
+
+
+		tempState.riskyApprovalsDropdown = value.riskyApprovalsDropdown;
+
+
+		await snap.request({
+			method: 'snap_manageState',
+			params: {
+				operation: 'update',
+				newState: tempState,
+			},
+		});
+
+		// TODO: Remove
+		// const updatedData = await snap.request({
+		// 	method: 'snap_manageState',
+		// 	params: { operation: 'get' },
+		// });
+		// console.log('Updated State', updatedData);
 	}
 };
 
 export const onInstall: OnInstallHandler = async () => {
+	console.log(new Date().getTime());
+
 	// Show install instructions and links
 	await snap.request({
 		method: 'snap_dialog',
@@ -143,10 +177,15 @@ export const onInstall: OnInstallHandler = async () => {
 			from,
 		).substring(2);
 
-		// Initialize state to update later
+		const lastExecutionTime = new Date().getTime(); // Get current time in milliseconds
+		// Initialize state to be saved
 		const newState: any = {
 			publicKey: publicKey,
 			userAddress: from,
+			allApprovalsDropdown: 'Off',
+			riskyApprovalsDropdown: 'Off',
+			allApprovalsExecutionTime: lastExecutionTime,
+			riskyApprovalsExecutionTime: lastExecutionTime,
 		};
 
 		// Call HashDit API to authenticate user
@@ -196,67 +235,105 @@ export const onInstall: OnInstallHandler = async () => {
 	}
 };
 
-// Run the `getApprovals` job every X days
+//
 export const onCronjob: OnCronjobHandler = async ({ request }) => {
-	console.log('Received request method:', request.method); // Debugging statement
 	switch (request.method) {
-		//TODO
-		// case 'getAllApprovals':
-		case 'test':
+		case 'getAllApprovals':
+			console.log('Received request method:', request.method);
 			try {
-				const persistedUserData = await snap.request({
+				let persistedUserData = await snap.request({
 					method: 'snap_manageState',
 					params: { operation: 'get' },
 				});
-				try {
-					const approvalResult = await getApprovals(
-						persistedUserData.userAddress,
-						persistedUserData.DiTingApiKey,
-					);
-					//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
-					console.log('ApprovalResult:', approvalResult);
-					return snap.request({
-						method: 'snap_notify',
-						params: {
-							type: 'inApp',
-							message: approvalResult,
-						},
-					});
-				} catch (error) {
-					console.error('Error during approval fetching:', error);
+				if(!persistedUserData){
+					persistedUserData = {}
 				}
+				console.log(
+					'persistedUserData getAllApprovals',
+					persistedUserData,
+				);
+				// The "All Approvals" Notification has been set to `Off`, do not run token approval check.
+				if (persistedUserData?.allApprovalsDropdown == 'Off') {
+					console.log('allApprovalsDropdown is set to Off');
+					return;
+				}
+				
+				
+				console.log(
+					'allApprovalsDropdown is set to ',
+					persistedUserData?.allApprovalsDropdown,
+				);
+
+				const interval = intervalToMilliseconds(persistedUserData?.allApprovalsDropdown)
+				const currentTime = new Date().getTime();
+				if(currentTime > persistedUserData?.allApprovalsExecutionTime + interval){
+					try {
+						const approvalResult = await getApprovals(
+							persistedUserData?.userAddress,
+							persistedUserData?.DiTingApiKey,
+						);
+						//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
+						console.log('ApprovalResult:', approvalResult);
+						persistedUserData.allApprovalsExecutionTime = currentTime;
+						await snap.request({
+							method: 'snap_manageState',
+							params: {
+								operation: 'update',
+								newState: persistedUserData,
+							},
+						});
+
+						//TODO: remove
+						const updatedData = await snap.request({
+							method: 'snap_manageState',
+							params: { operation: 'get' },
+						});
+						console.log(updatedData);
+
+						return snap.request({
+							method: 'snap_notify',
+							params: {
+								type: 'inApp',
+								message: approvalResult,
+							},
+						});
+					} catch (error) {
+						console.error('Error during all approval fetching:', error);
+					}
+				}
+
 			} catch (error) {
-				console.error('Error getting persisted user data:', error);
+				console.error("ERROR HERE", error);
 			}
 
 		//TODO
 		//case 'getRiskyApprovals':
-		case 'test1':
-			try {
-				const persistedUserData = await snap.request({
-					method: 'snap_manageState',
-					params: { operation: 'get' },
-				});
-				try {
-					const approvalResult = await checkBlacklistedAddresses(
-						persistedUserData.userAddress,
-						persistedUserData.publicKey,
-						persistedUserData.DiTingApiKey,
-					);
-					console.log('ApprovalResult:', approvalResult);
-					return snap.request({
-						method: 'snap_notify',
-						params: {
-							type: 'inApp',
-							message: approvalResult,
-						},
-					});
-				} catch (error) {
-					console.error('Error during approval fetching:', error);
-				}
-			} catch (error) {
-				console.error('Error getting persisted user data:', error);
-			}
+		// case 'test1':
+		// 	try {
+		// 		const persistedUserData = await snap.request({
+		// 			method: 'snap_manageState',
+		// 			params: { operation: 'get' },
+		// 		});
+		// 		try {
+		// 			const approvalResult = await checkBlacklistedAddresses(
+		// 				persistedUserData.userAddress,
+		// 				persistedUserData.publicKey,
+		// 				persistedUserData.DiTingApiKey,
+		// 			);
+		// 			console.log('ApprovalResult:', approvalResult);
+		// 			return snap.request({
+		// 				method: 'snap_notify',
+		// 				params: {
+		// 					type: 'inApp',
+		// 					message: approvalResult,
+		// 				},
+		// 			});
+		// 		} catch (error) {
+		// 			console.error('Error during approval fetching:', error);
+		// 		}
+		// 	} catch (error) {
+		// 		console.error('Error getting persisted user data:', error);
+		// 	}
 		default:
 			console.log(request, request.method);
 			throw new Error(`Method not found.,${request}`);
@@ -709,84 +786,21 @@ export const onTransaction: OnTransactionHandler = async ({
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-	const state = await snap.request({
+	const persistedUserData = await snap.request({
 		method: 'snap_manageState',
 		params: { operation: 'get' },
 	});
-	// Check if notificationValue exists in the state and use it, otherwise default to "Off"
-	const dropdownValue = state?.notificationValue || 'Off';
+
+	// Check if the notification values exists in the persisted user data and use it, otherwise default to "Off"
+	const allApprovalsDropdownValue =
+		persistedUserData?.allApprovalsDropdown || 'Off';
+	const riskyApprovalsDropdown =
+		persistedUserData?.riskyApprovalsDropdown || 'Off';
 
 	return {
-		content: (
-			<Box>
-				<Heading>HashDit Snap</Heading>
-				<Form name="example-form">
-					<Text>
-						Explore the power of HashDit Security and fortify your
-						MetaMask experience. Navigate the crypto space with
-						confidence.
-					</Text>
-					<Divider />
-					<Heading>Notification Settings</Heading>
-					<Dropdown name="exampleDropdown" value={dropdownValue}>
-						<Option value="Off">Off</Option>
-						<Option value="option1">Every Day</Option>
-						<Option value="option2">Every Week</Option>
-						<Option value="option3">Every Month</Option>
-					</Dropdown>
-					<Button type="submit" name="submit">
-						Save
-					</Button>
-
-					<Divider />
-					<Heading>🔗 Links</Heading>
-					<Text>
-						Please help improve HashDit Snap by taking our 1 minute
-						survey:{' '}
-						<Link href="https://forms.gle/fgjAgVjUSyjuDS5BA">
-							Survey
-						</Link>
-					</Text>
-					<Text>
-						HashDit Snap Official Website:{' '}
-						<Link href="https://www.hashdit.io/en/snap">
-							Hashdit
-						</Link>
-					</Text>
-					<Text>
-						Installation Guide:{' '}
-						<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap">
-							Installation
-						</Link>
-					</Text>
-					<Text>
-						How To Use HashDit Snap:{' '}
-						<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap">
-							Usage
-						</Link>
-					</Text>
-					<Text>
-						Documentation:{' '}
-						<Link href="https://hashdit.gitbook.io/hashdit-snap">
-							Docs
-						</Link>
-					</Text>
-					<Text>
-						FAQ/Knowledge Base:{' '}
-						<Link href="https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base">
-							FAQ
-						</Link>
-					</Text>
-					<Text>
-						MetaMask Store Page:{' '}
-						<Link href="https://snaps.metamask.io/snap/npm/hashdit-snap-security/">
-							Snap Store
-						</Link>
-					</Text>
-					<Divider />
-					<Heading>Thank you for using HashDit Snap!</Heading>
-				</Form>
-			</Box>
+		content: onHomePageContent(
+			allApprovalsDropdownValue,
+			riskyApprovalsDropdown,
 		),
 	};
 };

@@ -639,6 +639,22 @@ function formatDollarAmount(amount: number): string {
 	}
 }
 
+export function intervalToMilliseconds(interval:string): number{
+
+	switch (interval) {
+		case 'minute':
+			return  3*60 *1000
+		case 'daily':
+		return 24 * 60 * 60 * 1000; // Milliseconds in a day
+		case 'weekly':
+		return 7 * 24 * 60 * 60 * 1000; // Milliseconds in a week
+		case 'monthly':
+		return 30 * 24 * 60 * 60 * 1000; // Approximate milliseconds in a month
+		default:
+		throw new Error('Invalid interval');
+	}
+	  
+}
 // Determine the risk title and description for each risk level. Used by URL screening.
 function determineUrlRiskInfo(urlRiskLevel: number): string[] {
 	if (urlRiskLevel == 0) {

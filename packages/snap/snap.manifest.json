@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "fmrsbCTQQCjH0zfV4tqZdcXyVBk0EsdwW5YhWJyFirM=",
+    "shasum": "JqgTJ69xvxJ6rTVi1lrcHzs1EqyG5BDjimJaLx/+BLQ=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -31,15 +31,9 @@
     "endowment:cronjob": {
       "jobs": [
         {
-          "expression": "*/2 * * * *",
+          "expression": "*/1 * * * *",
           "request": {
-            "method": "getApprovals"
-          }
-        },
-        {
-          "expression": "*/2 * * * *",
-          "request": {
-            "method": "getRiskyApprovals"
+            "method": "getAllApprovals"
           }
         }
       ]

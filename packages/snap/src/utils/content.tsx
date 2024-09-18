@@ -22,12 +22,10 @@ import {
  * The state of the {@link InteractiveForm} component.
  */
 export type InteractiveFormState = {
-
 	/**
 	 * The value of the example dropdown.
 	 */
 	'example-dropdown': string;
-
 };
 
 export const onInstallContent = (
@@ -89,19 +87,42 @@ export const onInstallContent = (
 	</Box>
 );
 
-export const onHomePageContent: SnapComponent = () => {
+export const onHomePageContent = (
+	allApprovalsDropdownValue: any,
+	riskyApprovalsDropdownValue: any,
+) => {
 	return (
 		<Box>
 			<Heading>HashDit Snap</Heading>
-			<Form name="example-form">
-				<Text>
-					Explore the power of HashDit Security and fortify your
-					MetaMask experience. Navigate the crypto space with
-					confidence.
-				</Text>
-				<Divider />
-				<Heading>Notification Settings</Heading>
-				<Dropdown name="example-dropdown">
+
+			<Text>
+				Explore the power of HashDit Security and fortify your MetaMask
+				experience. Navigate the crypto space with confidence.
+			</Text>
+			<Divider />
+			<Heading>Notification Settings</Heading>
+			<Form name="allApprovalsForm">
+				<Text>All Token Approvals</Text>
+				<Dropdown
+					name="allApprovalsDropdown"
+					value={allApprovalsDropdownValue}
+				>
+					<Option value="Off">Off</Option>
+					<Option value="minute">Every Minute</Option>
+					<Option value="daily">Every Day</Option>
+					<Option value="weekly">Every Week</Option>
+					<Option value="monthly">Every Month</Option>
+				</Dropdown>
+				<Button type="submit" name="submit">
+					Save
+				</Button>
+			</Form>
+			<Form name="riskyApprovalsForm">
+				<Text>Risky Token Approvals</Text>
+				<Dropdown
+					name="riskyApprovalsDropdown"
+					value={riskyApprovalsDropdownValue}
+				>
 					<Option value="Off">Off</Option>
 					<Option value="option1">Every Day</Option>
 					<Option value="option2">Every Week</Option>
@@ -110,76 +131,48 @@ export const onHomePageContent: SnapComponent = () => {
 				<Button type="submit" name="submit">
 					Save
 				</Button>
-				<Field label="Example RadioGroup">
-					<RadioGroup name="example-radiogroup">
-						<Radio value="option1">Option 1</Radio>
-						<Radio value="option2">Option 2</Radio>
-						<Radio value="option3">Option 3</Radio>
-					</RadioGroup>
-				</Field>
-				<Field label="Example Selector">
-					<Selector
-						name="example-selector"
-						title="Choose an option"
-						value="option1"
-					>
-						<SelectorOption value="option1">
-							<Card title="Option 1" value="option1" />
-						</SelectorOption>
-						<SelectorOption value="option2">
-							<Card title="Option 2" value="option2" />
-						</SelectorOption>
-						<SelectorOption value="option3">
-							<Card title="Option 3" value="option3" />
-						</SelectorOption>
-					</Selector>
-				</Field>
-				<Divider />
-				<Heading>🔗 Links</Heading>
-				<Text>
-					Please help improve HashDit Snap by taking our 1 minute
-					survey:{' '}
-					<Link href="https://forms.gle/fgjAgVjUSyjuDS5BA">
-						Survey
-					</Link>
-				</Text>
-				<Text>
-					HashDit Snap Official Website:{' '}
-					<Link href="https://www.hashdit.io/en/snap">Hashdit</Link>
-				</Text>
-				<Text>
-					Installation Guide:{' '}
-					<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap">
-						Installation
-					</Link>
-				</Text>
-				<Text>
-					How To Use HashDit Snap:{' '}
-					<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap">
-						Usage
-					</Link>
-				</Text>
-				<Text>
-					Documentation:{' '}
-					<Link href="https://hashdit.gitbook.io/hashdit-snap">
-						Docs
-					</Link>
-				</Text>
-				<Text>
-					FAQ/Knowledge Base:{' '}
-					<Link href="https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base">
-						FAQ
-					</Link>
-				</Text>
-				<Text>
-					MetaMask Store Page:{' '}
-					<Link href="https://snaps.metamask.io/snap/npm/hashdit-snap-security/">
-						Snap Store
-					</Link>
-				</Text>
-				<Divider />
-				<Heading>Thank you for using HashDit Snap!</Heading>
 			</Form>
+
+			<Divider />
+			<Heading>🔗 Links</Heading>
+			<Text>
+				Please help improve HashDit Snap by taking our 1 minute survey:{' '}
+				<Link href="https://forms.gle/fgjAgVjUSyjuDS5BA">Survey</Link>
+			</Text>
+			<Text>
+				HashDit Snap Official Website:{' '}
+				<Link href="https://www.hashdit.io/en/snap">Hashdit</Link>
+			</Text>
+			<Text>
+				Installation Guide:{' '}
+				<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap">
+					Installation
+				</Link>
+			</Text>
+			<Text>
+				How To Use HashDit Snap:{' '}
+				<Link href="https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap">
+					Usage
+				</Link>
+			</Text>
+			<Text>
+				Documentation:{' '}
+				<Link href="https://hashdit.gitbook.io/hashdit-snap">Docs</Link>
+			</Text>
+			<Text>
+				FAQ/Knowledge Base:{' '}
+				<Link href="https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base">
+					FAQ
+				</Link>
+			</Text>
+			<Text>
+				MetaMask Store Page:{' '}
+				<Link href="https://snaps.metamask.io/snap/npm/hashdit-snap-security/">
+					Snap Store
+				</Link>
+			</Text>
+			<Divider />
+			<Heading>Thank you for using HashDit Snap!</Heading>
 		</Box>
 	);
 };
