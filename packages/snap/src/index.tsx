@@ -58,7 +58,7 @@ import {
 } from '@metamask/snaps-sdk/jsx';
 
 /**
- * Handle incoming user events coming from the MetaMask clients open interfaces.
+ * Handle incoming user events coming from the MetaMask clients open interfaces. Only usable in Flask currently.
  *
  * @param params - The event parameters.
  * @param params.id - The Snap interface ID where the event was fired.
@@ -67,83 +67,69 @@ import {
  * @see https://docs.metamask.io/snaps/reference/exports/#onuserinput
  */
 
-export const onUserInput: OnUserInputHandler = async ({
-	id,
-	event,
-	context,
-}) => {
-	// Detect user submits form `allApprovalsForm`
-	if (
-		event.type === UserInputEventType.FormSubmitEvent &&
-		event.name === 'allApprovalsForm'
-	) {
-		const value = event.value as InteractiveFormState;
-		console.log('onUserInput here', id, event, value);
+// export const onUserInput: OnUserInputHandler = async ({
+// 	id,
+// 	event,
+// 	context,
+// }) => {
+// 	// Detect user submits form `allApprovalsForm`
+// 	if (
+// 		event.type === UserInputEventType.FormSubmitEvent &&
+// 		event.name === 'allApprovalsForm'
+// 	) {
+// 		const value = event.value as InteractiveFormState;
+// 		console.log('onUserInput here', id, event, value);
 
-		let tempState = await snap.request({
-			method: 'snap_manageState',
-			params: { operation: 'get' },
-		});
-		// If tempState is null, initialize it to an empty object
-		if (!tempState) {
-			tempState = {};
-		}
+// 		let tempState = await snap.request({
+// 			method: 'snap_manageState',
+// 			params: { operation: 'get' },
+// 		});
+// 		// If tempState is null, initialize it to an empty object
+// 		if (!tempState) {
+// 			tempState = {};
+// 		}
 
-		tempState.allApprovalsDropdown = value.allApprovalsDropdown;
-
-
-		await snap.request({
-			method: 'snap_manageState',
-			params: {
-				operation: 'update',
-				newState: tempState,
-			},
-		});
-
-		// TODO: Remove
-		// const updatedData = await snap.request({
-		// 	method: 'snap_manageState',
-		// 	params: { operation: 'get' },
-		// });
-
-	}
-	// Detect user submits form `riskyApprovalsForm`
-	else if (
-		event.type === UserInputEventType.FormSubmitEvent &&
-		event.name === 'riskyApprovalsForm'
-	) {
-		const value = event.value as InteractiveFormState;
-		console.log('onUserInput here', id, event, value);
-
-		let tempState = await snap.request({
-			method: 'snap_manageState',
-			params: { operation: 'get' },
-		});
-		// If tempState is null, initialize it to an empty object
-		if (!tempState) {
-			tempState = {};
-		}
+// 		tempState.allApprovalsDropdown = value.allApprovalsDropdown;
 
 
-		tempState.riskyApprovalsDropdown = value.riskyApprovalsDropdown;
+// 		await snap.request({
+// 			method: 'snap_manageState',
+// 			params: {
+// 				operation: 'update',
+// 				newState: tempState,
+// 			},
+// 		});
+// 	}
+// 	// Detect user submits form `riskyApprovalsForm`
+// 	else if (
+// 		event.type === UserInputEventType.FormSubmitEvent &&
+// 		event.name === 'riskyApprovalsForm'
+// 	) {
+// 		const value = event.value as InteractiveFormState;
+// 		console.log('onUserInput here', id, event, value);
+
+// 		let tempState = await snap.request({
+// 			method: 'snap_manageState',
+// 			params: { operation: 'get' },
+// 		});
+// 		// If tempState is null, initialize it to an empty object
+// 		if (!tempState) {
+// 			tempState = {};
+// 		}
 
 
-		await snap.request({
-			method: 'snap_manageState',
-			params: {
-				operation: 'update',
-				newState: tempState,
-			},
-		});
+// 		tempState.riskyApprovalsDropdown = value.riskyApprovalsDropdown;
 
-		// TODO: Remove
-		// const updatedData = await snap.request({
-		// 	method: 'snap_manageState',
-		// 	params: { operation: 'get' },
-		// });
-		// console.log('Updated State', updatedData);
-	}
-};
+
+// 		await snap.request({
+// 			method: 'snap_manageState',
+// 			params: {
+// 				operation: 'update',
+// 				newState: tempState,
+// 			},
+// 		});
+// 	}
+// };
 
 export const onInstall: OnInstallHandler = async () => {
 	console.log(new Date().getTime());
@@ -786,21 +772,21 @@ export const onTransaction: OnTransactionHandler = async ({
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-	const persistedUserData = await snap.request({
-		method: 'snap_manageState',
-		params: { operation: 'get' },
-	});
 
 	// Check if the notification values exists in the persisted user data and use it, otherwise default to "Off"
-	const allApprovalsDropdownValue =
-		persistedUserData?.allApprovalsDropdown || 'Off';
-	const riskyApprovalsDropdown =
-		persistedUserData?.riskyApprovalsDropdown || 'Off';
+	// const persistedUserData = await snap.request({
+	// 	method: 'snap_manageState',
+	// 	params: { operation: 'get' },
+	// });
+
+	// const allApprovalsDropdownValue =
+	// 	persistedUserData?.allApprovalsDropdown || 'Off';
+	// const riskyApprovalsDropdown =
+	// 	persistedUserData?.riskyApprovalsDropdown || 'Off';
 
 	return {
 		content: onHomePageContent(
-			allApprovalsDropdownValue,
-			riskyApprovalsDropdown,
+			
 		),
 	};
 };

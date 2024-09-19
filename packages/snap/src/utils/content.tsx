@@ -88,8 +88,6 @@ export const onInstallContent = (
 );
 
 export const onHomePageContent = (
-	allApprovalsDropdownValue: any,
-	riskyApprovalsDropdownValue: any,
 ) => {
 	return (
 		<Box>
@@ -99,7 +97,7 @@ export const onHomePageContent = (
 				Explore the power of HashDit Security and fortify your MetaMask
 				experience. Navigate the crypto space with confidence.
 			</Text>
-			<Divider />
+			{/* <Divider />
 			<Heading>Notification Settings</Heading>
 			<Form name="allApprovalsForm">
 				<Text>All Token Approvals</Text>
@@ -131,7 +129,7 @@ export const onHomePageContent = (
 				<Button type="submit" name="submit">
 					Save
 				</Button>
-			</Form>
+			</Form> */}
 
 			<Divider />
 			<Heading>🔗 Links</Heading>
