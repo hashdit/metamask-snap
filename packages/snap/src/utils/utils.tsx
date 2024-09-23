@@ -21,7 +21,6 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 		chain_id: '56',
 		owner: userAddress,
 	};
-	console.log(requestBody);
 
 	const response = await fetch(
 		'https://api.diting.pro/v1/diting/token-approval-security',
@@ -38,7 +37,7 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 
 	if (resp.message === 'success') {
 		if (Array.isArray(resp.diting_result?.approval_status)) {
-			console.log(resp.diting_result.approval_status);
+	
 			const numberOfApprovals = resp.diting_result.approval_status.length;
 
 			let totalAffectedUSD = 0;
@@ -57,7 +56,6 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 			return 'No token approvals found. You are safe!';
 		}
 	} else {
-		console.log('error with token approval api TODO');
 		return 'Error with token approval API';
 	}
 }
@@ -81,7 +79,6 @@ export async function checkBlacklistedAddresses(
 		chain_id: '56',
 		owner: userAddress,
 	};
-	console.log(requestBody);
 
 	const response = await fetch(
 		'https://api.diting.pro/v1/diting/token-approval-security',
@@ -189,11 +186,7 @@ export async function checkBlacklistedAddresses(
 						console.error('Request failed:', result.reason); // Logs failed request reason
 					}
 				});
-				console.log(responseResultArray);
-				console.log(
-					'Number of Blacklisted Spenders:',
-					numberOfBlacklistedSpenders,
-				);
+
 				if (numberOfBlacklistedSpenders > 0) {
 					return `WARNING: ${numberOfBlacklistedSpenders} blacklisted spenders approved`;
 				} else {
@@ -235,7 +228,7 @@ export async function authenticateHashDit(
 	);
 
 	const resp = await response.json();
-	console.log('HashDit Authenticate Resp', resp);
+
 }
 
 export async function authenticateDiTing(
@@ -246,7 +239,7 @@ export async function authenticateDiTing(
 		userAddr: userAddress,
 		signature: signature,
 	};
-	console.log(requestBody);
+
 
 	const response = await fetch('https://api.diting.pro/v1/auth', {
 		method: 'POST',
@@ -256,7 +249,7 @@ export async function authenticateDiTing(
 		body: JSON.stringify(requestBody),
 	});
 	const resp = await response.json();
-	console.log('Diting Authenticate Resp', resp);
+	
 	return resp;
 }
 
@@ -267,6 +260,7 @@ export async function getHashDitResponse(
 	transaction?: any,
 	chainId?: string,
 ) {
+	try{
 	const trace_id = uuidv4();
 
 	// formatting chainid to match api formatting
@@ -335,6 +329,10 @@ export async function getHashDitResponse(
 		signatureFinal,
 	);
 	return formatResponse(response, businessName);
+	}catch(error){
+		console.error('Error in getHashDitResponse:', error);
+    	throw new Error('Failed to fetch HashDit response.');
+	}
 }
 
 async function customFetch(
@@ -345,6 +343,7 @@ async function customFetch(
 	nonce: any,
 	signatureFinal: any,
 ) {
+	try{
 	const response = await fetch(url, {
 		method: 'POST',
 		mode: 'cors',
@@ -361,12 +360,19 @@ async function customFetch(
 		referrerPolicy: 'no-referrer',
 		body: JSON.stringify(postBody),
 	});
-
+	if (!response.ok) {
+		throw new Error(`HTTP error! Status: ${response.status}`);
+	  }
 	const resp = await response.json();
+
 	if (resp.status == 'OK' && resp.data) {
 		return resp.data;
 	} else {
 		//console.log('Fetch api error: ' + resp.errorData);
+	}
+	} catch(error){
+		console.error('Error in customFetch:', error);
+		throw new Error('Failed to make API request.');
 	}
 }
 
@@ -465,7 +471,7 @@ export async function getTokenApprovals() {
 			userAddr: from,
 			signature: 'TODO',
 		};
-		console.log(bodyParameters);
+		
 
 		try {
 			// Send a POST request to the API
@@ -481,7 +487,6 @@ export async function getTokenApprovals() {
 			const data = await response.json();
 
 			// Handle the response data
-			console.log('Response:', data);
 			if (data.diting_result) {
 				if (data.diting_result.approval_status) {
 				}
@@ -639,21 +644,21 @@ function formatDollarAmount(amount: number): string {
 	}
 }
 
-export function intervalToMilliseconds(interval:string): number{
-
+export function intervalToMilliseconds(interval: string): number {
 	switch (interval) {
 		case 'minute':
-			return  3*60 *1000
+			return 2 * 60 * 1000;
 		case 'daily':
-		return 24 * 60 * 60 * 1000; // Milliseconds in a day
+			return 24 * 60 * 60 * 1000;
 		case 'weekly':
-		return 7 * 24 * 60 * 60 * 1000; // Milliseconds in a week
+			return 7 * 24 * 60 * 60 * 1000;
+		case 'biweekly':
+			return 2 * 7 * 24 * 60 * 60 * 1000;
 		case 'monthly':
-		return 30 * 24 * 60 * 60 * 1000; // Approximate milliseconds in a month
+			return 30 * 24 * 60 * 60 * 1000;
 		default:
-		throw new Error('Invalid interval');
+			throw new Error('Invalid interval');
 	}
-	  
 }
 // Determine the risk title and description for each risk level. Used by URL screening.
 function determineUrlRiskInfo(urlRiskLevel: number): string[] {

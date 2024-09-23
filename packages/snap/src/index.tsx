@@ -37,103 +37,8 @@ import {
 	onHomePageContent,
 	InteractiveFormState,
 } from './utils/content';
-import {
-	Box,
-	Heading,
-	Address,
-	Text,
-	Divider,
-	Bold,
-	Link,
-	Dropdown,
-	Option,
-	Button,
-	Field,
-	Radio,
-	RadioGroup,
-	Selector,
-	SelectorOption,
-	Card,
-	Form,
-} from '@metamask/snaps-sdk/jsx';
-
-/**
- * Handle incoming user events coming from the MetaMask clients open interfaces. Only usable in Flask currently.
- *
- * @param params - The event parameters.
- * @param params.id - The Snap interface ID where the event was fired.
- * @param params.event - The event object containing the event type, name and value.
- * @param params.context - The Snap interface context.
- * @see https://docs.metamask.io/snaps/reference/exports/#onuserinput
- */
-
-// export const onUserInput: OnUserInputHandler = async ({
-// 	id,
-// 	event,
-// 	context,
-// }) => {
-// 	// Detect user submits form `allApprovalsForm`
-// 	if (
-// 		event.type === UserInputEventType.FormSubmitEvent &&
-// 		event.name === 'allApprovalsForm'
-// 	) {
-// 		const value = event.value as InteractiveFormState;
-// 		console.log('onUserInput here', id, event, value);
-
-// 		let tempState = await snap.request({
-// 			method: 'snap_manageState',
-// 			params: { operation: 'get' },
-// 		});
-// 		// If tempState is null, initialize it to an empty object
-// 		if (!tempState) {
-// 			tempState = {};
-// 		}
-
-// 		tempState.allApprovalsDropdown = value.allApprovalsDropdown;
-
-
-// 		await snap.request({
-// 			method: 'snap_manageState',
-// 			params: {
-// 				operation: 'update',
-// 				newState: tempState,
-// 			},
-// 		});
-// 	}
-// 	// Detect user submits form `riskyApprovalsForm`
-// 	else if (
-// 		event.type === UserInputEventType.FormSubmitEvent &&
-// 		event.name === 'riskyApprovalsForm'
-// 	) {
-// 		const value = event.value as InteractiveFormState;
-// 		console.log('onUserInput here', id, event, value);
-
-// 		let tempState = await snap.request({
-// 			method: 'snap_manageState',
-// 			params: { operation: 'get' },
-// 		});
-// 		// If tempState is null, initialize it to an empty object
-// 		if (!tempState) {
-// 			tempState = {};
-// 		}
-
-
-// 		tempState.riskyApprovalsDropdown = value.riskyApprovalsDropdown;
-
-
-// 		await snap.request({
-// 			method: 'snap_manageState',
-// 			params: {
-// 				operation: 'update',
-// 				newState: tempState,
-// 			},
-// 		});
-// 	}
-// };
 
 export const onInstall: OnInstallHandler = async () => {
-	console.log(new Date().getTime());
-
 	// Show install instructions and links
 	await snap.request({
 		method: 'snap_dialog',
@@ -168,8 +73,8 @@ export const onInstall: OnInstallHandler = async () => {
 		const newState: any = {
 			publicKey: publicKey,
 			userAddress: from,
-			allApprovalsDropdown: 'Off',
-			riskyApprovalsDropdown: 'Off',
+			allApprovalsSetting: 'Off',
+			riskyApprovalsSetting: 'Off',
 			allApprovalsExecutionTime: lastExecutionTime,
 			riskyApprovalsExecutionTime: lastExecutionTime,
 		};
@@ -206,13 +111,6 @@ export const onInstall: OnInstallHandler = async () => {
 				newState: newState,
 			},
 		});
-
-		// Optionally, fetch and log the updated state
-		const updatedData = await snap.request({
-			method: 'snap_manageState',
-			params: { operation: 'get' },
-		});
-		console.log(updatedData);
 	} catch (error) {
 		console.error(
 			'An error occurred during the installation process:',
@@ -221,46 +119,110 @@ export const onInstall: OnInstallHandler = async () => {
 	}
 };
 
-//
+export const onRpcRequest: OnRpcRequestHandler = async ({
+	origin,
+	request,
+}) => {
+	switch (request.method) {
+		case 'getNotificationSettings':
+			let userPersistedState = await snap.request({
+				method: 'snap_manageState',
+				params: { operation: 'get' },
+			});
+			if (!userPersistedState) {
+				return {
+					allApprovalsSetting: 'Off',
+					riskyApprovalsSetting: 'Off',
+				};
+			} else {
+				return {
+					allApprovalsSetting: userPersistedState.allApprovalsSetting,
+					riskyApprovalsSetting:
+						userPersistedState.riskyApprovalsSetting,
+				};
+			}
+		case 'setAllApprovalsInterval':
+			let tempState = await snap.request({
+				method: 'snap_manageState',
+				params: { operation: 'get' },
+			});
+			// If tempState is null, initialize it to an empty object
+			if (!tempState) {
+				tempState = {};
+			}
+
+			tempState.allApprovalsSetting = request?.params?.interval;
+
+			await snap.request({
+				method: 'snap_manageState',
+				params: {
+					operation: 'update',
+					newState: tempState,
+				},
+			});
+
+			return;
+		case 'setRiskyApprovalsInterval':
+			let userTempState = await snap.request({
+				method: 'snap_manageState',
+				params: { operation: 'get' },
+			});
+			// If userTempState is null, initialize it to an empty object
+			if (!userTempState) {
+				tempState = {};
+			}
+
+			userTempState.riskyApprovalsSetting = request?.params?.interval;
+
+			await snap.request({
+				method: 'snap_manageState',
+				params: {
+					operation: 'update',
+					newState: userTempState,
+				},
+			});
+
+			return;
+
+		default:
+			throw new Error('Method not found.');
+	}
+};
+
 export const onCronjob: OnCronjobHandler = async ({ request }) => {
 	switch (request.method) {
 		case 'getAllApprovals':
-			console.log('Received request method:', request.method);
 			try {
 				let persistedUserData = await snap.request({
 					method: 'snap_manageState',
 					params: { operation: 'get' },
 				});
-				if(!persistedUserData){
-					persistedUserData = {}
+				if (!persistedUserData) {
+					persistedUserData = {};
 				}
-				console.log(
-					'persistedUserData getAllApprovals',
-					persistedUserData,
-				);
+
 				// The "All Approvals" Notification has been set to `Off`, do not run token approval check.
-				if (persistedUserData?.allApprovalsDropdown == 'Off') {
-					console.log('allApprovalsDropdown is set to Off');
+				if (persistedUserData?.allApprovalsSetting == 'Off') {
 					return;
 				}
-				
-				
-				console.log(
-					'allApprovalsDropdown is set to ',
-					persistedUserData?.allApprovalsDropdown,
-				);
 
-				const interval = intervalToMilliseconds(persistedUserData?.allApprovalsDropdown)
+				const interval = intervalToMilliseconds(
+					persistedUserData?.allApprovalsSetting,
+				);
 				const currentTime = new Date().getTime();
-				if(currentTime > persistedUserData?.allApprovalsExecutionTime + interval){
+				if (
+					currentTime >
+					persistedUserData?.allApprovalsExecutionTime + interval
+				) {
 					try {
 						const approvalResult = await getApprovals(
 							persistedUserData?.userAddress,
 							persistedUserData?.DiTingApiKey,
 						);
 						//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
-						console.log('ApprovalResult:', approvalResult);
-						persistedUserData.allApprovalsExecutionTime = currentTime;
+
+						persistedUserData.allApprovalsExecutionTime =
+							currentTime;
 						await snap.request({
 							method: 'snap_manageState',
 							params: {
@@ -274,7 +236,6 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 							method: 'snap_manageState',
 							params: { operation: 'get' },
 						});
-						console.log(updatedData);
 
 						return snap.request({
 							method: 'snap_notify',
@@ -284,44 +245,75 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 							},
 						});
 					} catch (error) {
-						console.error('Error during all approval fetching:', error);
+						console.error(
+							'Error during all approval fetching:',
+							error,
+						);
 					}
+				} else {
+					return;
 				}
-
 			} catch (error) {
-				console.error("ERROR HERE", error);
+				console.error('ERROR HERE', error);
 			}
 
-		//TODO
-		//case 'getRiskyApprovals':
-		// case 'test1':
-		// 	try {
-		// 		const persistedUserData = await snap.request({
-		// 			method: 'snap_manageState',
-		// 			params: { operation: 'get' },
-		// 		});
-		// 		try {
-		// 			const approvalResult = await checkBlacklistedAddresses(
-		// 				persistedUserData.userAddress,
-		// 				persistedUserData.publicKey,
-		// 				persistedUserData.DiTingApiKey,
-		// 			);
-		// 			console.log('ApprovalResult:', approvalResult);
-		// 			return snap.request({
-		// 				method: 'snap_notify',
-		// 				params: {
-		// 					type: 'inApp',
-		// 					message: approvalResult,
-		// 				},
-		// 			});
-		// 		} catch (error) {
-		// 			console.error('Error during approval fetching:', error);
-		// 		}
-		// 	} catch (error) {
-		// 		console.error('Error getting persisted user data:', error);
-		// 	}
+		case 'getRiskyApprovals':
+			try {
+				let persistedUserData = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				if (!persistedUserData) {
+					persistedUserData = {};
+				}
+
+				// The "All Approvals" Notification has been set to `Off`, do not run token approval check.
+				if (persistedUserData?.riskyApprovalsSetting == 'Off') {
+					return;
+				}
+
+				const interval = intervalToMilliseconds(
+					persistedUserData?.riskyApprovalsSetting,
+				);
+				const currentTime = new Date().getTime();
+				if (
+					currentTime >
+					persistedUserData?.riskyApprovalsExecutionTime + interval
+				) {
+					try {
+						const blacklistResult = await checkBlacklistedAddresses(
+							persistedUserData?.userAddress,
+							persistedUserData?.publicKey,
+							persistedUserData?.DiTingApiKey,
+						);
+						//const approvalResult = await getApprovals("0x46f4a6bf81a41d2b5ada059d43b959b8e6068fe2", persistedUserData.DiTingApiKey)
+
+						persistedUserData.riskyApprovalsExecutionTime =
+							currentTime;
+						await snap.request({
+							method: 'snap_manageState',
+							params: {
+								operation: 'update',
+								newState: persistedUserData,
+							},
+						});
+						return snap.request({
+							method: 'snap_notify',
+							params: {
+								type: 'inApp',
+								message: blacklistResult,
+							},
+						});
+					} catch (error) {
+						console.error('Error during blacklist fetching', error);
+					}
+				} else {
+					return;
+				}
+			} catch (error) {
+				console.error('ERROR here', error);
+			}
 		default:
-			console.log(request, request.method);
 			throw new Error(`Method not found.,${request}`);
 	}
 };
@@ -772,21 +764,7 @@ export const onTransaction: OnTransactionHandler = async ({
 };
 
 export const onHomePage: OnHomePageHandler = async () => {
-
-	// Check if the notification values exists in the persisted user data and use it, otherwise default to "Off"
-	// const persistedUserData = await snap.request({
-	// 	method: 'snap_manageState',
-	// 	params: { operation: 'get' },
-	// });
-
-	// const allApprovalsDropdownValue =
-	// 	persistedUserData?.allApprovalsDropdown || 'Off';
-	// const riskyApprovalsDropdown =
-	// 	persistedUserData?.riskyApprovalsDropdown || 'Off';
-
 	return {
-		content: onHomePageContent(
-			
-		),
+		content: onHomePageContent(),
 	};
 };

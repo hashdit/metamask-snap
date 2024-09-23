@@ -87,8 +87,7 @@ export const onInstallContent = (
 	</Box>
 );
 
-export const onHomePageContent = (
-) => {
+export const onHomePageContent = () => {
 	return (
 		<Box>
 			<Heading>HashDit Snap</Heading>
@@ -97,9 +96,13 @@ export const onHomePageContent = (
 				Explore the power of HashDit Security and fortify your MetaMask
 				experience. Navigate the crypto space with confidence.
 			</Text>
-			{/* <Divider />
+			<Divider />
 			<Heading>Notification Settings</Heading>
-			<Form name="allApprovalsForm">
+			<Text>
+				Change notifications settings on the HashDit Snap website:{' '}
+				<Link href="https://www.hashdit.io/en/snap">Hashdit</Link>
+			</Text>
+			{/* <Form name="allApprovalsForm">
 				<Text>All Token Approvals</Text>
 				<Dropdown
 					name="allApprovalsDropdown"
