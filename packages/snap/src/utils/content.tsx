@@ -1,4 +1,3 @@
-import type { SnapComponent } from '@metamask/snaps-sdk/jsx';
 import {
 	Box,
 	Heading,

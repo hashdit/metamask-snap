@@ -1,10 +1,6 @@
-import { remove0x, add0x } from '@metamask/utils';
-
 import { v4 as uuidv4 } from 'uuid';
-import * as CryptoJS from 'crypto-js';
 import hmacSHA256 from 'crypto-js/hmac-sha256';
 import encHex from 'crypto-js/enc-hex';
-import { trace } from 'console';
 import { CHAINS_INFO } from './chains';
 import {
 	heading,
@@ -37,7 +33,6 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 
 	if (resp.message === 'success') {
 		if (Array.isArray(resp.diting_result?.approval_status)) {
-	
 			const numberOfApprovals = resp.diting_result.approval_status.length;
 
 			let totalAffectedUSD = 0;
@@ -228,7 +223,6 @@ export async function authenticateHashDit(
 	);
 
 	const resp = await response.json();
-
 }
 
 export async function authenticateDiTing(
@@ -240,7 +234,6 @@ export async function authenticateDiTing(
 		signature: signature,
 	};
 
-
 	const response = await fetch('https://api.diting.pro/v1/auth', {
 		method: 'POST',
 		headers: {
@@ -249,7 +242,7 @@ export async function authenticateDiTing(
 		body: JSON.stringify(requestBody),
 	});
 	const resp = await response.json();
-	
+
 	return resp;
 }
 
@@ -260,78 +253,78 @@ export async function getHashDitResponse(
 	transaction?: any,
 	chainId?: string,
 ) {
-	try{
-	const trace_id = uuidv4();
+	try {
+		const trace_id = uuidv4();
 
-	// formatting chainid to match api formatting
-	let chain: string;
-	switch (chainId) {
-		case '0x1':
-			chain = '1';
-			break;
-		case '0x38':
-			chain = '56';
-			break;
-		default:
-			chain = '56';
-	}
+		// formatting chainid to match api formatting
+		let chain: string;
+		switch (chainId) {
+			case '0x1':
+				chain = '1';
+				break;
+			case '0x38':
+				chain = '56';
+				break;
+			default:
+				chain = '56';
+		}
 
-	let postBody: any = {};
-	if (businessName == 'hashdit_snap_tx_api_url_detection') {
-		postBody.url = transactionUrl;
-	} else if (businessName == 'internal_address_lables_tags') {
-		postBody.address = transaction.to;
-		postBody.chain_id = chain;
-	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
-		postBody.address = transaction.to;
-		postBody.chain_id = chain;
-		postBody.trace_id = trace_id;
-		postBody.transaction = JSON.stringify(transaction);
-		postBody.url = transactionUrl;
-	} else if (businessName == 'hashdit_snap_tx_api_signature_request') {
-		// This will be utilized when signature requests is supported
-		postBody.address = transaction.to;
-		postBody.chain_id = chain;
-		postBody.message = '0xdeadbeef';
-		postBody.method = 'eth_sign';
-		postBody.trace_id = trace_id;
-		postBody.url = transactionUrl;
-	}
+		let postBody: any = {};
+		if (businessName == 'hashdit_snap_tx_api_url_detection') {
+			postBody.url = transactionUrl;
+		} else if (businessName == 'internal_address_lables_tags') {
+			postBody.address = transaction.to;
+			postBody.chain_id = chain;
+		} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
+			postBody.address = transaction.to;
+			postBody.chain_id = chain;
+			postBody.trace_id = trace_id;
+			postBody.transaction = JSON.stringify(transaction);
+			postBody.url = transactionUrl;
+		} else if (businessName == 'hashdit_snap_tx_api_signature_request') {
+			// This will be utilized when signature requests is supported
+			postBody.address = transaction.to;
+			postBody.chain_id = chain;
+			postBody.message = '0xdeadbeef';
+			postBody.method = 'eth_sign';
+			postBody.trace_id = trace_id;
+			postBody.url = transactionUrl;
+		}
 
-	let appId: string;
-	let appSecret: string;
+		let appId: string;
+		let appSecret: string;
 
-	const timestamp = Date.now();
-	const nonce = uuidv4().replace(/-/g, '');
+		const timestamp = Date.now();
+		const nonce = uuidv4().replace(/-/g, '');
 
-	const url = new URL(
-		'https://api.hashdit.io/security-api/public/chain/v1/web3/detect',
-	);
+		const url = new URL(
+			'https://api.hashdit.io/security-api/public/chain/v1/web3/detect',
+		);
 
-	let dataToSign: string;
-	appId = persistedUserData.userAddress;
-	appSecret = persistedUserData.publicKey;
-	url.searchParams.append('business', businessName);
-	const query = url.search.substring(1);
-	dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(
-		postBody,
-	)}`;
+		let dataToSign: string;
+		appId = persistedUserData.userAddress;
+		appSecret = persistedUserData.publicKey;
+		url.searchParams.append('business', businessName);
+		const query = url.search.substring(1);
+		dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(
+			postBody,
+		)}`;
 
-	const signature = hmacSHA256(dataToSign, appSecret);
-	const signatureFinal = encHex.stringify(signature);
+		const signature = hmacSHA256(dataToSign, appSecret);
+		const signatureFinal = encHex.stringify(signature);
 
-	const response = await customFetch(
-		url,
-		postBody,
-		appId,
-		timestamp,
-		nonce,
-		signatureFinal,
-	);
-	return formatResponse(response, businessName);
-	}catch(error){
+		const response = await customFetch(
+			url,
+			postBody,
+			appId,
+			timestamp,
+			nonce,
+			signatureFinal,
+		);
+		return formatResponse(response, businessName);
+	} catch (error) {
 		console.error('Error in getHashDitResponse:', error);
-    	throw new Error('Failed to fetch HashDit response.');
+		throw new Error('Failed to fetch HashDit response.');
 	}
 }
 
@@ -343,34 +336,34 @@ async function customFetch(
 	nonce: any,
 	signatureFinal: any,
 ) {
-	try{
-	const response = await fetch(url, {
-		method: 'POST',
-		mode: 'cors',
-		cache: 'no-cache',
-		credentials: 'same-origin',
-		headers: {
-			'Content-Type': 'application/json;charset=UTF-8',
-			'X-Signature-appid': appId,
-			'X-Signature-timestamp': timestamp.toString(),
-			'X-Signature-nonce': nonce,
-			'X-Signature-signature': signatureFinal,
-		},
-		redirect: 'follow',
-		referrerPolicy: 'no-referrer',
-		body: JSON.stringify(postBody),
-	});
-	if (!response.ok) {
-		throw new Error(`HTTP error! Status: ${response.status}`);
-	  }
-	const resp = await response.json();
+	try {
+		const response = await fetch(url, {
+			method: 'POST',
+			mode: 'cors',
+			cache: 'no-cache',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json;charset=UTF-8',
+				'X-Signature-appid': appId,
+				'X-Signature-timestamp': timestamp.toString(),
+				'X-Signature-nonce': nonce,
+				'X-Signature-signature': signatureFinal,
+			},
+			redirect: 'follow',
+			referrerPolicy: 'no-referrer',
+			body: JSON.stringify(postBody),
+		});
+		if (!response.ok) {
+			throw new Error(`HTTP error! Status: ${response.status}`);
+		}
+		const resp = await response.json();
 
-	if (resp.status == 'OK' && resp.data) {
-		return resp.data;
-	} else {
-		//console.log('Fetch api error: ' + resp.errorData);
-	}
-	} catch(error){
+		if (resp.status == 'OK' && resp.data) {
+			return resp.data;
+		} else {
+			//console.log('Fetch api error: ' + resp.errorData);
+		}
+	} catch (error) {
 		console.error('Error in customFetch:', error);
 		throw new Error('Failed to make API request.');
 	}
@@ -471,7 +464,6 @@ export async function getTokenApprovals() {
 			userAddr: from,
 			signature: 'TODO',
 		};
-		
 
 		try {
 			// Send a POST request to the API

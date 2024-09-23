@@ -4,7 +4,6 @@ import type {
 	OnHomePageHandler,
 	OnRpcRequestHandler,
 	OnCronjobHandler,
-	OnUserInputHandler,
 } from '@metamask/snaps-sdk';
 import {
 	heading,
@@ -13,10 +12,6 @@ import {
 	divider,
 	address,
 	row,
-	UnauthorizedError,
-	MethodNotFoundError,
-	NotificationType,
-	UserInputEventType,
 } from '@metamask/snaps-sdk';
 import {
 	getHashDitResponse,
@@ -32,11 +27,7 @@ import {
 	intervalToMilliseconds,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
-import {
-	onInstallContent,
-	onHomePageContent,
-	InteractiveFormState,
-} from './utils/content';
+import { onInstallContent, onHomePageContent } from './utils/content';
 
 export const onInstall: OnInstallHandler = async () => {
 	// Show install instructions and links
@@ -229,12 +220,6 @@ export const onCronjob: OnCronjobHandler = async ({ request }) => {
 								operation: 'update',
 								newState: persistedUserData,
 							},
-						});
-
-						//TODO: remove
-						const updatedData = await snap.request({
-							method: 'snap_manageState',
-							params: { operation: 'get' },
 						});
 
 						return snap.request({

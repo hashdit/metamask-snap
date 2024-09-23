@@ -1,53 +1,53 @@
 {
-  "version": "0.2.1",
-  "description": "HashDit security snap to screen addresses before interaction.",
-  "proposedName": "HashDit Security",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hashdit/metamask-snap.git"
-  },
-  "source": {
-    "shasum": "v7asmDvOY9RxRuHTfFeyUgtf2gfihr3QTrdZlNMseWc=",
-    "location": {
-      "npm": {
-        "filePath": "dist/bundle.js",
-        "iconPath": "images/hashdit.svg",
-        "packageName": "hashdit-snap-security",
-        "registry": "https://registry.npmjs.org/"
-      }
-    }
-  },
-  "initialPermissions": {
-    "endowment:transaction-insight": {
-      "allowTransactionOrigin": true
-    },
-    "endowment:network-access": {},
-    "endowment:ethereum-provider": {},
-    "snap_manageState": {},
-    "endowment:lifecycle-hooks": {},
-    "snap_dialog": {},
-    "endowment:page-home": {},
-    "snap_notify": {},
-    "endowment:cronjob": {
-      "jobs": [
-        {
-          "expression": "*/1 * * * *",
-          "request": {
-            "method": "getAllApprovals"
-          }
-        },
-        {
-          "expression": "*/1 * * * *",
-          "request": {
-            "method": "getRiskyApprovals"
-          }
-        }
-      ]
-    },
-    "endowment:rpc": {
-      "dapps": true,
-      "snaps": false
-    }
-  },
-  "manifestVersion": "0.1"
+	"version": "0.2.1",
+	"description": "HashDit security snap to screen addresses before interaction.",
+	"proposedName": "HashDit Security",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/hashdit/metamask-snap.git"
+	},
+	"source": {
+		"shasum": "rPqMGqN+7XW6OEi5WKkFStYVd8jKlz79eGZjL1q64ts=",
+		"location": {
+			"npm": {
+				"filePath": "dist/bundle.js",
+				"iconPath": "images/hashdit.svg",
+				"packageName": "hashdit-snap-security",
+				"registry": "https://registry.npmjs.org/"
+			}
+		}
+	},
+	"initialPermissions": {
+		"endowment:transaction-insight": {
+			"allowTransactionOrigin": true
+		},
+		"endowment:network-access": {},
+		"endowment:ethereum-provider": {},
+		"snap_manageState": {},
+		"endowment:lifecycle-hooks": {},
+		"snap_dialog": {},
+		"endowment:page-home": {},
+		"snap_notify": {},
+		"endowment:cronjob": {
+			"jobs": [
+				{
+					"expression": "*/1 * * * *",
+					"request": {
+						"method": "getAllApprovals"
+					}
+				},
+				{
+					"expression": "*/1 * * * *",
+					"request": {
+						"method": "getRiskyApprovals"
+					}
+				}
+			]
+		},
+		"endowment:rpc": {
+			"dapps": true,
+			"snaps": false
+		}
+	},
+	"manifestVersion": "0.1"
 }
