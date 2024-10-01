@@ -4,20 +4,22 @@ import encHex from 'crypto-js/enc-hex';
 import { CHAINS_INFO } from './chains';
 import {
 	heading,
-	panel,
 	text,
-	copyable,
 	divider,
 	address,
 	row,
 } from '@metamask/snaps-sdk';
 
+
+// Get all token approvals from DiTing. Currently only supports BSC
 export async function getApprovals(userAddress: string, DiTingApiKey: string) {
+	
 	const requestBody = {
 		chain_id: '56',
 		owner: userAddress,
 	};
 
+	// Get user's token approvals
 	const response = await fetch(
 		'https://api.diting.pro/v1/diting/token-approval-security',
 		{
@@ -35,10 +37,12 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 		if (Array.isArray(resp.diting_result?.approval_status)) {
 			const numberOfApprovals = resp.diting_result.approval_status.length;
 
+			// Sum the amount of affected USD
 			let totalAffectedUSD = 0;
 			for (const approval of resp.diting_result.approval_status) {
-				totalAffectedUSD += approval?.affected_usd_amount ?? 0; // Safe access to affected_usd_amount
+				totalAffectedUSD += approval?.affected_usd_amount ?? 0; 
 			}
+			
 			const formattedTotalAffectedUSD =
 				formatDollarAmount(totalAffectedUSD);
 			const notificationString = `${numberOfApprovals} approvals found, $${formattedTotalAffectedUSD} is at risk`;
@@ -55,26 +59,18 @@ export async function getApprovals(userAddress: string, DiTingApiKey: string) {
 	}
 }
 
+// Get risky token approvals. Retrieve token approvals from DiTing, and check if each spender is blacklisted with HashDit.
 export async function checkBlacklistedAddresses(
 	userAddress: string,
 	publicKey: string,
 	DiTingApiKey: string,
 ) {
-	// const spenderAddressesArray = [
-	// 	'0xb524a9a21702813f8ea7a79c16afcb5fb4660544',
-	// 	'0xb524a9a21702813f8ea7a79c16afcb5fb4660544',
-	// 	'0x2E1197c3C1Ed011CF18de2AaE093A678C8E3CC11',
-	// 	'0xb524a9a21702813f8Ea7A79c16aFCB5fb4660544',
-	// 	'0x139AE647499d762b2C589670bE7546298c66f821',
-	// 	'0xAC2eeb78f25ac8F19e3097A9DBab102C27dFFA8e',
-	// 	'0xa24155e615136363c8c5AF4eCDE325948621A0af',
-	// ];
-
 	const requestBody = {
 		chain_id: '56',
 		owner: userAddress,
 	};
 
+	// Get user's token approvals
 	const response = await fetch(
 		'https://api.diting.pro/v1/diting/token-approval-security',
 		{
@@ -94,7 +90,8 @@ export async function checkBlacklistedAddresses(
 			try {
 				const appId = userAddress;
 				const appSecret = publicKey;
-				// Create an array of POST fetch requests with different input data
+				// Create an array of POST fetch requests with different input data.
+				// Each request checks if the spender is a blacklisted address.
 				const requests = spenderAddressesArray.map(
 					(spenderAddress: string) => {
 						let postBody: any = {
@@ -139,13 +136,13 @@ export async function checkBlacklistedAddresses(
 									`Request failed: ${response.status}`,
 								);
 							}
-							return response.json(); // Automatically parses the response to JSON
+							return response.json(); 
 						});
 					},
 				);
 
 				// Fetch and process all requests concurrently
-				const responseResultArray = await Promise.allSettled(requests); // This will handle individual request failures without breaking everything
+				const responseResultArray = await Promise.allSettled(requests);
 
 				let numberOfBlacklistedSpenders = 0;
 
@@ -178,7 +175,7 @@ export async function checkBlacklistedAddresses(
 							}
 						}
 					} else {
-						console.error('Request failed:', result.reason); // Logs failed request reason
+						console.error('Request failed:', result.reason);
 					}
 				});
 
@@ -196,6 +193,7 @@ export async function checkBlacklistedAddresses(
 	}
 }
 
+// Called during HashDit Snap installation. Used to authenticate the user with HashDit, and the user's public key.
 export async function authenticateHashDit(
 	userAddress: string,
 	messageSignature: string,
@@ -225,6 +223,7 @@ export async function authenticateHashDit(
 	const resp = await response.json();
 }
 
+// Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
 export async function authenticateDiTing(
 	userAddress: string,
 	signature: string,
@@ -448,48 +447,6 @@ function formatResponse(resp: any, businessName: string) {
 	return responseData;
 }
 
-export async function getTokenApprovals() {
-	try {
-		// Get user's accounts
-		const accounts = await ethereum.request({
-			method: 'eth_requestAccounts',
-		});
-		const from = accounts[0];
-
-		const url = 'https://api.diting.pro/v1/auth';
-
-		// Define the body parameters
-		const bodyParameters = {
-			// Replace with your actual body parameters
-			userAddr: from,
-			signature: 'TODO',
-		};
-
-		try {
-			// Send a POST request to the API
-			const response = await fetch(url, {
-				method: 'POST', // Use POST method
-				headers: {
-					'Content-Type': 'application/json', // Set content type to JSON
-				},
-				body: JSON.stringify(bodyParameters), // Convert the body parameters to a JSON string
-			});
-
-			// Parse the JSON response
-			const data = await response.json();
-
-			// Handle the response data
-			if (data.diting_result) {
-				if (data.diting_result.approval_status) {
-				}
-			}
-		} catch (error) {
-			// Handle errors
-			console.error('Error:', error);
-		}
-	} catch (error) {}
-}
-
 // Parse transacting value to decimals to be human-readable
 export function parseTransactingValue(transactionValue: any) {
 	let valueAsDecimals = 0;
@@ -624,6 +581,7 @@ function detectSimilarity(
 	return similarityScoreResultArray;
 }
 
+// Format the dollar amount to reduce character usage in order to fit the notification limit of 50 characters.
 function formatDollarAmount(amount: number): string {
 	if (amount >= 1_000_000_000) {
 		return `$${(amount / 1_000_000_000).toFixed(1)}B`; // For billions
@@ -639,7 +597,7 @@ function formatDollarAmount(amount: number): string {
 export function intervalToMilliseconds(interval: string): number {
 	switch (interval) {
 		case 'minute':
-			return 2 * 60 * 1000;
+			return 1 * 60 * 1000;
 		case 'daily':
 			return 24 * 60 * 60 * 1000;
 		case 'weekly':
@@ -692,7 +650,7 @@ function determineUrlRiskInfo(urlRiskLevel: number): string[] {
 	}
 }
 
-//TODO: Seperate for more precise descriptions?
+//TODO: Separate for more precise descriptions?
 export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
 	if (riskLevel >= 4) {
 		return [

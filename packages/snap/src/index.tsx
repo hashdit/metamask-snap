@@ -116,64 +116,83 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 }) => {
 	switch (request.method) {
 		case 'getNotificationSettings':
-			let userPersistedState = await snap.request({
-				method: 'snap_manageState',
-				params: { operation: 'get' },
-			});
-			if (!userPersistedState) {
+			try {
+				let userPersistedState = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				if (!userPersistedState) {
+					return {
+						allApprovalsSetting: 'Off',
+						riskyApprovalsSetting: 'Off',
+						error: true,
+					};
+				} else {
+					return {
+						allApprovalsSetting:
+							userPersistedState.allApprovalsSetting,
+						riskyApprovalsSetting:
+							userPersistedState.riskyApprovalsSetting,
+						error: false,
+					};
+				}
+			} catch (error) {
 				return {
 					allApprovalsSetting: 'Off',
 					riskyApprovalsSetting: 'Off',
-				};
-			} else {
-				return {
-					allApprovalsSetting: userPersistedState.allApprovalsSetting,
-					riskyApprovalsSetting:
-						userPersistedState.riskyApprovalsSetting,
+					error: true,
 				};
 			}
+
 		case 'setAllApprovalsInterval':
-			let tempState = await snap.request({
-				method: 'snap_manageState',
-				params: { operation: 'get' },
-			});
-			// If tempState is null, initialize it to an empty object
-			if (!tempState) {
-				tempState = {};
+			try {
+				let tempState = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				// If tempState is null, initialize it to an empty object
+				if (!tempState) {
+					tempState = {};
+				}
+
+				tempState.allApprovalsSetting = request?.params?.interval;
+
+				await snap.request({
+					method: 'snap_manageState',
+					params: {
+						operation: 'update',
+						newState: tempState,
+					},
+				});
+				return { status: true, error: '' };
+			} catch (error) {
+				return { status: false, error: error };
 			}
 
-			tempState.allApprovalsSetting = request?.params?.interval;
-
-			await snap.request({
-				method: 'snap_manageState',
-				params: {
-					operation: 'update',
-					newState: tempState,
-				},
-			});
-
-			return;
 		case 'setRiskyApprovalsInterval':
-			let userTempState = await snap.request({
-				method: 'snap_manageState',
-				params: { operation: 'get' },
-			});
-			// If userTempState is null, initialize it to an empty object
-			if (!userTempState) {
-				tempState = {};
+			try {
+				let userTempState = await snap.request({
+					method: 'snap_manageState',
+					params: { operation: 'get' },
+				});
+				// If userTempState is null, initialize it to an empty object
+				if (!userTempState) {
+					userTempState = {};
+				}
+
+				userTempState.riskyApprovalsSetting = request?.params?.interval;
+
+				await snap.request({
+					method: 'snap_manageState',
+					params: {
+						operation: 'update',
+						newState: userTempState,
+					},
+				});
+				return { status: true, error: '' };
+			} catch (error) {
+				return { status: false, error: error };
 			}
-
-			userTempState.riskyApprovalsSetting = request?.params?.interval;
-
-			await snap.request({
-				method: 'snap_manageState',
-				params: {
-					operation: 'update',
-					newState: userTempState,
-				},
-			});
-
-			return;
 
 		default:
 			throw new Error('Method not found.');

@@ -1,31 +1,11 @@
 import {
 	Box,
 	Heading,
-	Address,
 	Text,
 	Divider,
 	Bold,
 	Link,
-	Dropdown,
-	Option,
-	Button,
-	Field,
-	Radio,
-	RadioGroup,
-	Selector,
-	SelectorOption,
-	Form,
 } from '@metamask/snaps-sdk/jsx';
-
-/**
- * The state of the {@link InteractiveForm} component.
- */
-export type InteractiveFormState = {
-	/**
-	 * The value of the example dropdown.
-	 */
-	'example-dropdown': string;
-};
 
 export const onInstallContent = (
 	<Box>
@@ -101,38 +81,6 @@ export const onHomePageContent = () => {
 				Change notifications settings on the HashDit Snap website:{' '}
 				<Link href="https://www.hashdit.io/en/snap">Hashdit</Link>
 			</Text>
-			{/* <Form name="allApprovalsForm">
-				<Text>All Token Approvals</Text>
-				<Dropdown
-					name="allApprovalsDropdown"
-					value={allApprovalsDropdownValue}
-				>
-					<Option value="Off">Off</Option>
-					<Option value="minute">Every Minute</Option>
-					<Option value="daily">Every Day</Option>
-					<Option value="weekly">Every Week</Option>
-					<Option value="monthly">Every Month</Option>
-				</Dropdown>
-				<Button type="submit" name="submit">
-					Save
-				</Button>
-			</Form>
-			<Form name="riskyApprovalsForm">
-				<Text>Risky Token Approvals</Text>
-				<Dropdown
-					name="riskyApprovalsDropdown"
-					value={riskyApprovalsDropdownValue}
-				>
-					<Option value="Off">Off</Option>
-					<Option value="option1">Every Day</Option>
-					<Option value="option2">Every Week</Option>
-					<Option value="option3">Every Month</Option>
-				</Dropdown>
-				<Button type="submit" name="submit">
-					Save
-				</Button>
-			</Form> */}
-
 			<Divider />
 			<Heading>🔗 Links</Heading>
 			<Text>
