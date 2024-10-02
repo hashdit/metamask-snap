@@ -1,32 +1,32 @@
 {
-    "version": "0.2.1",
-    "description": "HashDit security snap to screen addresses before interaction.",
-    "proposedName": "HashDit Security",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/hashdit/metamask-snap.git"
+  "version": "0.2.1",
+  "description": "HashDit security snap to screen addresses before interaction.",
+  "proposedName": "HashDit Security",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hashdit/metamask-snap.git"
+  },
+  "source": {
+    "shasum": "T9TrrqtSgm0W8ONNn77u36c4DMlAqC15gTuE/YeDfFY=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "images/hashdit.svg",
+        "packageName": "hashdit-snap-security",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "endowment:transaction-insight": {
+      "allowTransactionOrigin": true
     },
-    "source": {
-        "shasum": "MvDrrKMzNVeF1a4Zq0Ibkw0uaotNG4VVu1zE7BkIzpk=",
-        "location": {
-            "npm": {
-                "filePath": "dist/bundle.js",
-                "iconPath": "images/hashdit.svg",
-                "packageName": "hashdit-snap-security",
-                "registry": "https://registry.npmjs.org/"
-            }
-        }
-    },
-    "initialPermissions": {
-        "endowment:transaction-insight": {
-            "allowTransactionOrigin": true
-        },
-        "endowment:network-access": {},
-        "endowment:ethereum-provider": {},
-        "snap_manageState": {},
-        "endowment:lifecycle-hooks": {},
-        "snap_dialog": {},
-        "endowment:page-home": {}
-    },
-    "manifestVersion": "0.1"
+    "endowment:network-access": {},
+    "endowment:ethereum-provider": {},
+    "snap_manageState": {},
+    "endowment:lifecycle-hooks": {},
+    "snap_dialog": {},
+    "endowment:page-home": {}
+  },
+  "manifestVersion": "0.1"
 }
