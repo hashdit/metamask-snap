@@ -127,7 +127,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 						riskyApprovalsSetting: 'Off',
 						DiTingApiKey: "",
 						userAddress: "",
-						
+						publicKey:"",
 						error: true,
 					};
 				} else {
@@ -140,6 +140,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 							userPersistedState.DiTingApiKey,
 						userAddress: 
 							userPersistedState.userAddress,
+							publicKey: userPersistedState.publicKey,
 						error: false,
 					};
 				}
@@ -149,6 +150,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 					riskyApprovalsSetting: 'Off',
 					DiTingApiKey: "",
 					userAddress: "",
+					publicKey:"",
 					error: true,
 				};
 			}
