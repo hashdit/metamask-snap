@@ -125,6 +125,9 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 					return {
 						allApprovalsSetting: 'Off',
 						riskyApprovalsSetting: 'Off',
+						DiTingApiKey: "",
+						userAddress: "",
+						
 						error: true,
 					};
 				} else {
@@ -133,6 +136,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 							userPersistedState.allApprovalsSetting,
 						riskyApprovalsSetting:
 							userPersistedState.riskyApprovalsSetting,
+						DiTingApiKey: 
+							userPersistedState.DiTingApiKey,
+						userAddress: 
+							userPersistedState.userAddress,
 						error: false,
 					};
 				}
@@ -140,6 +147,8 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 				return {
 					allApprovalsSetting: 'Off',
 					riskyApprovalsSetting: 'Off',
+					DiTingApiKey: "",
+					userAddress: "",
 					error: true,
 				};
 			}
