@@ -1,6 +1,6 @@
 {
   "name": "hashdit-snap-security",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "The HashDit Security Snap provides transaction warnings when interacting with risky contracts.",
   "keywords": [
     "Binance Smart Chain",
