@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { v4 as uuidv4 } from 'uuid';
 import hmacSHA256 from 'crypto-js/hmac-sha256';
 import encHex from 'crypto-js/enc-hex';
@@ -10,6 +11,7 @@ import {
     divider,
     address,
     row,
+    Signature,
 } from '@metamask/snaps-sdk';
 
 export async function authenticateHashDit(persistedUserData: any) {

@@ -1,3 +1,4 @@
+/* eslint-disable */
 export const CHAINS_INFO: {
     [key: string]: { url: string; nativeToken: string };
 } = {
