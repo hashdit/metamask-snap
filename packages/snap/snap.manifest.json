@@ -1,5 +1,7 @@
 {
+
   "version": "0.3.1",
+
   "description": "HashDit security snap to screen addresses before interaction.",
   "proposedName": "HashDit Security",
   "repository": {
@@ -26,7 +28,11 @@
     "snap_manageState": {},
     "endowment:lifecycle-hooks": {},
     "snap_dialog": {},
-    "endowment:page-home": {}
+    "endowment:page-home": {},
+    "snap_notify": {},
+    "endowment:signature-insight": {
+      "allowSignatureOrigin": true
+    }
   },
   "manifestVersion": "0.1"
 }

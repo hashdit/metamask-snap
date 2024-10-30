@@ -42,11 +42,12 @@ export async function authenticateHashDit(persistedUserData: any) {
 }
 
 export async function getHashDitResponse(
-    businessName: string,
-    persistedUserData: any,
-    transactionUrl?: any,
-    transaction?: any,
-    chainId?: string,
+  businessName: string,
+  persistedUserData: any,
+  transactionUrl?: any,
+  transaction?: any,
+  chainId?: string,
+  signaturePayload?: Signature,
 ) {
     const trace_id = uuidv4();
 
@@ -76,13 +77,13 @@ export async function getHashDitResponse(
         postBody.transaction = JSON.stringify(transaction);
         postBody.url = transactionUrl;
     } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
-        // This will be utilized when signature requests is supported
-        postBody.address = transaction.to;
-        postBody.chain_id = chain;
-        postBody.message = '0xdeadbeef';
-        postBody.method = 'eth_sign';
-        postBody.trace_id = trace_id;
-        postBody.url = transactionUrl;
+    // This will be utilized when signature requests is supported
+    postBody.address = signaturePayload.from;
+    postBody.chain_id = chain;
+    postBody.message = signaturePayload.data;
+    postBody.method = signaturePayload.signatureMethod;
+    postBody.trace_id = trace_id;
+    postBody.url = transactionUrl;
     }
 
     let appId: string;

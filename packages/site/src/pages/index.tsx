@@ -344,34 +344,34 @@ const Index = () => {
         dispatch({ type: MetamaskActions.SetError, payload: e });
       }
   
-      try {
-        // Request user to sign a message -> get user's signature -> get user's public key.
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const from = accounts[0];  
-        const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-        const signature = await window.ethereum.request({
-            method: 'personal_sign',
-            params: [message, from],
-          });
+      // try {
+      //   // Request user to sign a message -> get user's signature -> get user's public key.
+      //   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      //   const from = accounts[0];  
+      //   const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
+      //   const signature = await window.ethereum.request({
+      //       method: 'personal_sign',
+      //       params: [message, from],
+      //     });
 
-        // Send the signature to the snap for processing
-        const result = await window.ethereum.request({
-          method: 'wallet_invokeSnap',
-          params: {
-            snapId: defaultSnapOrigin, // Replace defaultSnapOrigin with 'npm:hashdit-snap-security' to test live version of snap
-            request: {
-              method: 'publicKeyMethod',
-              params:{        
-                signature: signature,
-                message: message,
-                from: from
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.log(`Error requesting accounts or encrypting public key: ${error}`)
-      }
+      //   // Send the signature to the snap for processing
+      //   const result = await window.ethereum.request({
+      //     method: 'wallet_invokeSnap',
+      //     params: {
+      //       snapId: defaultSnapOrigin, // Replace defaultSnapOrigin with 'npm:hashdit-snap-security' to test live version of snap
+      //       request: {
+      //         method: 'publicKeyMethod',
+      //         params:{        
+      //           signature: signature,
+      //           message: message,
+      //           from: from
+      //         }
+      //       }
+      //     }
+      //   });
+      // } catch (error) {
+      //   console.log(`Error requesting accounts or encrypting public key: ${error}`)
+      // }
     };
 
   return (

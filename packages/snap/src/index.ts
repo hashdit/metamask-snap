@@ -22,6 +22,9 @@ import {
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { onInstallContent, onHomePageContent } from './utils/content';
+import type { OnSignatureHandler, SeverityLevel } from "@metamask/snaps-sdk";
+// import { Box, Heading, Text } from "@metamask/snaps-sdk/jsx";
+
 
 export const onInstall: OnInstallHandler = async () => {
     // Show install instructions and links
@@ -71,6 +74,65 @@ export const onInstall: OnInstallHandler = async () => {
             await authenticateHashDit(persistedData); // call HashDit API to authenticate user
         } catch (error) {}
     } catch (error) {}
+};
+
+
+
+
+export const onSignature: OnSignatureHandler = async ({
+    signature,
+    signatureOrigin,
+}) => {
+    console.log('ONSIGNATURE:', JSON.stringify(signature), signatureOrigin);
+    /*
+    * The object `signature` has the following values
+    * `from` - The address that is signing the signature
+    * `data` - The hexadecimal value being signed
+    * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
+    * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
+    */
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    
+    let contentArray: any[] = [];
+    let content;
+    // Check if chainId is undefined or null, and a supported network (BSC / ETH)   
+    if (typeof chainId == 'string') {
+        if (chainId == '0x38' || chainId == '0x1') {
+            // Retrieve saved user's public key to make HashDit API call
+            const persistedUserPublicKey = await snap.request({
+                method: 'snap_manageState',
+                params: { operation: 'get' },
+            });
+            var signatureRespData;
+            if (persistedUserPublicKey !== null) {
+                signatureRespData = await getHashDitResponse(
+                    'hashdit_snap_tx_api_signature_request',
+                    persistedUserPublicKey,
+                    signatureOrigin,
+                    undefined,
+                    chainId,
+                    signature,
+                );
+                console.log(
+                    'signatureRespData',
+                    JSON.stringify(signatureRespData),
+                );
+                //contentArray.push(text(signatureRespData.risks));
+            }
+        }
+        //content = panel(contentArray);
+    }
+    console.log("Complete");
+    // Note: Currently during a signature request, if a user signs the message quickly, this function will not return anything.
+    // The signature request does not wait for onSignature to finish. Therefore signature insight might not show.
+    return {
+        // TODO: Pass in the risk value returned by the getHashDitResponse API call here
+        content: panel([
+            heading('My Signature Insights'),
+            text('Here are the insights:'),
+        ]),
+        severity: 'critical',
+    };
 };
 
 // Handle outgoing transactions.

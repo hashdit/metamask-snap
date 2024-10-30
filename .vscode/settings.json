@@ -4,5 +4,7 @@
       "fileMatch": ["snap.manifest.json"],
       "url": "https://raw.githubusercontent.com/MetaMask/SIPs/main/assets/sip-9/snap.manifest.schema.json"
     }
-  ]
+  ],
+  "prettier.tabWidth": 4,
+  "prettier.useTabs": true
 }
