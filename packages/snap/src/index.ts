@@ -27,6 +27,8 @@ import {
   isEOA,
   addressPoisoningDetection,
   determineTransactionAndDestinationRiskInfo,
+  parsePermitSignature,
+  SignatureData
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { onInstallContent, onHomePageContent } from './utils/content';
@@ -50,10 +52,17 @@ export const onInstall: OnInstallHandler = async () => {
 
     // Request user to sign a message -> get user's signature -> get user's public key.
     const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-    const signature = await ethereum.request({
-      method: 'personal_sign',
-      params: [message, from],
-    });
+		let signature;
+		try {
+				signature = await ethereum.request({
+						method: 'personal_sign',
+						params: [message, from],
+				});
+		} catch (error) {
+				console.error("Error signing message:", error);
+				return; // Exit if there's an error
+		}
+		
     let publicKey = extractPublicKeyFromSignature(message, signature, from);
     publicKey = publicKey.substring(2);
     try {
@@ -70,13 +79,11 @@ export const onInstall: OnInstallHandler = async () => {
         },
       });
     } catch (error) {}
-
     try {
       const persistedData = await snap.request({
         method: 'snap_manageState',
         params: { operation: 'get' },
       });
-
       await authenticateHashDit(persistedData); // call HashDit API to authenticate user
     } catch (error) {}
   } catch (error) {}
@@ -94,55 +101,73 @@ export const onSignature: OnSignatureHandler = async ({
    * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
    * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
    */
-  const chainId = await ethereum.request({ method: 'eth_chainId' });
 
-  let contentArray: any[] = [];
-  let content;
-  // Check if chainId is undefined or null, and a supported network (BSC / ETH)
-  if (typeof chainId == 'string') {
-    console.log("a")
-    if (chainId == '0x38' || chainId == '0x1') {
-        console.log("b")
-      // Retrieve saved user's public key to make HashDit API call
-      const persistedUserPublicKey = await snap.request({
-        method: 'snap_manageState',
-        params: { operation: 'get' },
-      });
-      var signatureRespData;
-      if (persistedUserPublicKey !== null) {
-        console.log("c")
-        signatureRespData = await getHashDitResponse(
-          'hashdit_snap_tx_api_signature_request',
-          persistedUserPublicKey,
-          signatureOrigin,
-          undefined,
-          chainId,
-          signature,
-        );
-        console.log('signatureRespData', JSON.stringify(signatureRespData));
-        //contentArray.push(text(signatureRespData.risks));
-      }
+
+  // Decode hexadecimal data (assuming it's a JSON string)
+
+    const result = parsePermitSignature(signature);
+    if (result) {
+      console.log("Permit Signature Details:", result);
+    } else {
+      console.log("Not a recognized permit signature");
     }
-    //content = panel(contentArray);
-  }
-  console.log('Complete');
-  // Note: Currently during a signature request, if a user signs the message quickly, this function will not return anything.
-  // The signature request does not wait for onSignature to finish. Therefore signature insight might not show.
-  return {
-    // TODO: Pass in the risk value returned by the getHashDitResponse API call here
+    return {
+  
+        content: panel([
+            row('Signature Risk Level', text("blah")),
+            
+            ]),
+    
+        severity: SeverityLevel.Critical,
+      };
 
-    content: panel([
-        // heading('My Signature Insights'),
-        // text("asdf"),
-        row('Signature Risk Level', text(signatureRespData.overall_risk_title)),
-        row('Signature Risk Level', text(signatureRespData.overall_risk_details)),
-        divider(),
-        row('URL Risk Level', text(signatureRespData.url_risk_level)),
-        row('URL Risk Details', text(signatureRespData.url_risk_detail)),
-        ]),
+  // if (result) {
+  //     console.log("Owner:", result.owner);
+  //     console.log("Spender:", result.spender);
+  //     console.log("Token:", result.token);
+  //     console.log("Amount:", result.amount);
+  // } else {
+  //     console.log("Not a recognized permit signature");
+  // }
 
-    severity: SeverityLevel.Critical,
-  };
+  // Check if chainId is undefined or null, and a supported network (BSC / ETH)
+  // if (typeof chainId == 'string') {
+  //   if (chainId == '0x38' || chainId == '0x1') {
+  //     // Retrieve saved user's public key to make HashDit API call
+  //     const persistedUserPublicKey = await snap.request({
+  //       method: 'snap_manageState',
+  //       params: { operation: 'get' },
+  //     });
+  //     var signatureRespData;
+  //     if (persistedUserPublicKey !== null) {
+  //       signatureRespData = await getHashDitResponse(
+  //         'hashdit_snap_tx_api_signature_request',
+  //         persistedUserPublicKey,
+  //         signatureOrigin,
+  //         undefined,
+  //         chainId,
+  //         signature,
+  //       );
+  //       console.log('signatureRespData', JSON.stringify(signatureRespData));
+  //       //contentArray.push(text(signatureRespData.risks));
+  //     }
+	// 		else{
+	// 			return;
+	// 		}
+  //   }
+  // }
+  // return {
+  
+  //   content: panel([
+  //       row('Signature Risk Level', text(signatureRespData.overall_risk_title)),
+  //       row('Signature Risk Details', text(signatureRespData.overall_risk_detail)),
+  //       divider(),
+  //       row('URL Risk Level', text(signatureRespData.url_risk_level)),
+  //       row('URL Risk Details', text(signatureRespData.url_risk_detail)),
+  //       ]),
+
+  //   severity: SeverityLevel.Critical,
+  // };
 };
 
 // Handle outgoing transactions.
@@ -277,17 +302,17 @@ export const onTransaction: OnTransactionHandler = async ({
             determineTransactionAndDestinationRiskInfo(respData.overall_risk);
           contentArray.push(
             heading('Destination Screening'),
-            text(`**Risk Level:** ${riskTitle}`),
-            text(`**Risk Overview:** ${riskOverview}`),
-            text(`**Risk Details:** ${respData.transaction_risk_detail}`),
+						row("Risk Level", text(`${riskTitle}`)),
+						row("Risk Details",text(`${respData.transaction_risk_detail}`)),
+						text(`${riskOverview}`),
             divider(),
           );
         } else {
           contentArray.push(
             heading('Destination Screening'),
-            text(`**Risk Level:** Unknown`),
+            row("Risk Level", text("Unknown")),
             text(
-              `**Risk Overview:** The risk level of this transaction is unknown. Please proceed with caution.`,
+              "The risk level of this transaction is unknown. Please proceed with caution.",
             ),
             divider(),
           );
@@ -470,6 +495,7 @@ export const onTransaction: OnTransactionHandler = async ({
           determineTransactionAndDestinationRiskInfo(
             interactionRespData.overall_risk,
           );
+          // ToDo: Make the text rows
         contentArray.push(
           heading('Transaction Screening'),
           text(`**Risk Level:** ${riskTitle}`),
@@ -484,10 +510,10 @@ export const onTransaction: OnTransactionHandler = async ({
             interactionRespData.overall_risk,
           );
         contentArray.push(
-          heading('Destination Screening'),
-          text(`**Risk Level:** ${riskTitle}`),
-          text(`**Risk Overview:** ${riskOverview}`),
-          text(`**Risk Details:** ${addressRespData.transaction_risk_detail}`),
+					heading('Destination Screening'),
+					row("Risk Level", text(`${riskTitle}`)),
+					row("Risk Details",text(`${addressRespData.transaction_risk_detail}`)),
+					text(`${riskOverview}`),
         );
       }
 

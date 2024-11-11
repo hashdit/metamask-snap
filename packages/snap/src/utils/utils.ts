@@ -40,7 +40,7 @@ export async function authenticateHashDit(persistedUserData: any) {
     );
 
     const resp = await response.json();
-    //console.log('Authenticate Resp', resp);
+    console.log('Authenticate Resp', resp);
 }
 
 export async function getHashDitResponse(
@@ -80,6 +80,7 @@ export async function getHashDitResponse(
         postBody.url = transactionUrl;
     } else if (businessName == 'hashdit_snap_tx_api_signature_request') {
     // This will be utilized when signature requests is supported
+    //console.log("api call", signaturePayload, chain, trace_id, transactionUrl);
     postBody.address = signaturePayload.from;
     postBody.chain_id = chain;
     postBody.message = signaturePayload.data;
@@ -147,7 +148,7 @@ function formatResponse(
         responseData.url_risk_level = url_risk_level;
         responseData.url_risk_detail = url_risk_detail;
 
-        // Destination Screening, checks if destination address is in blacklist or whitelist
+    // Destination Screening, checks if destination address is in blacklist or whitelist
     } else if (businessName == 'internal_address_lables_tags') {
         responseData.overall_risk = resp.risk_level;
         try {
@@ -435,3 +436,110 @@ export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
         ];
     }
 }
+
+export interface SignatureParsed {
+    from: string;
+    data: {
+        types: {
+            EIP712Domain: Array<{ name: string; type: string }>;
+            PermitBatch?: Array<{ name: string; type: string }>;
+            PermitDetails?: Array<{ name: string; type: string }>;
+            PermitSingle?: Array<{ name: string; type: string }>;
+            PermitForAll?: Array<{ name: string; type: string }>;
+            Permit?: Array<{ name: string; type: string }>;
+        };
+        domain: {
+            name: string;
+            chainId: string;
+            verifyingContract: string;
+        };
+        primaryType: string;
+        message: any;
+    };
+}
+
+export function parsePermitSignature(signature: Signature) {
+    console.log("parsePermitSignature");
+    let signatureParsed: SignatureParsed;
+    let decodedData;
+
+    // Check if signature.data is an object (which it is in your case)
+    if (typeof signature.data !== 'object') {
+        console.log("Invalid data type for signature.data:", typeof signature.data);
+        return null; // Exit if data is not an object
+    }
+
+    // No need to decode if it's already an object
+    decodedData = signature.data;
+
+    signatureParsed = {
+        from: signature.from,
+        data: decodedData,
+    };
+
+    const { primaryType, message } = signatureParsed.data;
+    console.log(primaryType, message);
+    let owner: string | undefined;
+    let spender: string | undefined;
+    let token: string | undefined;
+    let amount: string | undefined;
+
+    // Check for PermitBatch
+    if (primaryType === "PermitBatch" && message.details && Array.isArray(message.details)) {
+        owner = signature.from;
+        spender = message.spender;
+        token = message.details[0].token; // Use the first token for example
+        amount = message.details[0].amount;
+
+    }
+    // Check for PermitSingle
+    else if (primaryType === "PermitSingle" && message.details) {
+        owner = signature.from;
+        spender = message.spender;
+        token = message.details.token;
+        amount = message.details.amount;
+
+
+    }
+    // Check for PermitForAll
+    else if (primaryType === "PermitForAll") {
+        owner = message.owner;
+        spender = message.operator;
+        token = "N/A"; // Not relevant for PermitForAll
+        amount = "N/A"; // Not relevant for PermitForAll
+
+    }
+    // Check for Permit (ERC20/other token)
+    else if (primaryType === "Permit" && message.spender && message.value) {
+		if(message.holder){
+			// The owner address can be the `holder` key in the signature
+			owner = message.holder;
+			spender = message.spender;
+			token = message.domain.verifyingContract; 
+			amount = message.value;
+		}
+		else if (message.owner){
+			
+			owner = message.owner;
+			spender = message.spender;
+			token = message.domain.verifyingContract; 
+			amount = message.value;
+		}
+
+
+    } else {
+        console.log("Unknown signature type or missing fields");
+        return null;
+    }
+
+    return { owner, spender, token, amount };
+}
+
+
+// function getPermitRiskLevel(primaryType, owner, spender, token, amount){
+
+// }
+
+
+
+
