@@ -6,17 +6,15 @@ import type {
   OnSignatureHandler,
 } from '@metamask/snaps-sdk';
 
-import {
-    SeverityLevel,
-  } from '@metamask/snaps-sdk';
+import { SeverityLevel } from '@metamask/snaps-sdk';
 
 import {
-    heading,
-    panel,
-    text,
-    divider,
-    address,
-    row,
+  heading,
+  panel,
+  text,
+  divider,
+  address,
+  row,
 } from '@metamask/snaps-sdk';
 
 import {
@@ -27,8 +25,7 @@ import {
   isEOA,
   addressPoisoningDetection,
   determineTransactionAndDestinationRiskInfo,
-  parsePermitSignature,
-  SignatureData
+  parseSignature,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import { onInstallContent, onHomePageContent } from './utils/content';
@@ -52,17 +49,17 @@ export const onInstall: OnInstallHandler = async () => {
 
     // Request user to sign a message -> get user's signature -> get user's public key.
     const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-		let signature;
-		try {
-				signature = await ethereum.request({
-						method: 'personal_sign',
-						params: [message, from],
-				});
-		} catch (error) {
-				console.error("Error signing message:", error);
-				return; // Exit if there's an error
-		}
-		
+    let signature;
+    try {
+      signature = await ethereum.request({
+        method: 'personal_sign',
+        params: [message, from],
+      });
+    } catch (error) {
+      console.error('Error signing message:', error);
+      return; // Exit if there's an error
+    }
+
     let publicKey = extractPublicKeyFromSignature(message, signature, from);
     publicKey = publicKey.substring(2);
     try {
@@ -94,80 +91,44 @@ export const onSignature: OnSignatureHandler = async ({
   signatureOrigin,
 }) => {
   console.log('ONSIGNATURE:', JSON.stringify(signature), signatureOrigin);
-  /*
-   * The object `signature` has the following values
-   * `from` - The address that is signing the signature
-   * `data` - The hexadecimal value being signed
-   * `signatureMethod` - The signing method e.g. personal_sign, eth_sign
-   * More information about signature methods can be found here: https://docs.metamask.io/wallet/concepts/signing-methods/
-   */
 
+  const contentArray = await parseSignature(signature, signatureOrigin);
+  if (contentArray != null) {
+    console.log('onsig result', contentArray);
+    const content = panel(contentArray);
+    return { content };
+  }
 
-  // Decode hexadecimal data (assuming it's a JSON string)
+  console.log('No permit function found');
 
-    const result = parsePermitSignature(signature);
-    if (result) {
-      console.log("Permit Signature Details:", result);
-    } else {
-      console.log("Not a recognized permit signature");
-    }
-    return {
-  
+  const persistedUserPublicKey = await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'get' },
+  });
+
+  if (persistedUserPublicKey !== null) {
+    const urlResp = await getHashDitResponse(
+      'hashdit_snap_tx_api_url_detection',
+      persistedUserPublicKey,
+      signatureOrigin,
+    );
+
+    if (urlResp) {
+      return {
         content: panel([
-            row('Signature Risk Level', text("blah")),
-            
-            ]),
-    
-        severity: SeverityLevel.Critical,
+          heading('Website Screening'),
+          row('Website', text(signatureOrigin)),
+          row('Risk Level', text(urlResp.url_risk_level)),
+          text(urlResp.url_risk_detail),
+        ]),
       };
+    }
+  }
 
-  // if (result) {
-  //     console.log("Owner:", result.owner);
-  //     console.log("Spender:", result.spender);
-  //     console.log("Token:", result.token);
-  //     console.log("Amount:", result.amount);
-  // } else {
-  //     console.log("Not a recognized permit signature");
-  // }
-
-  // Check if chainId is undefined or null, and a supported network (BSC / ETH)
-  // if (typeof chainId == 'string') {
-  //   if (chainId == '0x38' || chainId == '0x1') {
-  //     // Retrieve saved user's public key to make HashDit API call
-  //     const persistedUserPublicKey = await snap.request({
-  //       method: 'snap_manageState',
-  //       params: { operation: 'get' },
-  //     });
-  //     var signatureRespData;
-  //     if (persistedUserPublicKey !== null) {
-  //       signatureRespData = await getHashDitResponse(
-  //         'hashdit_snap_tx_api_signature_request',
-  //         persistedUserPublicKey,
-  //         signatureOrigin,
-  //         undefined,
-  //         chainId,
-  //         signature,
-  //       );
-  //       console.log('signatureRespData', JSON.stringify(signatureRespData));
-  //       //contentArray.push(text(signatureRespData.risks));
-  //     }
-	// 		else{
-	// 			return;
-	// 		}
-  //   }
-  // }
-  // return {
-  
-  //   content: panel([
-  //       row('Signature Risk Level', text(signatureRespData.overall_risk_title)),
-  //       row('Signature Risk Details', text(signatureRespData.overall_risk_detail)),
-  //       divider(),
-  //       row('URL Risk Level', text(signatureRespData.url_risk_level)),
-  //       row('URL Risk Details', text(signatureRespData.url_risk_detail)),
-  //       ]),
-
-  //   severity: SeverityLevel.Critical,
-  // };
+  // Fallback message if none of the above conditions were met
+  return {
+    content: panel([text('Unable to retrieve any risk details.')]),
+  };
 };
 
 // Handle outgoing transactions.
@@ -302,17 +263,17 @@ export const onTransaction: OnTransactionHandler = async ({
             determineTransactionAndDestinationRiskInfo(respData.overall_risk);
           contentArray.push(
             heading('Destination Screening'),
-						row("Risk Level", text(`${riskTitle}`)),
-						row("Risk Details",text(`${respData.transaction_risk_detail}`)),
-						text(`${riskOverview}`),
+            row('Risk Level', text(`${riskTitle}`)),
+            row('Risk Details', text(`${respData.transaction_risk_detail}`)),
+            text(`${riskOverview}`),
             divider(),
           );
         } else {
           contentArray.push(
             heading('Destination Screening'),
-            row("Risk Level", text("Unknown")),
+            row('Risk Level', text('Unknown')),
             text(
-              "The risk level of this transaction is unknown. Please proceed with caution.",
+              'The risk level of this transaction is unknown. Please proceed with caution.',
             ),
             divider(),
           );
@@ -495,7 +456,7 @@ export const onTransaction: OnTransactionHandler = async ({
           determineTransactionAndDestinationRiskInfo(
             interactionRespData.overall_risk,
           );
-          // ToDo: Make the text rows
+        // ToDo: Make the text rows
         contentArray.push(
           heading('Transaction Screening'),
           text(`**Risk Level:** ${riskTitle}`),
@@ -510,10 +471,13 @@ export const onTransaction: OnTransactionHandler = async ({
             interactionRespData.overall_risk,
           );
         contentArray.push(
-					heading('Destination Screening'),
-					row("Risk Level", text(`${riskTitle}`)),
-					row("Risk Details",text(`${addressRespData.transaction_risk_detail}`)),
-					text(`${riskOverview}`),
+          heading('Destination Screening'),
+          row('Risk Level', text(`${riskTitle}`)),
+          row(
+            'Risk Details',
+            text(`${addressRespData.transaction_risk_detail}`),
+          ),
+          text(`${riskOverview}`),
         );
       }
 
