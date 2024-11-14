@@ -6,8 +6,6 @@ import type {
   OnSignatureHandler,
 } from '@metamask/snaps-sdk';
 
-import { SeverityLevel } from '@metamask/snaps-sdk';
-
 import {
   heading,
   panel,
@@ -33,7 +31,6 @@ import {
   onHomePageContent,
   errorContent,
 } from './utils/content';
-// import { Box, Heading, Text } from "@metamask/snaps-sdk/jsx";
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -112,7 +109,6 @@ export const onSignature: OnSignatureHandler = async ({
 
   // We consider personal_sign to be safe
   if (signature.signatureMethod === 'personal_sign') {
-    console.log("personal_sign")
     contentArray.push(
       heading('Signature Screening'),
       text(
@@ -158,6 +154,7 @@ export const onSignature: OnSignatureHandler = async ({
       }
     } catch (error) {
       // Handle any errors from getHashDitResponse
+      console.error("Error with HashDit Snap:", error);
       contentArray.push(
         text(
           'An error occurred while attempting to retrieve website screening information.',

@@ -41,7 +41,7 @@ export async function authenticateHashDit(persistedUserData: any) {
   );
 
   const resp = await response.json();
-  console.log('Authenticate Resp', resp);
+  //console.log('Authenticate Resp', resp);
 }
 
 export async function getHashDitResponse(
@@ -123,7 +123,7 @@ export async function getHashDitResponse(
     nonce,
     signatureFinal,
   );
-  console.log(response);
+  //console.log(response);
   return formatResponse(response, businessName);
 }
 
@@ -456,13 +456,12 @@ export async function parseSignature(
   signature: Signature,
   signatureOrigin: any,
 ) {
-  console.log('parseSignature()');
   let signatureParsed: SignatureParsed;
   let decodedData;
 
   // Check if signature.data is an object. Exit if data is not an object
   if (typeof signature.data !== 'object') {
-    console.log('Invalid data type for signature.data:', typeof signature.data);
+    //console.log('Invalid data type for signature.data:', typeof signature.data);
     return null;
   }
 
@@ -474,7 +473,7 @@ export async function parseSignature(
   };
 
   const { primaryType, message } = signatureParsed.data;
-  console.log('PrimaryType and Message', primaryType, message);
+  //console.log('PrimaryType and Message', primaryType, message);
 
   let spender: string | undefined;
   let token: any;
@@ -513,7 +512,7 @@ export async function parseSignature(
       token = null;
     }
   } else {
-    console.log('Not a Permit Signature, returning null');
+    //console.log('Not a Permit Signature, returning null');
 
     return null;
   }
@@ -534,7 +533,6 @@ async function callHashDitAPIForSignatureInsight(
   signatureOrigin: any,
 ) {
   let contentArray: any[] = [];
-  console.log('callHashDitAPIForSignature()');
   let persistedUserData;
   // Retrieve persisted user data
   try {
@@ -575,19 +573,6 @@ async function callHashDitAPIForSignatureInsight(
             spender,
           ),
         );
-
-        // if (tokenAddress != null) {
-        //   blacklistPromises.push(
-        //     getHashDitResponse(
-        //       'signature_insight_blacklist',
-        //       persistedUserData,
-        //       null,
-        //       null,
-        //       chainId,
-        //       tokenAddress,
-        //     ),
-        //   );
-        // }
       } else if (primaryType === 'PermitForAll') {
         blacklistPromises.push(
           getHashDitResponse(
@@ -610,23 +595,6 @@ async function callHashDitAPIForSignatureInsight(
             spender,
           ),
         );
-
-        // If tokenAddress is an array, add each token check to the blacklistPromises array
-        // if (Array.isArray(tokenAddress)) {
-        //   for (const tokenDetails of tokenAddress) {
-        //     const token = tokenDetails.token;
-        //     blacklistPromises.push(
-        //       getHashDitResponse(
-        //         'signature_insight_blacklist',
-        //         persistedUserData,
-        //         null,
-        //         null,
-        //         chainId,
-        //         token,
-        //       ),
-        //     );
-        //   }
-        // }
       }
     }
 
@@ -649,7 +617,6 @@ async function createContentForSignatureInsight(
   spender: any,
   signatureOrigin: string,
 ) {
-  console.log('createContentForSignatureInsight()');
   // Define variables for responses
   let urlResp, spenderBlacklistResp, tokenBlacklistResp, isSpenderEOA;
   let contentArray: any[] = [];
@@ -657,12 +624,6 @@ async function createContentForSignatureInsight(
   // Assign responses based on primaryType
   urlResp = responses[0];
   spenderBlacklistResp = responses[1];
-  //tokenBlacklistResp = responses.slice(2); // Collect all token responses as an array
-
-  console.log('urlResp', urlResp);
-  console.log('spenderBlacklistResp', spenderBlacklistResp);
-  console.log('tokenBlacklistResp', tokenBlacklistResp);
-
 
   // Check if spender is an Externally Owned Address.
   // We consider approving to an EOA spender to be a high risk because there are few scenarios where this is needed.
