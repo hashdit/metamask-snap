@@ -27,7 +27,6 @@
     "endowment:lifecycle-hooks": {},
     "snap_dialog": {},
     "endowment:page-home": {},
-    "snap_notify": {},
     "endowment:signature-insight": {
       "allowSignatureOrigin": true
     }
