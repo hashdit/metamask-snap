@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ethers } from 'ethers';
 import { ec as EC } from 'elliptic';
 

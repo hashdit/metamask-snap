@@ -7,4 +7,4 @@
  * there. Running `yarn build` will automatically use the production environment variables.
  */
 export const defaultSnapOrigin =
-  process.env.SNAP_ORIGIN ?? `local:http://localhost:8080`;
+  process.env.SNAP_ORIGIN ?? 'local:http://localhost:8080';
