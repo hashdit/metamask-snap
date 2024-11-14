@@ -28,11 +28,15 @@ import {
   parseSignature,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
-import { onInstallContent, onHomePageContent } from './utils/content';
+import {
+  onInstallContent,
+  onHomePageContent,
+  errorContent,
+} from './utils/content';
 // import { Box, Heading, Text } from "@metamask/snaps-sdk/jsx";
 
+// Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-  // Show install instructions and links
   await snap.request({
     method: 'snap_dialog',
     params: {
@@ -86,52 +90,87 @@ export const onInstall: OnInstallHandler = async () => {
   } catch (error) {}
 };
 
+// Called during a signature request transaction. Show insights
 export const onSignature: OnSignatureHandler = async ({
   signature,
   signatureOrigin,
 }) => {
-  console.log('ONSIGNATURE:', JSON.stringify(signature), signatureOrigin);
+  
+  // Retrieve the content array if the signature is v3 or v4
+  const parseSignatureArrayResult = await parseSignature(
+    signature,
+    signatureOrigin,
+  );
 
-  const contentArray = await parseSignature(signature, signatureOrigin);
-  if (contentArray != null) {
-    console.log('onsig result', contentArray);
-    const content = panel(contentArray);
+  // Return the results if they exist
+  if (parseSignatureArrayResult != null) {
+    const content = panel(parseSignatureArrayResult);
     return { content };
   }
 
-  console.log('No permit function found');
+  let contentArray: any[] = [];
 
-  const persistedUserPublicKey = await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'get' },
-  });
-
-  if (persistedUserPublicKey !== null) {
-    const urlResp = await getHashDitResponse(
-      'hashdit_snap_tx_api_url_detection',
-      persistedUserPublicKey,
-      signatureOrigin,
+  // We consider personal_sign to be safe
+  if (signature.signatureMethod === 'personal_sign') {
+    console.log("personal_sign")
+    contentArray.push(
+      heading('Signature Screening'),
+      text(
+        'This signature uses the personal_sign method. It allows users to sign arbitrary messages to verify address ownership. It is generally safe.',
+      ),
+      divider(),
     );
+  }
 
-    if (urlResp) {
-      return {
-        content: panel([
+  // Retrieve user data, and get website risk level
+  let persistedUserData = null;
+  try {
+    persistedUserData = await snap.request({
+      method: 'snap_manageState',
+      params: { operation: 'get' },
+    });
+  } catch (error) {
+    contentArray.push(
+      heading('HashDit Snap'),
+      text(
+        'If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.',
+      ),
+    );
+    return { content: panel(contentArray) };
+  }
+  // User data exists. Call website screening API, and add results to content array.
+  if (persistedUserData !== null) {
+    try {
+      const urlResp = await getHashDitResponse(
+        'hashdit_snap_tx_api_url_detection',
+        persistedUserData,
+        signatureOrigin,
+      );
+
+      if (urlResp) {
+        contentArray.push(
           heading('Website Screening'),
           row('Website', text(signatureOrigin)),
           row('Risk Level', text(urlResp.url_risk_level)),
           text(urlResp.url_risk_detail),
-        ]),
-      };
+        );
+        return { content: panel(contentArray) };
+      }
+    } catch (error) {
+      // Handle any errors from getHashDitResponse
+      contentArray.push(
+        text(
+          'An error occurred while attempting to retrieve website screening information.',
+        ),
+      );
     }
   }
 
-  // Fallback message if none of the above conditions were met
-  return {
-    content: panel([text('Unable to retrieve any risk details.')]),
-  };
+  // Fallback error message if none of the above conditions were met
+  return { content: panel(errorContent) };
 };
 
-// Handle outgoing transactions.
+// Called when a transaction is pending. Handle outgoing transactions.
 export const onTransaction: OnTransactionHandler = async ({
   transaction,
   transactionOrigin,
@@ -170,14 +209,14 @@ export const onTransaction: OnTransactionHandler = async ({
           contentArray = poisonResultArray;
         }
 
-        // URL Screening call
+        // Website Screening call
         urlRespData = await getHashDitResponse(
           'hashdit_snap_tx_api_url_detection',
           persistedUserPublicKey,
           transactionOrigin,
         );
         contentArray.push(
-          heading('URL Screening'),
+          heading('Website Screening'),
           row('Website', text(transactionOrigin)),
           row('Risk Level', text(urlRespData.url_risk_level)),
           text(urlRespData.url_risk_detail),
@@ -242,7 +281,7 @@ export const onTransaction: OnTransactionHandler = async ({
           contentArray = poisonResultArray;
         }
 
-        // Parallelize Destination Screening call and URL Screening call
+        // Parallelize Destination Screening call and Website Screening call
         const [respData, urlRespData] = await Promise.all([
           getHashDitResponse(
             'internal_address_lables_tags',
@@ -280,7 +319,7 @@ export const onTransaction: OnTransactionHandler = async ({
         }
 
         contentArray.push(
-          heading('URL Screening'),
+          heading('Website Screening'),
           row('Website', text(transactionOrigin)),
           row('Risk Level', text(urlRespData.url_risk_level)),
           text(urlRespData.url_risk_detail),
@@ -347,14 +386,14 @@ export const onTransaction: OnTransactionHandler = async ({
       if (poisonResultArray.length != 0) {
         contentArray = poisonResultArray;
       }
-      // URL Screening call
+      // Website Screening call
       const urlRespData = await getHashDitResponse(
         'hashdit_snap_tx_api_url_detection',
         persistedUserData,
         transactionOrigin,
       );
       contentArray = [
-        heading('URL Screening'),
+        heading('Website Screening'),
         row('Website', text(transactionOrigin)),
         row('Risk Level', text(urlRespData.url_risk_level)),
         text(urlRespData.url_risk_detail),
@@ -381,7 +420,7 @@ export const onTransaction: OnTransactionHandler = async ({
         ),
         divider(),
         text(
-          'HashDit Security Insights is not fully supported on this chain. Only URL screening has been performed.',
+          'HashDit Security Insights is not fully supported on this chain. Only Website Screening has been performed.',
         ),
         text(
           'Currently we only support the **BSC Mainnet** and **ETH Mainnet**.',
@@ -400,7 +439,7 @@ export const onTransaction: OnTransactionHandler = async ({
 
     let contentArray: any[] = [];
     if (persistedUserPublicKey !== null) {
-      // Parallelize Transaction, Destination, and URL screening calls
+      // Parallelize Transaction, Destination, and Website Screening calls
       const [interactionRespData, addressRespData, urlRespData] =
         await Promise.all([
           getHashDitResponse(
@@ -481,10 +520,10 @@ export const onTransaction: OnTransactionHandler = async ({
         );
       }
 
-      // Display URL screening results
+      // Display Website Screening results
       contentArray.push(
         divider(),
-        heading('URL Screening'),
+        heading('Website Screening'),
         row('Website', text(transactionOrigin)),
         row('Risk Level', text(urlRespData.url_risk_level)),
         text(urlRespData.url_risk_detail),

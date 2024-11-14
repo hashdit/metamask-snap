@@ -75,3 +75,10 @@ export const onHomePageContent = [
     divider(),
     heading('Thank you for using HashDit Snap!'),
 ];
+
+export const errorContent = [
+    heading('HashDit Snap'),
+    text(
+        "If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.",
+      ),
+]
