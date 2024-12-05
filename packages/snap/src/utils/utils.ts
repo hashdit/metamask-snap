@@ -15,11 +15,53 @@ import {
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
 
-export async function authenticateHashDit(persistedUserData: any) {
+// Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
+export async function authenticateDiTing(
+	userAddress: string,
+	signature: string,
+) {
+	const requestBody = {
+		userAddr: userAddress,
+		signature: signature,
+	};
+
+	const response = await fetch('https://service.hashdit.io/v2/auth', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(requestBody),
+	});
+	const resp = await response.json();
+
+	return resp;
+}
+
+export async function getBlockHeight() {
+	try {
+		// Use the snap's provider to call the eth_blockNumber method
+		const blockNumberHex = (await ethereum.request({
+			method: 'eth_blockNumber',
+		})) as string;
+
+		// Convert the hex block number to a decimal number
+		const blockNumber = parseInt(blockNumberHex, 16);
+
+		console.log(`Current Block Height: ${blockNumber}`);
+		return blockNumber;
+	} catch (error) {
+		console.error('Error retrieving block height:', error);
+		throw error;
+	}
+}
+
+// Called during HashDit Snap installation. Used to authenticate the user with HashDit, and the user's public key.
+export async function authenticateHashDit(
+	userAddress: string,
+	messageSignature: string,
+) {
 	const timestamp = Date.now();
 	const nonce = uuidv4().replace(/-/g, '');
-	const appId = persistedUserData.userAddress;
-	const appSecret = persistedUserData.messageSignature;
 
 	const response = await fetch(
 		'https://api.hashdit.io/security-api/public/chain/v1/web3/signature',
@@ -30,10 +72,10 @@ export async function authenticateHashDit(persistedUserData: any) {
 			credentials: 'same-origin',
 			headers: {
 				'Content-Type': 'application/json;charset=UTF-8',
-				'X-Signature-appid': appId,
+				'X-Signature-appid': userAddress,
 				'X-Signature-timestamp': timestamp.toString(),
 				'X-Signature-nonce': nonce,
-				'X-Signature-signature': appSecret,
+				'X-Signature-signature': messageSignature,
 			},
 			redirect: 'follow',
 			referrerPolicy: 'no-referrer',
@@ -41,7 +83,6 @@ export async function authenticateHashDit(persistedUserData: any) {
 	);
 
 	const resp = await response.json();
-	//console.log('Authenticate Resp', resp);
 }
 
 export async function getHashDitResponse(
@@ -206,6 +247,61 @@ function formatResponse(resp: any, businessName: string) {
 	}
 
 	return responseData;
+}
+
+export async function callDiTingTxSimulation(
+	chainId: string,
+	toAddress: string,
+	fromAddress: string,
+	transactionGasHex: string,
+	transactionValue: string,
+	transactionData:string,
+	
+) {
+	
+	let chainIdNumber = chainIdHexToNumber(chainId);
+	let transactionGasNumber = parseInt(transactionGasHex, 16)
+	const currentBlockHeight = getBlockHeight();
+	const url = 'https://service.hashdit.io/v2/hashdit/txn-simulation';
+	const postBody = {
+		chain_id: chainIdNumber,
+		block_height: currentBlockHeight,
+		node_type: 'hardhat',
+		transactions: [
+			{
+				to: toAddress,
+				from: fromAddress,
+				value: transactionValue,
+				gas: transactionGasNumber,
+				data: transactionData,
+				mode: 'force',
+				debug: true,
+			},
+		],
+		requested_items: {
+			balance_changes: true,
+			approve_changes: true,
+			involved_address_risks: true,
+			invocation_tree: false,
+		},
+	};
+
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			// Add api key
+		},
+		body: JSON.stringify(postBody),
+	});
+	const resp = await response.json();
+	console.log(resp);
+	// if (resp.status == 'OK' && resp.data) {
+
+	// 	return resp.data;
+	// } else {
+	// 	console.log('Simulation api error: ' + resp.errorData);
+	// }
 }
 
 async function customFetch(
@@ -722,4 +818,12 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 			'The risk level of this transaction is unknown. Please proceed with caution.',
 		];
 	}
+}
+
+function chainIdHexToNumber(chainId: string): string {
+    const chainMap: Record<string, string> = {
+        '0x1': '1',
+        '0x38': '56',
+    };
+    return chainMap[chainId] || '56'; 
 }

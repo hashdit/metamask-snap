@@ -24,6 +24,9 @@ import {
 	addressPoisoningDetection,
 	determineTransactionAndDestinationRiskInfo,
 	parseSignature,
+	authenticateDiTing,
+
+	callDiTingTxSimulation,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -34,6 +37,7 @@ import {
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
+
 	await snap.request({
 		method: 'snap_dialog',
 		params: {
@@ -52,38 +56,66 @@ export const onInstall: OnInstallHandler = async () => {
 		const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
 		let signature;
 		try {
-			signature = await ethereum.request({
+			signature = (await ethereum.request({
 				method: 'personal_sign',
 				params: [message, from],
-			});
+			})) as string;
 		} catch (error) {
 			console.error('Error signing message:', error);
 			return; // Exit if there's an error
 		}
 
-		let publicKey = extractPublicKeyFromSignature(message, signature, from);
-		publicKey = publicKey.substring(2);
+		let publicKey = extractPublicKeyFromSignature(
+			message,
+			signature,
+			from,
+		)?.substring(2);
+		const newState: any = {
+			publicKey: publicKey,
+			userAddress: from,
+			messageSignature: signature,
+		};
+
+		// Call HashDit API to authenticate user
 		try {
-			// Save public key here and user address here:
+			await authenticateHashDit(from, signature);
+		} catch (error) {
+			console.error('Error during HashDit API authentication:', error);
+		}
+
+		// Call DiTing Auth API to retrieve personal API key
+		try {
+			const DiTingResult = await authenticateDiTing(from, signature);
+			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
+				newState.DiTingApiKey = DiTingResult.apiKey;
+				console.log("DitingResult",DiTingResult);
+			} else {
+				throw new Error(
+					`Authentication failed: ${DiTingResult.message}`,
+				);
+			}
+		} catch (error) {
+			console.error(
+				'An error occurred during DiTing authentication:',
+				error,
+			);
+		}
+
+		// Finally, update the state with all the collected data
+		try {
 			await snap.request({
 				method: 'snap_manageState',
 				params: {
 					operation: 'update',
-					newState: {
-						publicKey: publicKey,
-						userAddress: from,
-						messageSignature: signature,
-					},
+					newState: newState,
 				},
 			});
-		} catch (error) {}
-		try {
-			const persistedData = await snap.request({
-				method: 'snap_manageState',
-				params: { operation: 'get' },
-			});
-			await authenticateHashDit(persistedData); // call HashDit API to authenticate user
-		} catch (error) {}
+		} catch (error) {
+			console.error(
+				'An error occurred during saving to local storage:',
+				error,
+			);
+		}
 	} catch (error) {}
 };
 
@@ -171,6 +203,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
+	console.log("transaction", transaction);
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -271,7 +304,6 @@ export const onTransaction: OnTransactionHandler = async ({
 			});
 
 			let contentArray: any[] = [];
-			var respData;
 			var urlRespData;
 			if (persistedUserPublicKey !== null) {
 				const poisonResultArray = addressPoisoningDetection(accounts, [
@@ -295,6 +327,14 @@ export const onTransaction: OnTransactionHandler = async ({
 						persistedUserPublicKey,
 						transactionOrigin,
 					),
+					callDiTingTxSimulation(
+						chainId,
+						transaction.to,
+						transaction.from,
+						transaction.gas,
+						transaction.value,
+						transaction.data
+					)
 				]);
 
 				if (respData.overall_risk != '-1') {
