@@ -24,6 +24,7 @@ import {
 	addressPoisoningDetection,
 	determineTransactionAndDestinationRiskInfo,
 	parseSignature,
+	checkSignatureDatabase,
 } from './utils/utils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -171,6 +172,8 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
+	console.log('onTransaction', transaction);
+	
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -393,6 +396,10 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (poisonResultArray.length != 0) {
 				contentArray = poisonResultArray;
 			}
+			const signatureCheckResultArray = await checkSignatureDatabase(transaction.data);
+			if (signatureCheckResultArray.length !== 0) {
+				contentArray.push(...signatureCheckResultArray); 
+			}
 			// Website Screening call
 			const urlRespData = await getHashDitResponse(
 				'hashdit_snap_tx_api_url_detection',
@@ -540,10 +547,15 @@ export const onTransaction: OnTransactionHandler = async ({
 				text(urlRespData.url_risk_detail),
 			);
 
-			/*
-	  Only display Transfer Details if transferring more than 0 native tokens
-	  This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-	  */
+			const signatureCheckResultArray = await checkSignatureDatabase(transaction.data);
+			if (signatureCheckResultArray.length !== 0) {
+				contentArray.push(...signatureCheckResultArray);
+			}
+
+		/*
+	  	Only display Transfer Details if transferring more than 0 native tokens
+	  	This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
+	  	*/
 			const transactingValue = parseTransactingValue(transaction.value);
 			const nativeToken = getNativeToken(chainId);
 			if (transactingValue > 0) {

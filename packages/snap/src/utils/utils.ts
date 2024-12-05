@@ -354,13 +354,13 @@ function detectSimilarity(
 				let similarityRiskLevel;
 				switch (similarityScore) {
 					case 3:
-						similarityRiskLevel = '⛔ High Risk ⛔';
+						similarityRiskLevel = '⛔ High ⛔';
 						break;
 					case 4:
-						similarityRiskLevel = '⛔ High Risk ⛔';
+						similarityRiskLevel = '⛔ High ⛔';
 						break;
 					case 5:
-						similarityRiskLevel = '🚫 **Critical Risk** 🚫';
+						similarityRiskLevel = '🚫 **Critical** 🚫';
 						break;
 				}
 
@@ -648,7 +648,7 @@ async function createContentForSignatureInsight(
 		) {
 			contentArray.push(
 				heading('Spender Screening'),
-				row('Risk Level', text('⛔ High Risk ⛔')),
+				row('Risk Level', text('⛔ High ⛔')),
 				row('Spender', address(spender)),
 				text(
 					'This transaction’s spender is an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
@@ -722,4 +722,42 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 			'The risk level of this transaction is unknown. Please proceed with caution.',
 		];
 	}
+}
+
+export async function checkSignatureDatabase(transactionData: string) {
+	const functionSelector = transactionData.slice(0, 10);
+	const response = await fetch(
+		`https://www.4byte.directory/api/v1/signatures/?hex_signature=${functionSelector}`,
+	);
+	let resultArray: any[] = [];
+
+	if (response.ok) {
+		const data = await response.json();
+
+		if (data.count < 0) {
+			resultArray.push(
+				divider(),
+				heading('4Byte Signature Check'),
+				row('Risk Level', text('Low')),
+				row('Function Signature', text(functionSelector)),
+				text(
+					`The function signature was found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. While calling a known function is less risky due to its verifiable behavior, risks remain if the contract is flawed, malicious, or interacts unpredictably.`,
+				),
+			);
+		} else {
+			console.log('Function Signature Not Found');
+			resultArray.push(
+				divider(),
+				heading('4Byte Signature Check'),
+				row('Risk Level', text("⚠️ Medium ⚠️")),
+				row('Function Signature', text(functionSelector)),
+				text(
+					`The function signature was not found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. Calling an unknown signature is risky, as it may trigger malicious or unintended behavior, leading to loss of funds or exploits.`,
+				),
+			);
+		}
+	} else {
+		console.error('Error querying 4byte API:', response.status);
+	}
+	return resultArray;
 }
