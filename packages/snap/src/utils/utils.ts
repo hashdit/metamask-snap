@@ -734,7 +734,7 @@ export async function checkSignatureDatabase(transactionData: string) {
 	if (response.ok) {
 		const data = await response.json();
 
-		if (data.count < 0) {
+		if (data.count > 0) {
 			resultArray.push(
 				divider(),
 				heading('4Byte Signature Check'),
