@@ -738,10 +738,9 @@ export async function checkSignatureDatabase(transactionData: string) {
 			resultArray.push(
 				divider(),
 				heading('4Byte Signature Check'),
-				row('Risk Level', text('Low')),
 				row('Function Signature', text(functionSelector)),
 				text(
-					`The function signature was found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. While calling a known function is less risky due to its verifiable behavior, risks remain if the contract is flawed, malicious, or interacts unpredictably.`,
+					`The function signature was found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. While calling a known function is less risky due to its verifiable behaviour, risks remain if the contract is flawed, malicious, or interacts unpredictably.`,
 				),
 			);
 		} else {
@@ -749,10 +748,10 @@ export async function checkSignatureDatabase(transactionData: string) {
 			resultArray.push(
 				divider(),
 				heading('4Byte Signature Check'),
-				row('Risk Level', text("⚠️ Medium ⚠️")),
 				row('Function Signature', text(functionSelector)),
 				text(
-					`The function signature was not found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. Calling an unknown signature is risky, as it may trigger malicious or unintended behavior, leading to loss of funds or exploits.`,
+					`The function signature was not found in the [4Byte](https://www.4byte.directory/signatures/?bytes4_signature=${functionSelector}) database. While calling an unknown signature does not guarantee risk, it may still trigger unintended behavior, potentially leading to loss of funds or exploits.
+`,
 				),
 			);
 		}
