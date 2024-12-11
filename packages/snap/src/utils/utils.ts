@@ -48,7 +48,7 @@ export async function getBlockHeight() {
 		const blockNumber = parseInt(blockNumberHex, 16);
 
 		console.log(`Current Block Height: ${blockNumber}`);
-		return blockNumber;
+		return blockNumber.toString();
 	} catch (error) {
 		console.error('Error retrieving block height:', error);
 		throw error;
@@ -250,6 +250,7 @@ function formatResponse(resp: any, businessName: string) {
 }
 
 export async function callDiTingTxSimulation(
+	persistedUserData:any,
 	chainId: string,
 	toAddress: string,
 	fromAddress: string,
@@ -258,10 +259,12 @@ export async function callDiTingTxSimulation(
 	transactionData:string,
 	
 ) {
-	
+	let ditingApiKey = persistedUserData.DiTingApiKey
+
 	let chainIdNumber = chainIdHexToNumber(chainId);
 	let transactionGasNumber = parseInt(transactionGasHex, 16)
-	const currentBlockHeight = getBlockHeight();
+	let valueNumber = parseInt(transactionValue,16).toString();
+	const currentBlockHeight = await getBlockHeight();
 	const url = 'https://service.hashdit.io/v2/hashdit/txn-simulation';
 	const postBody = {
 		chain_id: chainIdNumber,
@@ -271,7 +274,7 @@ export async function callDiTingTxSimulation(
 			{
 				to: toAddress,
 				from: fromAddress,
-				value: transactionValue,
+				value: valueNumber,
 				gas: transactionGasNumber,
 				data: transactionData,
 				mode: 'force',
@@ -285,17 +288,32 @@ export async function callDiTingTxSimulation(
 			invocation_tree: false,
 		},
 	};
+	console.log(postBody);
 
 	const response = await fetch(url, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			// Add api key
+			'X-API-KEY': ditingApiKey,
 		},
 		body: JSON.stringify(postBody),
 	});
-	const resp = await response.json();
-	console.log(resp);
+	const result = await response.json();
+	
+	// Retrieve the `evm_txn_error` field
+	const evmTxnError = result.data.txn_summaries[0].evm_txn_error;
+
+	// Check if the string "Insufficient_Native_Token:" exists
+	if (evmTxnError.includes("Insufficient_Native_Token:")) {
+		console.log("Insufficient_Native_Token");
+	}
+	else if (evmTxnError.includes("Transaction_Reverted")){
+		console.log("Transaction Reverted");
+	}
+	else {
+		console.log("No EVM error.");
+	}
+	console.log(result);
 	// if (resp.status == 'OK' && resp.data) {
 
 	// 	return resp.data;
@@ -820,10 +838,10 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 	}
 }
 
-function chainIdHexToNumber(chainId: string): string {
-    const chainMap: Record<string, string> = {
-        '0x1': '1',
-        '0x38': '56',
+function chainIdHexToNumber(chainId: string): number {
+    const chainMap: Record<string, number> = {
+        '0x1': 1,
+        '0x38': 56,
     };
-    return chainMap[chainId] || '56'; 
+    return chainMap[chainId] || 56; 
 }
