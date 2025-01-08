@@ -763,7 +763,6 @@ export async function verifyContractAndFunction(
 	const chain = chainMap[chainId] || '';
 
 	if (chain) {
-		// Get verify result
 		const isDestinationVerifiedResult = await isDestinationUnverified(
 			transaction.to,
 			chain,
@@ -817,6 +816,7 @@ export async function verifyContractAndFunction(
 	return resultArray;
 }
 
+// Check if the contract address is unverified
 async function isDestinationUnverified(
 	contractAddress: string,
 	chainId: string,
@@ -861,5 +861,5 @@ async function isDestinationUnverified(
 		console.error('Fetch error:', error);
 	}
 
-	return false; // Default to false if there's an error or unexpected response
+	return false;
 }
