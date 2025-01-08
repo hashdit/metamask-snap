@@ -36,7 +36,6 @@ import {
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-
 	await snap.request({
 		method: 'snap_dialog',
 		params: {
@@ -87,7 +86,7 @@ export const onInstall: OnInstallHandler = async () => {
 			const DiTingResult = await authenticateDiTing(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log("DitingResult",DiTingResult);
+				console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -117,7 +116,6 @@ export const onInstall: OnInstallHandler = async () => {
 		}
 	} catch (error) {}
 };
-
 
 // Called during a signature request transaction. Show insights
 export const onSignature: OnSignatureHandler = async ({
@@ -204,7 +202,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transactionOrigin,
 }) => {
 	console.log('onTransaction', transaction);
-	
+
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -427,9 +425,13 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (poisonResultArray.length != 0) {
 				contentArray = poisonResultArray;
 			}
-			const signatureCheckResultArray = await verifyContractAndFunction(transaction, chainId, persistedUserData.DiTingApiKey);
+			const signatureCheckResultArray = await verifyContractAndFunction(
+				transaction,
+				chainId,
+				persistedUserData.DiTingApiKey,
+			);
 			if (signatureCheckResultArray.length !== 0) {
-				contentArray.push(...signatureCheckResultArray); 
+				contentArray.push(...signatureCheckResultArray);
 			}
 			// Website Screening call
 			const urlRespData = await getHashDitResponse(
@@ -578,12 +580,16 @@ export const onTransaction: OnTransactionHandler = async ({
 				text(urlRespData.url_risk_detail),
 			);
 
-			const signatureCheckResultArray = await verifyContractAndFunction(transaction, chainId, persistedUserData.DiTingApiKey);
+			const signatureCheckResultArray = await verifyContractAndFunction(
+				transaction,
+				chainId,
+				persistedUserData.DiTingApiKey,
+			);
 			if (signatureCheckResultArray.length !== 0) {
 				contentArray.push(...signatureCheckResultArray);
 			}
 
-		/*
+			/*
 	  	Only display Transfer Details if transferring more than 0 native tokens
 	  	This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
 	  	*/
