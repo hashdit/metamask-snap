@@ -33,7 +33,7 @@ export async function authenticateDiTing(
 		body: JSON.stringify(requestBody),
 	});
 	const resp = await response.json();
-	console.log(resp);
+	//console.log(resp);
 	return resp;
 }
 
@@ -751,7 +751,6 @@ export async function verifyContractAndFunction(
 	chainId: string,
 	apiKey: string,
 ) {
-	console.log('test', transaction, chainId, apiKey);
 
 	const resultArray = [];
 	// We only support checking if contract is verified on BSC and ETH
@@ -795,8 +794,7 @@ export async function verifyContractAndFunction(
 		if (response.ok) {
 			const data = await response.json();
 			// 0 results returned by the API, meaning the function signature was not found
-			if (data.count == 0) {
-				console.log('Function Signature Not Found');
+			if (data.count != 0) {
 				resultArray.push(
 					divider(),
 					heading('Unverified Risk'),
