@@ -27,9 +27,7 @@ import {
 	authenticateDiTing,
 } from './utils/utils';
 
-import{
-	callDiTingTxSimulation,
-} from './utils/simulationUtils';
+import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
 	onInstallContent,
@@ -37,11 +35,8 @@ import {
 	errorContent,
 } from './utils/content';
 
-
-
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-
 	await snap.request({
 		method: 'snap_dialog',
 		params: {
@@ -92,7 +87,7 @@ export const onInstall: OnInstallHandler = async () => {
 			const DiTingResult = await authenticateDiTing(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log("DitingResult",DiTingResult);
+				console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -276,8 +271,6 @@ export const onTransaction: OnTransactionHandler = async ({
 				);
 			}
 
-
-
 			contentArray.push(
 				text(
 					'HashDit Security Insights is not fully supported on this chain.',
@@ -309,29 +302,30 @@ export const onTransaction: OnTransactionHandler = async ({
 				}
 
 				// Parallelize Destination Screening call and Website Screening call
-				const [respData, urlRespData, txSimulationContentArray] = await Promise.all([
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
-						chainId,
-					),
-					getHashDitResponse(
-						'hashdit_snap_tx_api_url_detection',
-						persistedUserData,
-						transactionOrigin,
-					),
-					callDiTingTxSimulation(
-						persistedUserData,
-						chainId,
-						transaction.to,
-						transaction.from,
-						transaction.gas,
-						transaction.value,
-						transaction.data ? transaction.data : ""
-					)
-				]);
+				const [respData, urlRespData, txSimulationContentArray] =
+					await Promise.all([
+						getHashDitResponse(
+							'internal_address_lables_tags',
+							persistedUserData,
+							transactionOrigin,
+							transaction,
+							chainId,
+						),
+						getHashDitResponse(
+							'hashdit_snap_tx_api_url_detection',
+							persistedUserData,
+							transactionOrigin,
+						),
+						callDiTingTxSimulation(
+							persistedUserData,
+							chainId,
+							transaction.to,
+							transaction.from,
+							transaction.gas,
+							transaction.value,
+							transaction.data ? transaction.data : '',
+						),
+					]);
 
 				if (respData.overall_risk != '-1') {
 					const [riskTitle, riskOverview] =
@@ -367,12 +361,13 @@ export const onTransaction: OnTransactionHandler = async ({
 					divider(),
 				);
 
-				console.log("txSimulationContentArray", txSimulationContentArray)
-				if(txSimulationContentArray != undefined){
+				console.log(
+					'txSimulationContentArray',
+					txSimulationContentArray,
+				);
+				if (txSimulationContentArray != undefined) {
 					contentArray.push(...txSimulationContentArray);
-	
 				}
-		
 			} else {
 				contentArray.push(
 					heading('HashDit Security Insights'),
@@ -393,10 +388,6 @@ export const onTransaction: OnTransactionHandler = async ({
 					divider(),
 				);
 			}
-
-
-
-
 
 			const content = panel(contentArray);
 			return { content };
@@ -486,37 +477,41 @@ export const onTransaction: OnTransactionHandler = async ({
 		let contentArray: any[] = [];
 		if (persistedUserData !== null) {
 			// Parallelize Transaction, Destination, and Website Screening calls
-			const [interactionRespData, addressRespData, urlRespData, txSimulationContentArray] =
-				await Promise.all([
-					getHashDitResponse(
-						'hashdit_snap_tx_api_transaction_request',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
-						chainId,
-					),
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
-						chainId,
-					),
-					getHashDitResponse(
-						'hashdit_snap_tx_api_url_detection',
-						persistedUserData,
-						transactionOrigin,
-					),
-					callDiTingTxSimulation(
-						persistedUserData,
-						chainId,
-						transaction.to,
-						transaction.from,
-						transaction.gas,
-						transaction.value,
-						transaction.data
-					)
-				]);
+			const [
+				interactionRespData,
+				addressRespData,
+				urlRespData,
+				txSimulationContentArray,
+			] = await Promise.all([
+				getHashDitResponse(
+					'hashdit_snap_tx_api_transaction_request',
+					persistedUserData,
+					transactionOrigin,
+					transaction,
+					chainId,
+				),
+				getHashDitResponse(
+					'internal_address_lables_tags',
+					persistedUserData,
+					transactionOrigin,
+					transaction,
+					chainId,
+				),
+				getHashDitResponse(
+					'hashdit_snap_tx_api_url_detection',
+					persistedUserData,
+					transactionOrigin,
+				),
+				callDiTingTxSimulation(
+					persistedUserData,
+					chainId,
+					transaction.to,
+					transaction.from,
+					transaction.gas,
+					transaction.value,
+					transaction.data,
+				),
+			]);
 
 			// Address Poisoning Detection on destination address and function parameters
 			let targetAddresses = [];
@@ -545,12 +540,11 @@ export const onTransaction: OnTransactionHandler = async ({
 			}
 
 			// We display the bigger risk between Transaction screening and Destination screening
-			console.log("interactionRespData",interactionRespData)
-			console.log("addressRespData",addressRespData)
+			console.log('interactionRespData', interactionRespData);
+			console.log('addressRespData', addressRespData);
 			if (
 				interactionRespData.overall_risk >= addressRespData.overall_risk
 			) {
-				
 				const [riskTitle, riskOverview] =
 					determineTransactionAndDestinationRiskInfo(
 						interactionRespData.overall_risk,
@@ -566,7 +560,6 @@ export const onTransaction: OnTransactionHandler = async ({
 					divider(),
 				);
 			} else {
-				
 				const [riskTitle, riskOverview] =
 					determineTransactionAndDestinationRiskInfo(
 						addressRespData.overall_risk,
@@ -585,7 +578,6 @@ export const onTransaction: OnTransactionHandler = async ({
 
 			// Display Website Screening results
 			contentArray.push(
-
 				heading('Website Screening'),
 				row('Website', text(transactionOrigin)),
 				row('Risk Level', text(urlRespData.url_risk_level)),
@@ -593,12 +585,10 @@ export const onTransaction: OnTransactionHandler = async ({
 				divider(),
 			);
 
-			console.log("txSimulationContentArray", txSimulationContentArray)
-			if(txSimulationContentArray != undefined){
+			console.log('txSimulationContentArray', txSimulationContentArray);
+			if (txSimulationContentArray != undefined) {
 				contentArray.push(...txSimulationContentArray);
 			}
-
-			
 
 			// Display function call insight (function names and parameters)
 			if (

@@ -194,11 +194,17 @@ async function getUserApprovalChanges(
 			const divisor = tokenInfo?.divisor
 				? parseInt(tokenInfo.divisor)
 				: 18;
-			const formattedBalanceChange =
-			(amount / Math.pow(10, divisor)).toString();
-			
-			
-			console.log('singleApproval', amount ,formattedBalanceChange, spender, approver, );
+			const formattedBalanceChange = (
+				amount / Math.pow(10, divisor)
+			).toString();
+
+			console.log(
+				'singleApproval',
+				amount,
+				formattedBalanceChange,
+				spender,
+				approver,
+			);
 			if (Array.isArray(userAccounts)) {
 				if (userAccounts.includes(approver)) {
 					console.log(`Approver ${approver} exists in userAccounts.`);
@@ -300,7 +306,12 @@ function getUserBalanceChanges(
 	let positiveChanges: any[] = [];
 	let negativeChanges: any[] = [];
 	if (!balanceChanges || Object.entries(balanceChanges).length == 0) {
-		contentArray.push(text('No balance changes detected. No tokens are being sent or received in this transaction.'), divider());
+		contentArray.push(
+			text(
+				'No balance changes detected. No tokens are being sent or received in this transaction.',
+			),
+			divider(),
+		);
 		return contentArray;
 	}
 	for (const singleBalanceChange in balanceChanges) {
@@ -392,18 +403,28 @@ function getUserBalanceChanges(
 				);
 			}
 			if (negativeChanges.length !== 0) {
-				contentArray.push(text('**Assets Out ⚠️**'), ...negativeChanges, divider());
-			
+				contentArray.push(
+					text('**Assets Out ⚠️**'),
+					...negativeChanges,
+					divider(),
+				);
+
 				if (positiveChanges.length === 0) {
 					contentArray.push(
 						text('**Assets In ❌**'),
-						text('You are transferring tokens out of your wallet but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.')
+						text(
+							'You are transferring tokens out of your wallet but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.',
+						),
 					);
 				}
 			}
-			
+
 			if (positiveChanges.length !== 0) {
-				contentArray.push(text('**Assets In ✅**'), ...positiveChanges, divider());
+				contentArray.push(
+					text('**Assets In ✅**'),
+					...positiveChanges,
+					divider(),
+				);
 			}
 
 			return contentArray;
@@ -415,14 +436,16 @@ function createSimulationErrorContentArray(
 	errorTitle: String,
 	errorMessage: String,
 ) {
-	let contentArray: any[] = [heading('Transaction Simulation'),row('Status', text('Failed ❌')),];
+	let contentArray: any[] = [
+		heading('Transaction Simulation'),
+		row('Status', text('Failed ❌')),
+	];
 	if (
 		errorTitle == 'Node Connection Error' ||
 		errorTitle == 'HTTP Connection Error' ||
 		errorTitle == 'Other Error'
 	) {
 		contentArray.push(
-		
 			text(`${errorTitle}`),
 			text(
 				'A network error occurred during the transaction simulation. Please try again later or try reinstalling HashDit Snaps.',
