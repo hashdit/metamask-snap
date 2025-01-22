@@ -300,7 +300,7 @@ function getUserBalanceChanges(
 	let positiveChanges: any[] = [];
 	let negativeChanges: any[] = [];
 	if (!balanceChanges || Object.entries(balanceChanges).length == 0) {
-		contentArray.push(text('No balance changes.'), divider());
+		contentArray.push(text('No balance changes detected. No tokens are being sent or received in this transaction.'), divider());
 		return contentArray;
 	}
 	for (const singleBalanceChange in balanceChanges) {
