@@ -207,7 +207,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log('Transaction Result:', JSON.stringify(transaction, null, 2));
+	console.log('Transaction:', JSON.stringify(transaction, null, 2));
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -329,7 +329,7 @@ export const onTransaction: OnTransactionHandler = async ({
 						transaction.from,
 						transaction.gas,
 						transaction.value,
-						transaction.data
+						transaction.data ? transaction.data : ""
 					)
 				]);
 

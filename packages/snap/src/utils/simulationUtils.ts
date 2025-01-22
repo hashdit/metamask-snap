@@ -391,15 +391,19 @@ function getUserBalanceChanges(
 					`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
 				);
 			}
-			if (negativeChanges.length != 0) {
-				contentArray.push(text('**Assets Out ⚠️**'));
-				contentArray.push(...negativeChanges);
-				contentArray.push(divider());
+			if (negativeChanges.length !== 0) {
+				contentArray.push(text('**Assets Out ⚠️**'), ...negativeChanges, divider());
+			
+				if (positiveChanges.length === 0) {
+					contentArray.push(
+						text('**Assets In ❌**'),
+						text('You are transferring tokens out of your wallet but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.')
+					);
+				}
 			}
-			if (positiveChanges.length != 0) {
-				contentArray.push(text('**Assets In ✅**'));
-				contentArray.push(...positiveChanges);
-				contentArray.push(divider());
+			
+			if (positiveChanges.length !== 0) {
+				contentArray.push(text('**Assets In ✅**'), ...positiveChanges, divider());
 			}
 
 			return contentArray;
