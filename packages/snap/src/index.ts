@@ -25,15 +25,19 @@ import {
 	determineTransactionAndDestinationRiskInfo,
 	parseSignature,
 	authenticateDiTing,
-
-	callDiTingTxSimulation,
 } from './utils/utils';
+
+import{
+	callDiTingTxSimulation,
+} from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
 	onInstallContent,
 	onHomePageContent,
 	errorContent,
 } from './utils/content';
+
+
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -203,7 +207,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log("transaction", transaction);
+	console.log('Transaction Result:', JSON.stringify(transaction, null, 2));
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -272,16 +276,7 @@ export const onTransaction: OnTransactionHandler = async ({
 				);
 			}
 
-			const transactingValue = parseTransactingValue(transaction.value);
-			const nativeToken = getNativeToken(chainId);
 
-			contentArray.push(
-				heading('Transfer Details'),
-				row('Your Address', address(transaction.from)),
-				row('Amount', text(`${transactingValue} ${nativeToken}`)),
-				row('To', address(transaction.to)),
-				divider(),
-			);
 
 			contentArray.push(
 				text(
@@ -314,7 +309,7 @@ export const onTransaction: OnTransactionHandler = async ({
 				}
 
 				// Parallelize Destination Screening call and Website Screening call
-				const [respData, urlRespData] = await Promise.all([
+				const [respData, urlRespData, txSimulationContentArray] = await Promise.all([
 					getHashDitResponse(
 						'internal_address_lables_tags',
 						persistedUserData,
@@ -371,6 +366,13 @@ export const onTransaction: OnTransactionHandler = async ({
 					text(urlRespData.url_risk_detail),
 					divider(),
 				);
+
+				console.log("txSimulationContentArray", txSimulationContentArray)
+				if(txSimulationContentArray != undefined){
+					contentArray.push(...txSimulationContentArray);
+	
+				}
+		
 			} else {
 				contentArray.push(
 					heading('HashDit Security Insights'),
@@ -392,15 +394,9 @@ export const onTransaction: OnTransactionHandler = async ({
 				);
 			}
 
-			const transactingValue = parseTransactingValue(transaction.value);
-			const nativeToken = getNativeToken(chainId);
 
-			contentArray.push(
-				heading('Transfer Details'),
-				row('Your Address', address(transaction.from)),
-				row('Amount', text(`${transactingValue} ${nativeToken}`)),
-				row('To', address(transaction.to)),
-			);
+
+
 
 			const content = panel(contentArray);
 			return { content };
@@ -490,7 +486,7 @@ export const onTransaction: OnTransactionHandler = async ({
 		let contentArray: any[] = [];
 		if (persistedUserData !== null) {
 			// Parallelize Transaction, Destination, and Website Screening calls
-			const [interactionRespData, addressRespData, urlRespData] =
+			const [interactionRespData, addressRespData, urlRespData, txSimulationContentArray] =
 				await Promise.all([
 					getHashDitResponse(
 						'hashdit_snap_tx_api_transaction_request',
@@ -511,6 +507,15 @@ export const onTransaction: OnTransactionHandler = async ({
 						persistedUserData,
 						transactionOrigin,
 					),
+					callDiTingTxSimulation(
+						persistedUserData,
+						chainId,
+						transaction.to,
+						transaction.from,
+						transaction.gas,
+						transaction.value,
+						transaction.data
+					)
 				]);
 
 			// Address Poisoning Detection on destination address and function parameters
@@ -540,9 +545,12 @@ export const onTransaction: OnTransactionHandler = async ({
 			}
 
 			// We display the bigger risk between Transaction screening and Destination screening
+			console.log("interactionRespData",interactionRespData)
+			console.log("addressRespData",addressRespData)
 			if (
 				interactionRespData.overall_risk >= addressRespData.overall_risk
 			) {
+				
 				const [riskTitle, riskOverview] =
 					determineTransactionAndDestinationRiskInfo(
 						interactionRespData.overall_risk,
@@ -555,11 +563,13 @@ export const onTransaction: OnTransactionHandler = async ({
 						'Risk Details',
 						text(interactionRespData.transaction_risk_detail),
 					),
+					divider(),
 				);
 			} else {
+				
 				const [riskTitle, riskOverview] =
 					determineTransactionAndDestinationRiskInfo(
-						interactionRespData.overall_risk,
+						addressRespData.overall_risk,
 					);
 				contentArray.push(
 					heading('Destination Screening'),
@@ -569,33 +579,26 @@ export const onTransaction: OnTransactionHandler = async ({
 						text(`${addressRespData.transaction_risk_detail}`),
 					),
 					text(`${riskOverview}`),
+					divider(),
 				);
 			}
 
 			// Display Website Screening results
 			contentArray.push(
-				divider(),
+
 				heading('Website Screening'),
 				row('Website', text(transactionOrigin)),
 				row('Risk Level', text(urlRespData.url_risk_level)),
 				text(urlRespData.url_risk_detail),
+				divider(),
 			);
 
-			/*
-	  Only display Transfer Details if transferring more than 0 native tokens
-	  This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-	  */
-			const transactingValue = parseTransactingValue(transaction.value);
-			const nativeToken = getNativeToken(chainId);
-			if (transactingValue > 0) {
-				contentArray.push(
-					divider(),
-					heading('Transfer Details'),
-					row('Your Address', address(transaction.from)),
-					row('Amount', text(`${transactingValue} ${nativeToken}`)),
-					row('To', address(transaction.to)),
-				);
+			console.log("txSimulationContentArray", txSimulationContentArray)
+			if(txSimulationContentArray != undefined){
+				contentArray.push(...txSimulationContentArray);
 			}
+
+			
 
 			// Display function call insight (function names and parameters)
 			if (
@@ -634,7 +637,7 @@ export const onTransaction: OnTransactionHandler = async ({
 		} else {
 			// User public key not found, display error message to snap
 			contentArray = [
-				heading('HashDit Security Insights'),
+				heading('HashDit Securitfy Insights'),
 				text('⚠️ The full functionality of HashDit is not working. ⚠️'),
 				text('To resolve this issue, please follow these steps:'),
 				divider(),

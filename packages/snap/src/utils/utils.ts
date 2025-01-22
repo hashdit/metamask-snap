@@ -14,6 +14,7 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
+import { keccak256 } from 'js-sha3';
 
 // Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
 export async function authenticateDiTing(
@@ -35,24 +36,6 @@ export async function authenticateDiTing(
 	const resp = await response.json();
 
 	return resp;
-}
-
-export async function getBlockHeight() {
-	try {
-		// Use the snap's provider to call the eth_blockNumber method
-		const blockNumberHex = (await ethereum.request({
-			method: 'eth_blockNumber',
-		})) as string;
-
-		// Convert the hex block number to a decimal number
-		const blockNumber = parseInt(blockNumberHex, 16);
-
-		console.log(`Current Block Height: ${blockNumber}`);
-		return blockNumber.toString();
-	} catch (error) {
-		console.error('Error retrieving block height:', error);
-		throw error;
-	}
 }
 
 // Called during HashDit Snap installation. Used to authenticate the user with HashDit, and the user's public key.
@@ -247,79 +230,6 @@ function formatResponse(resp: any, businessName: string) {
 	}
 
 	return responseData;
-}
-
-export async function callDiTingTxSimulation(
-	persistedUserData:any,
-	chainId: string,
-	toAddress: string,
-	fromAddress: string,
-	transactionGasHex: string,
-	transactionValue: string,
-	transactionData:string,
-	
-) {
-	let ditingApiKey = persistedUserData.DiTingApiKey
-
-	let chainIdNumber = chainIdHexToNumber(chainId);
-	let transactionGasNumber = parseInt(transactionGasHex, 16)
-	let valueNumber = parseInt(transactionValue,16).toString();
-	const currentBlockHeight = await getBlockHeight();
-	const url = 'https://service.hashdit.io/v2/hashdit/txn-simulation';
-	const postBody = {
-		chain_id: chainIdNumber,
-		block_height: currentBlockHeight,
-		node_type: 'hardhat',
-		transactions: [
-			{
-				to: toAddress,
-				from: fromAddress,
-				value: valueNumber,
-				gas: transactionGasNumber,
-				data: transactionData,
-				mode: 'force',
-				debug: true,
-			},
-		],
-		requested_items: {
-			balance_changes: true,
-			approve_changes: true,
-			involved_address_risks: true,
-			invocation_tree: false,
-		},
-	};
-	console.log(postBody);
-
-	const response = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-API-KEY': ditingApiKey,
-		},
-		body: JSON.stringify(postBody),
-	});
-	const result = await response.json();
-	
-	// Retrieve the `evm_txn_error` field
-	const evmTxnError = result.data.txn_summaries[0].evm_txn_error;
-
-	// Check if the string "Insufficient_Native_Token:" exists
-	if (evmTxnError.includes("Insufficient_Native_Token:")) {
-		console.log("Insufficient_Native_Token");
-	}
-	else if (evmTxnError.includes("Transaction_Reverted")){
-		console.log("Transaction Reverted");
-	}
-	else {
-		console.log("No EVM error.");
-	}
-	console.log(result);
-	// if (resp.status == 'OK' && resp.data) {
-
-	// 	return resp.data;
-	// } else {
-	// 	console.log('Simulation api error: ' + resp.errorData);
-	// }
 }
 
 async function customFetch(
@@ -836,12 +746,4 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 			'The risk level of this transaction is unknown. Please proceed with caution.',
 		];
 	}
-}
-
-function chainIdHexToNumber(chainId: string): number {
-    const chainMap: Record<string, number> = {
-        '0x1': 1,
-        '0x38': 56,
-    };
-    return chainMap[chainId] || 56; 
 }
