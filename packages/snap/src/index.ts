@@ -86,7 +86,7 @@ export const onInstall: OnInstallHandler = async () => {
 			const DiTingResult = await authenticateDiTing(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log('DitingResult', DiTingResult);
+				//console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -201,7 +201,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log('onTransaction', transaction);
+	//console.log('onTransaction', transaction);
 
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
