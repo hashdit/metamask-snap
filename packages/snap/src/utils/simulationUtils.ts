@@ -301,12 +301,14 @@ function getUserBalanceChanges(
 	let contentArray: any[] = [
 		heading('Transaction Simulation'),
 		row('Status', text('Success ✅')),
-		divider(),
 	];
 	let positiveChanges: any[] = [];
 	let negativeChanges: any[] = [];
+	let positiveValue = 0;
+	let negativeValue = 0;
 	if (!balanceChanges || Object.entries(balanceChanges).length == 0) {
 		contentArray.push(
+			divider(),
 			text(
 				'No balance changes detected. No tokens are being sent or received in this transaction.',
 			),
@@ -333,7 +335,7 @@ function getUserBalanceChanges(
 					? parseInt(tokenInfo.divisor)
 					: 18;
 				const formattedBalanceChange =
-					tokenBalanceChange / Math.pow(10, divisor);
+					Math.abs(tokenBalanceChange / Math.pow(10, divisor));
 				const transferValue = price * formattedBalanceChange;
 				console.log(
 					'Token Info',
@@ -353,67 +355,186 @@ function getUserBalanceChanges(
 						symbol = 'BNB';
 					}
 				}
+				// // Assets in
+				// if (tokenBalanceChange >= 0) {
+				// 	// If undefined symbol, we show token address instead
+				// 	// Create "Asset In" rows
+				// 	if (symbol == undefined) {
+				// 		positiveChanges.push(row('Token', address(`${token}`)));
+				// 		positiveChanges.push(
+				// 			row('Amount', text(`+${formattedBalanceChange}`)),
+				// 		);
+				// 	} else {
+				// 		// Show amount + symbol in one row
+				// 		positiveChanges.push(
+				// 			row(
+				// 				'Amount',
+				// 				text(`+${formattedBalanceChange} ${symbol}`),
+				// 			),
+				// 		);
+				// 	}
+				// 	if (isNaN(transferValue)) {
+				// 		positiveChanges.push(row('Value', text(`N/A`)));
+				// 	} else {
+				// 		positiveChanges.push(
+				// 			row(
+				// 				'Value',
+				// 				text(`+$${transferValue.toFixed(4)} USD`),
+				// 			),
+				// 		);
+				// 	}
+
+				// 	positiveValue += transferValue;
+				// }
 				if (tokenBalanceChange >= 0) {
 					// If undefined symbol, we show token address instead
 					// Create "Asset In" rows
 					if (symbol == undefined) {
 						positiveChanges.push(row('Token', address(`${token}`)));
 						positiveChanges.push(
-							row('Amount', text(`+${formattedBalanceChange}`)),
+							row('Amount', text(`+${formattedBalanceChange}`),),
 						);
 					} else {
+						if(isNaN(transferValue)){
+							positiveChanges.push(
+								row(
+									'Token',
+									text(`+${formattedBalanceChange} ${symbol} (≈ N/A)`),
+	
+								),
+							);
+						}
 						// Show amount + symbol in one row
 						positiveChanges.push(
 							row(
-								'Amount',
-								text(`+${formattedBalanceChange} ${symbol}`),
+								'Token',
+								text(`+${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
+
 							),
 						);
 					}
-					positiveChanges.push(
-						row('Value', text(`+$${transferValue.toFixed(4)} USD`)),
-					);
-				} else {
+
+					positiveValue += transferValue;
+				}
+				//Assets Out
+				else {
 					// If undefined symbol, we show token address instead
 					// Create "Asset Out" rows
 					if (symbol == undefined) {
 						negativeChanges.push(row('Token', address(`${token}`)));
 						negativeChanges.push(
-							row('Amount', text(`${formattedBalanceChange}`)),
+							row('Amount', text(`-${formattedBalanceChange}`),),
 						);
 					} else {
+						if(isNaN(transferValue)){
+							negativeChanges.push(
+								row(
+									'Token',
+									text(`-${formattedBalanceChange} ${symbol} (≈ N/A)`),
+	
+								),
+							);
+						}
 						// Show amount + symbol in one row
 						negativeChanges.push(
 							row(
-								'Amount',
-								text(`${formattedBalanceChange} ${symbol}`),
+								'Token',
+								text(`-${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
+
 							),
 						);
 					}
 
-					negativeChanges.push(
-						row(
-							'Value',
-							text(`-$${Math.abs(transferValue).toFixed(4)} USD`),
-						),
-					);
+					positiveValue += transferValue;
+					// // If undefined symbol, we show token address instead
+					// // Create "Asset Out" rows
+					// if (symbol == undefined) {
+					// 	negativeChanges.push(row('Token', address(`${token}`)));
+					// 	negativeChanges.push(
+					// 		row('Amount', text(`${formattedBalanceChange}`)),
+					// 	);
+					// } else {
+					// 	// Show amount + symbol in one row
+					// 	negativeChanges.push(
+					// 		row(
+					// 			'Amount',
+					// 			text(`${formattedBalanceChange} ${symbol}`),
+					// 		),
+					// 	);
+					// }
+
+					// // If transfer value is not an number, show N/A
+					// if (isNaN(transferValue)) {
+					// 	negativeChanges.push(row('Value', text(`N/A`)));
+					// } else {
+					// 	negativeChanges.push(
+					// 		row(
+					// 			'Value',
+					// 			text(
+					// 				`-$${Math.abs(transferValue).toFixed(
+					// 					4,
+					// 				)} USD`,
+					// 			),
+					// 		),
+					// 	);
+					// }
+
+					// negativeValue = transferValue;
 				}
 				console.log(
 					`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
 				);
 			}
+
+			// Calculate value difference between assets in and assets out
+			const valueDifference = positiveValue - negativeValue;
+			let symbol = '+';
+
+			// Show the value difference of the transaction. If an error occurred fetching values, return N/A.
+			if (isNaN(valueDifference)) {
+				console.error('One of the values is NaN:', {
+					positiveValue,
+					negativeValue,
+					valueDifference,
+				});
+
+				contentArray.push(row('Total Value Change', text(`N/A`)));
+			} else {
+				console.log(
+					'Diff',
+					positiveValue,
+					negativeValue,
+					valueDifference,
+				);
+				if (valueDifference < 0) {
+					symbol = '-';
+				}
+
+				contentArray.push(
+					row(
+						'Total Value Change',
+						text(
+							`${symbol}$${Math.abs(valueDifference)
+								.toFixed(4)
+								.toString()} USD`,
+						),
+					),
+				);
+			}
+
 			if (negativeChanges.length !== 0) {
 				contentArray.push(
-					text('**Assets Out ⚠️**'),
-					...negativeChanges,
 					divider(),
+					text('**Outflows ⬇️**'),
+					...negativeChanges,
 				);
 
 				if (positiveChanges.length === 0) {
 					contentArray.push(
-						text('**Assets In ❌**'),
+						divider(),
+						text('**Outflows ❌**'),
 						text(
-							'You are transferring tokens out of your wallet but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.',
+							'You are transferring tokens out of your wallet, but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.',
 						),
 					);
 				}
@@ -421,9 +542,9 @@ function getUserBalanceChanges(
 
 			if (positiveChanges.length !== 0) {
 				contentArray.push(
-					text('**Assets In ✅**'),
-					...positiveChanges,
 					divider(),
+					text('**Inflows ⬆️**'),
+					...positiveChanges,
 				);
 			}
 
@@ -526,3 +647,13 @@ export async function getBlockHeight() {
 		throw error;
 	}
 }
+
+
+function roundDownToTwoSignificantDigits(num) {
+	if (num === 0) return 0;
+  
+	const order = Math.floor(Math.log10(Math.abs(num))) - 1;
+	const factor = Math.pow(10, order);
+  
+	return Math.floor(num / factor) * factor;
+  }
