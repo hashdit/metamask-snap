@@ -517,6 +517,7 @@ export const onTransaction: OnTransactionHandler = async ({
 			// Add destination address to `targetAddresses[]`
 			targetAddresses.push(transaction.to);
 			// Add all addresses from the function's parameters to `targetAddresses[]`
+			//console.log("interactionRespData",interactionRespData)
 			if (
 				interactionRespData.function_name != null &&
 				interactionRespData.function_name != ''

@@ -746,6 +746,12 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 	}
 }
 
+// We only support checking if contract is verified on BSC and ETH
+const chainMap: Record<string, string> = {
+	'0x38': '56',
+	'0x1': '1',
+};
+
 export async function verifyContractAndFunction(
 	transaction: any,
 	chainId: string,
@@ -753,11 +759,7 @@ export async function verifyContractAndFunction(
 ) {
 
 	const resultArray = [];
-	// We only support checking if contract is verified on BSC and ETH
-	const chainMap: Record<string, string> = {
-		'0x38': '56',
-		'0x1': '1',
-	};
+
 
 	const chain = chainMap[chainId] || '';
 
@@ -853,7 +855,7 @@ async function isDestinationUnverified(
 		if (status === 'ok' && data) {
 			return !(
 				data.address_type === 'Contract' &&
-				data.verification_status === 'unverified'
+				data.verify_status === 'unverified'
 			);
 		}
 	} catch (error) {
