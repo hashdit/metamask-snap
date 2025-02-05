@@ -404,6 +404,7 @@ function getUserBalanceChanges(
 								),
 							);
 						}
+						else{
 						// Show amount + symbol in one row
 						positiveChanges.push(
 							row(
@@ -412,6 +413,8 @@ function getUserBalanceChanges(
 
 							),
 						);
+						}
+						
 					}
 
 					positiveValue += transferValue;
@@ -435,14 +438,17 @@ function getUserBalanceChanges(
 								),
 							);
 						}
-						// Show amount + symbol in one row
-						negativeChanges.push(
-							row(
-								'Token',
-								text(`-${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
+						else{
+							// Show amount + symbol in one row
+							negativeChanges.push(
+								row(
+									'Token',
+									text(`-${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
 
-							),
-						);
+								),
+							);
+						}
+						
 					}
 
 					positiveValue += transferValue;
