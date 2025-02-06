@@ -22,6 +22,24 @@ export async function callDiTingTxSimulation(
 	transactionValue: string,
 	transactionData: string,
 ) {
+	let transferAmount;
+	let transferRecipient;
+	const isERC20Transfer = isERC20TransferOrTransferFrom(transactionData);
+	console.log('isERC20Transfer', isERC20Transfer);
+
+	if (isERC20Transfer) {
+		// Destructure the result into respective variables
+		const result = extractTransferAmountAndRecipient(transactionData);
+		transferRecipient = result[0];
+		transferAmount = result[1];
+
+		console.log(
+			'Transfer Selector Detected',
+			transferAmount,
+			transferRecipient,
+		);
+	}
+
 	try {
 		// Setup simulation API call parameters
 		const ditingApiKey = persistedUserData.DiTingApiKey;
@@ -124,10 +142,78 @@ export async function callDiTingTxSimulation(
 				fromAddress,
 				chainId,
 			);
+
+			let headingArray: any[] = [
+				heading('Transaction Simulation'),
+				row('Status', text('Success ✅')),
+			];
+			let transferTaxPercent = 0;
+
+			// If the transaction is a ERC20 transfer, show transfer tax
+			if (isERC20Transfer) {
+				transferTaxPercent = Number(getTransferTax(
+					result,
+					fromAddress.toLowerCase(),
+					transferAmount,
+					transferRecipient?.toLowerCase(),
+				).toFixed(2));
+				
+				if (transferTaxPercent >= 20) {
+					headingArray.push(
+						row(
+							'Transfer Tax',
+							text(
+								`${Math.abs(
+									transferTaxPercent,
+								).toString()}% ⛔️`,
+							),
+						),
+						text(
+							`⚠️ High transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a significant loss of tokens.`,
+						),
+					);
+				}
+				else if (transferTaxPercent >= 10) {
+					headingArray.push(
+						row(
+							'Transfer Tax',
+							text(
+								`${Math.abs(
+									transferTaxPercent,
+								).toString()}% ⚠️`,
+							),
+						),
+						text(
+							'Medium transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a moderate loss of tokens.',
+						),
+					);
+				}
+				else if (transferTaxPercent >= 5) {
+					headingArray.push(
+						row(
+							'Transfer Tax',
+							text(`${Math.abs(transferTaxPercent).toString()}%`),
+						),
+						text(
+							'Low transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a small loss of tokens.',
+						),
+					);
+				}
+				else{
+					headingArray.push(
+						row(
+							'Transfer Tax',
+							text(`${Math.abs(transferTaxPercent).toString()}%`),
+						),
+					);
+				}
+			}
+
 			console.log('balanceArray', balanceChangeArray);
 
 			// Merge the two arrays
 			const mergedArray = [
+				...(headingArray || []),
 				...(approvalChangeArray && approvalChangeArray?.length > 0
 					? [heading('Spender Screening')]
 					: []),
@@ -288,6 +374,87 @@ async function getUserApprovalChanges(
 		return;
 	}
 }
+
+function getTransferTax(
+	simulationResult: any,
+	senderAddress: string,
+	transferAmount: any,
+	receiverAddress: any,
+) {
+	try {
+		const balanceChanges = simulationResult?.data?.txn_summaries?.[0]?.balance_changes;
+		if (!balanceChanges || Object.keys(balanceChanges).length === 0) {
+			console.log('No balance change found');
+			return 0;
+		}
+
+		// Get sender's token changes safely
+		const senderTokenChange = balanceChanges[senderAddress];
+		if (!senderTokenChange || Object.keys(senderTokenChange).length === 0) {
+			console.log('No token changes found for sender');
+			return 0;
+		}
+
+		// Get the first token (assuming sender sends only one type of token)
+		const firstToken = Object.keys(senderTokenChange)[0];
+		if (!firstToken) {
+			console.log('No token found in sender balance changes');
+			return 0;
+		}
+
+		// Ensure the sender has a balance change for the token
+		const senderBalanceChange = senderTokenChange[firstToken];
+		if (senderBalanceChange === undefined) {
+			console.log('No matching token found for the sender address');
+			return 0;
+		}
+
+		// Ensure sender balance change is a positive number
+		const absSenderBalanceChange = Math.abs(Number(senderBalanceChange));
+		if (absSenderBalanceChange === 0) {
+			console.log('Sender balance change is zero, avoiding division by zero');
+			return 0;
+		}
+
+		console.log("Sender", senderTokenChange, firstToken);
+
+		// Get receiver's token change safely
+		const receiverTokenChange = balanceChanges[receiverAddress];
+		if (!receiverTokenChange) {
+			console.log('No token changes found for receiver');
+			return 0;
+		}
+
+		// Ensure the receiver has a balance change for the same token
+		const receiverBalanceChange = receiverTokenChange[firstToken];
+		if (receiverBalanceChange === undefined) {
+			console.log('No matching token found for the receiver address');
+			return 0;
+		}
+
+		// Convert receiverBalanceChange to a number
+		const numReceiverBalanceChange = Number(receiverBalanceChange);
+
+		console.log(
+			'Sender & Receiver',
+			firstToken,
+			receiverTokenChange,
+			numReceiverBalanceChange,
+			absSenderBalanceChange,
+		);
+
+		// Compute and return transfer tax
+		const transferTax = (1 - (numReceiverBalanceChange / absSenderBalanceChange)) * 100;
+		console.log('Transfer Tax:', transferTax);
+
+		return transferTax;
+	} catch (error) {
+		console.error('Error getting transfer tax:', error);
+		return 0;
+	}
+}
+
+
 function getUserBalanceChanges(
 	simulationResult: any,
 	userAddress: string,
@@ -298,10 +465,7 @@ function getUserBalanceChanges(
 		simulationResult?.data?.txn_summaries[0]?.balance_changes;
 	const tokenDetails = simulationResult?.data?.token_details;
 
-	let contentArray: any[] = [
-		heading('Transaction Simulation'),
-		row('Status', text('Success ✅')),
-	];
+	let contentArray: any[] = [];
 	let positiveChanges: any[] = [];
 	let negativeChanges: any[] = [];
 	let positiveValue = 0;
@@ -334,8 +498,9 @@ function getUserBalanceChanges(
 				const divisor = tokenInfo?.divisor
 					? parseInt(tokenInfo.divisor)
 					: 18;
-				const formattedBalanceChange =
-					Math.abs(tokenBalanceChange / Math.pow(10, divisor));
+				const formattedBalanceChange = Math.abs(
+					tokenBalanceChange / Math.pow(10, divisor),
+				);
 				const transferValue = price * formattedBalanceChange;
 				console.log(
 					'Token Info',
@@ -355,66 +520,41 @@ function getUserBalanceChanges(
 						symbol = 'BNB';
 					}
 				}
-				// // Assets in
-				// if (tokenBalanceChange >= 0) {
-				// 	// If undefined symbol, we show token address instead
-				// 	// Create "Asset In" rows
-				// 	if (symbol == undefined) {
-				// 		positiveChanges.push(row('Token', address(`${token}`)));
-				// 		positiveChanges.push(
-				// 			row('Amount', text(`+${formattedBalanceChange}`)),
-				// 		);
-				// 	} else {
-				// 		// Show amount + symbol in one row
-				// 		positiveChanges.push(
-				// 			row(
-				// 				'Amount',
-				// 				text(`+${formattedBalanceChange} ${symbol}`),
-				// 			),
-				// 		);
-				// 	}
-				// 	if (isNaN(transferValue)) {
-				// 		positiveChanges.push(row('Value', text(`N/A`)));
-				// 	} else {
-				// 		positiveChanges.push(
-				// 			row(
-				// 				'Value',
-				// 				text(`+$${transferValue.toFixed(4)} USD`),
-				// 			),
-				// 		);
-				// 	}
 
-				// 	positiveValue += transferValue;
-				// }
 				if (tokenBalanceChange >= 0) {
 					// If undefined symbol, we show token address instead
 					// Create "Asset In" rows
 					if (symbol == undefined) {
 						positiveChanges.push(row('Token', address(`${token}`)));
 						positiveChanges.push(
-							row('Amount', text(`+${formattedBalanceChange}`),),
+							row(
+								'Amount',
+								text(`+${formattedBalanceChange} (≈ N/A)`),
+							),
 						);
 					} else {
-						if(isNaN(transferValue)){
+						if (isNaN(transferValue)) {
 							positiveChanges.push(
 								row(
 									'Token',
-									text(`+${formattedBalanceChange} ${symbol} (≈ N/A)`),
-	
+									text(
+										`+${formattedBalanceChange} ${symbol} (≈ N/A)`,
+									),
+								),
+							);
+						} else {
+							// Show amount + symbol in one row
+							positiveChanges.push(
+								row(
+									'Token',
+									text(
+										`+${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(
+											2,
+										)})`,
+									),
 								),
 							);
 						}
-						else{
-						// Show amount + symbol in one row
-						positiveChanges.push(
-							row(
-								'Token',
-								text(`+${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
-
-							),
-						);
-						}
-						
 					}
 
 					positiveValue += transferValue;
@@ -426,75 +566,46 @@ function getUserBalanceChanges(
 					if (symbol == undefined) {
 						negativeChanges.push(row('Token', address(`${token}`)));
 						negativeChanges.push(
-							row('Amount', text(`-${formattedBalanceChange}`),),
+							row(
+								'Amount',
+								text(`-${formattedBalanceChange} (≈ N/A)`),
+							),
 						);
 					} else {
-						if(isNaN(transferValue)){
+						if (isNaN(transferValue)) {
 							negativeChanges.push(
 								row(
 									'Token',
-									text(`-${formattedBalanceChange} ${symbol} (≈ N/A)`),
-	
+									text(
+										`-${formattedBalanceChange} ${symbol} (≈ N/A)`,
+									),
 								),
 							);
-						}
-						else{
+						} else {
 							// Show amount + symbol in one row
 							negativeChanges.push(
 								row(
 									'Token',
-									text(`-${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(2)})`),
-
+									text(
+										`-${formattedBalanceChange} ${symbol} (≈ $${transferValue.toFixed(
+											2,
+										)})`,
+									),
 								),
 							);
 						}
-						
 					}
 
-					positiveValue += transferValue;
-					// // If undefined symbol, we show token address instead
-					// // Create "Asset Out" rows
-					// if (symbol == undefined) {
-					// 	negativeChanges.push(row('Token', address(`${token}`)));
-					// 	negativeChanges.push(
-					// 		row('Amount', text(`${formattedBalanceChange}`)),
-					// 	);
-					// } else {
-					// 	// Show amount + symbol in one row
-					// 	negativeChanges.push(
-					// 		row(
-					// 			'Amount',
-					// 			text(`${formattedBalanceChange} ${symbol}`),
-					// 		),
-					// 	);
-					// }
+					negativeValue += transferValue;
 
-					// // If transfer value is not an number, show N/A
-					// if (isNaN(transferValue)) {
-					// 	negativeChanges.push(row('Value', text(`N/A`)));
-					// } else {
-					// 	negativeChanges.push(
-					// 		row(
-					// 			'Value',
-					// 			text(
-					// 				`-$${Math.abs(transferValue).toFixed(
-					// 					4,
-					// 				)} USD`,
-					// 			),
-					// 		),
-					// 	);
-					// }
-
-					// negativeValue = transferValue;
+					console.log(
+						`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
+					);
 				}
-				console.log(
-					`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
-				);
 			}
-
 			// Calculate value difference between assets in and assets out
 			const valueDifference = positiveValue - negativeValue;
-			let symbol = '+';
+			let sign = '+';
 
 			// Show the value difference of the transaction. If an error occurred fetching values, return N/A.
 			if (isNaN(valueDifference)) {
@@ -513,14 +624,14 @@ function getUserBalanceChanges(
 					valueDifference,
 				);
 				if (valueDifference < 0) {
-					symbol = '-';
+					sign = '-';
 				}
 
 				contentArray.push(
 					row(
 						'Total Value Change',
 						text(
-							`${symbol}$${Math.abs(valueDifference)
+							`${sign}$${Math.abs(valueDifference)
 								.toFixed(4)
 								.toString()} USD`,
 						),
@@ -528,28 +639,30 @@ function getUserBalanceChanges(
 				);
 			}
 
+			// Add all negative balance changes to the contentArray
 			if (negativeChanges.length !== 0) {
 				contentArray.push(
 					divider(),
-					text('**Outflows ⬇️**'),
+					text('**Outflows ⬆️**'),
 					...negativeChanges,
 				);
 
+				// If there are outflows but no inflow, show warning message.
 				if (positiveChanges.length === 0) {
 					contentArray.push(
 						divider(),
-						text('**Outflows ❌**'),
+						text('**Inflows ❌**'),
 						text(
 							'You are transferring tokens out of your wallet, but you will **not receive any tokens from this transaction**. Verify the transaction details to avoid potential loss of funds.',
 						),
 					);
 				}
 			}
-
+			// Add all positive balance changes to the contentArray
 			if (positiveChanges.length !== 0) {
 				contentArray.push(
 					divider(),
-					text('**Inflows ⬆️**'),
+					text('**Inflows ⬇️**'),
 					...positiveChanges,
 				);
 			}
@@ -557,6 +670,7 @@ function getUserBalanceChanges(
 			return contentArray;
 		}
 	}
+	// Add fallback? No user tokens moved?
 }
 
 function createSimulationErrorContentArray(
@@ -646,7 +760,7 @@ export async function getBlockHeight() {
 		// Convert the hex block number to a decimal number
 		const blockNumber = parseInt(blockNumberHex, 16);
 
-		console.log(`Current Block Height: ${blockNumber}`);
+		//console.log(`Current Block Height: ${blockNumber}`);
 		return blockNumber.toString();
 	} catch (error) {
 		console.error('Error retrieving block height:', error);
@@ -654,12 +768,59 @@ export async function getBlockHeight() {
 	}
 }
 
+// ERC-20 transfer function selector
+const erc20TransferSelector = '0xa9059cbb';
+// ERC-20 transferFrom function selector
+const erc20TransferFromSelector = '0x23b872dd';
 
-function roundDownToTwoSignificantDigits(num) {
-	if (num === 0) return 0;
-  
-	const order = Math.floor(Math.log10(Math.abs(num))) - 1;
-	const factor = Math.pow(10, order);
-  
-	return Math.floor(num / factor) * factor;
-  }
+function isERC20TransferOrTransferFrom(transactionData: String) {
+	// Ensure the input data is a valid hex string
+	if (
+		!transactionData ||
+		!transactionData.startsWith('0x') ||
+		transactionData.length < 10
+	) {
+		return false;
+	}
+
+	// Extract the first 4 bytes (8 hex characters after '0x')
+	const functionSelector = transactionData.slice(0, 10).toLowerCase();
+
+	// Check if the function selector matches
+	if (
+		functionSelector === erc20TransferSelector ||
+		functionSelector === erc20TransferFromSelector
+	) {
+		return true;
+	}
+	return false;
+}
+
+function extractTransferAmountAndRecipient(transactionData: string) {
+	if (!transactionData.startsWith('0x') || transactionData.length < 138) {
+		console.error('Invalid transaction data');
+		return [null, null];
+	}
+
+	// Get function selector (first 4 bytes)
+	const functionSelector = transactionData.slice(0, 10).toLowerCase();
+
+	if (functionSelector === '0xa9059cbb') {
+		// transfer(address recipient, uint256 amount)
+		let recipient = '0x' + transactionData.slice(10, 74); // Extract recipient address
+		recipient = recipient.replace(/^0x0+/, '0x'); // Remove leading zeros after '0x'
+		const amount = BigInt('0x' + transactionData.slice(74, 138)).toString(); // Extract amount
+		return [recipient, amount];
+	} else if (functionSelector === '0x23b872dd') {
+		// transferFrom(address sender, address recipient, uint256 amount)
+		let recipient = '0x' + transactionData.slice(74, 138); // Extract recipient address
+		recipient = recipient.replace(/^0x0+/, '0x'); // Remove leading zeros after '0x'
+		const amount = BigInt(
+			'0x' + transactionData.slice(138 - 64),
+		).toString(); // Extract amount
+		return [recipient, amount];
+	} else {
+		console.error('Not a transfer or transferFrom function');
+		return [null, null];
+	}
+}
