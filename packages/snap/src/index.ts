@@ -17,15 +17,13 @@ import {
 
 import {
 	getHashDitResponse,
-	parseTransactingValue,
-	getNativeToken,
 	authenticateHashDit,
 	isEOA,
-	addressPoisoningDetection,
 	determineTransactionAndDestinationRiskInfo,
-	parseSignature,
 	authenticateDiTing,
 } from './utils/utils';
+import { parseSignature } from './utils/signatureInsight';
+import { addressPoisoningDetection } from './utils/addressPoisoning';
 
 import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
@@ -123,6 +121,7 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
+	console.log('OnSig:', JSON.stringify(signature, null, 2));
 	// Retrieve the content array if the signature is v3 or v4
 	const parseSignatureArrayResult = await parseSignature(
 		signature,
@@ -132,6 +131,7 @@ export const onSignature: OnSignatureHandler = async ({
 	// Return the results if they exist
 	if (parseSignatureArrayResult != null) {
 		const content = panel(parseSignatureArrayResult);
+		console.log('pareseSigResult');
 		return { content };
 	}
 
@@ -141,8 +141,9 @@ export const onSignature: OnSignatureHandler = async ({
 	if (signature.signatureMethod === 'personal_sign') {
 		contentArray.push(
 			heading('Signature Screening'),
+			row("Risk Level", text("Low")),
 			text(
-				'This signature uses the personal_sign method. It allows users to sign arbitrary messages to verify address ownership. It is generally safe.',
+				"This signature confirms that you own this address. It’s a common way to verify your identity without sharing your private key. This process is generally safe.",
 			),
 			divider(),
 		);

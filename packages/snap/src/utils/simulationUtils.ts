@@ -11,7 +11,8 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { keccak256 } from 'js-sha3';
-import { getHashDitResponse, isEOA, determineSpenderRiskInfo } from './utils';
+import { getHashDitResponse, isEOA } from './utils';
+import {determineSpenderRiskInfo} from "./signatureInsight"
 
 export async function callDiTingTxSimulation(
 	persistedUserData: any,
@@ -116,16 +117,39 @@ export async function callDiTingTxSimulation(
 			const errorTitles: Record<string, string> = {
 				Gas_Insufficient: 'Insufficient Gas',
 				Transaction_Reverted: 'Transaction Reverted',
-				Insufficient_Native_Token: 'Insufficient Tokens',
+				Insufficient_Native_Token: 'Insufficient Native Token',
 				Node_Connection_Error: 'Node Connection Error',
 				Gas_Exceeds_Block_Limit: 'Gas Exceeds Block Limit',
 				Ran_Out_Of_Gas: 'Ran Out Of Gas',
 				HTTP_Connection_Error: 'HTTP Connection Error',
 			};
 
-			const errorTitle = errorTitles[errorCategory] || 'Other Error';
+			// Map error categories to custom messages
+			const errorMessages: Record<string, string> = {
+				Gas_Insufficient: `${errorMessage}. You need to increase the gas limit to complete this transaction.`,
+				Transaction_Reverted:
+				"This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.",
+				Insufficient_Native_Token:
+					"This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.",
+				Node_Connection_Error:
+					"We're having trouble connecting to the network. This might be due to internet issues or network congestion. Please try again later.",
+				Gas_Exceeds_Block_Limit:
+					'This transaction needs more gas than the network allows right now. Try lowering the gas usage or waiting for network conditions to improve.',
+				Ran_Out_Of_Gas:
+					'Your transaction used up all its gas before it could finish. Try increasing the gas limit and resubmitting.',
+				HTTP_Connection_Error:
+					'There was a connection issue with the network. Please check your internet or try switching networks.',
+			};
+
+			const errorTitle = errorTitles[errorCategory] || 'Error';
+			const customErrorMessage =
+				errorMessages[errorCategory] ||
+				(errorMessage ? errorMessage : 'An unknown error occurred.');
 			//console.log('Error Title:', errorTitle);
-			return createSimulationErrorContentArray(errorTitle, errorMessage);
+			return createSimulationErrorContentArray(
+				errorTitle,
+				customErrorMessage,
+			);
 		}
 		// Transaction valid
 		else {
@@ -135,7 +159,6 @@ export async function callDiTingTxSimulation(
 				chainId,
 				persistedUserData,
 			);
-			console.log('approvalArray', approvalChangeArray);
 
 			const balanceChangeArray = getUserBalanceChanges(
 				result,
@@ -151,13 +174,14 @@ export async function callDiTingTxSimulation(
 
 			// If the transaction is a ERC20 transfer, show transfer tax
 			if (isERC20Transfer) {
-				transferTaxPercent = Number(getTransferTax(
-					result,
-					fromAddress.toLowerCase(),
-					transferAmount,
-					transferRecipient?.toLowerCase(),
-				).toFixed(2));
-				
+				transferTaxPercent = Number(
+					getTransferTax(
+						result,
+						fromAddress.toLowerCase(),
+						transferRecipient?.toLowerCase(),
+					).toFixed(2),
+				);
+
 				if (transferTaxPercent >= 20) {
 					headingArray.push(
 						row(
@@ -172,8 +196,7 @@ export async function callDiTingTxSimulation(
 							`⚠️ High transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a significant loss of tokens.`,
 						),
 					);
-				}
-				else if (transferTaxPercent >= 10) {
+				} else if (transferTaxPercent >= 10) {
 					headingArray.push(
 						row(
 							'Transfer Tax',
@@ -187,8 +210,7 @@ export async function callDiTingTxSimulation(
 							'Medium transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a moderate loss of tokens.',
 						),
 					);
-				}
-				else if (transferTaxPercent >= 5) {
+				} else if (transferTaxPercent >= 5) {
 					headingArray.push(
 						row(
 							'Transfer Tax',
@@ -198,8 +220,7 @@ export async function callDiTingTxSimulation(
 							'Low transfer tax detected. This tax is deducted from the total amount being transferred, resulting in a small loss of tokens.',
 						),
 					);
-				}
-				else{
+				} else {
 					headingArray.push(
 						row(
 							'Transfer Tax',
@@ -211,15 +232,17 @@ export async function callDiTingTxSimulation(
 
 			console.log('balanceArray', balanceChangeArray);
 
-			// Merge the two arrays
+			// Merge all the resulting arrays
 			const mergedArray = [
 				...(headingArray || []),
+				...(balanceChangeArray || []),
 				...(approvalChangeArray && approvalChangeArray?.length > 0
-					? [heading('Spender Screening')]
+					? [
+						divider(), 
+						heading('Spender Screening')
+					]
 					: []),
 				...(approvalChangeArray || []),
-
-				...(balanceChangeArray || []),
 			];
 
 			// Return the merged array
@@ -227,6 +250,10 @@ export async function callDiTingTxSimulation(
 		}
 	} catch (error) {
 		console.error('Error in callDiTingTxSimulation:', error);
+		return [
+			heading('Transaction Simulation'),
+			text("An error has occurred while simulating the transaction. Please try again.")
+		]
 	}
 }
 
@@ -237,7 +264,7 @@ async function getUserApprovalChanges(
 	persistedUserData: any,
 ) {
 	let contentArray: any[] = [];
-	const userAddressLower = userAddress.toLowerCase();
+
 	// Approval changes from simulation result
 	const approvalChanges =
 		simulationResult?.data?.txn_summaries[0]?.approve_changes;
@@ -304,7 +331,6 @@ async function getUserApprovalChanges(
 						if (isSpenderEOA) {
 							contentArray.push(
 								row('Risk Level', text('⛔ High Risk ⛔')),
-								row('Approver', address(approver)),
 								row('Spender', address(spender)),
 								row('Amount', text(formattedBalanceChange)),
 								text(
@@ -339,8 +365,7 @@ async function getUserApprovalChanges(
 										spenderBlacklistResp.overall_risk,
 									);
 								contentArray.push(
-									row('Risk Level', text(riskTitle)),
-									row('Approver', address(approver)),
+									row('Risk Level', text(riskTitle)),								
 									row('Spender', address(spender)),
 									row('Amount', text(formattedBalanceChange)),
 									text(riskOverview),
@@ -378,11 +403,11 @@ async function getUserApprovalChanges(
 function getTransferTax(
 	simulationResult: any,
 	senderAddress: string,
-	transferAmount: any,
 	receiverAddress: any,
 ) {
 	try {
-		const balanceChanges = simulationResult?.data?.txn_summaries?.[0]?.balance_changes;
+		const balanceChanges =
+			simulationResult?.data?.txn_summaries?.[0]?.balance_changes;
 		if (!balanceChanges || Object.keys(balanceChanges).length === 0) {
 			console.log('No balance change found');
 			return 0;
@@ -412,11 +437,13 @@ function getTransferTax(
 		// Ensure sender balance change is a positive number
 		const absSenderBalanceChange = Math.abs(Number(senderBalanceChange));
 		if (absSenderBalanceChange === 0) {
-			console.log('Sender balance change is zero, avoiding division by zero');
+			console.log(
+				'Sender balance change is zero, avoiding division by zero',
+			);
 			return 0;
 		}
 
-		console.log("Sender", senderTokenChange, firstToken);
+		console.log('Sender', senderTokenChange, firstToken);
 
 		// Get receiver's token change safely
 		const receiverTokenChange = balanceChanges[receiverAddress];
@@ -444,7 +471,8 @@ function getTransferTax(
 		);
 
 		// Compute and return transfer tax
-		const transferTax = (1 - (numReceiverBalanceChange / absSenderBalanceChange)) * 100;
+		const transferTax =
+			(1 - numReceiverBalanceChange / absSenderBalanceChange) * 100;
 		console.log('Transfer Tax:', transferTax);
 
 		return transferTax;
@@ -453,7 +481,6 @@ function getTransferTax(
 		return 0;
 	}
 }
-
 
 function getUserBalanceChanges(
 	simulationResult: any,
@@ -472,11 +499,11 @@ function getUserBalanceChanges(
 	let negativeValue = 0;
 	if (!balanceChanges || Object.entries(balanceChanges).length == 0) {
 		contentArray.push(
-			divider(),
+
 			text(
 				'No balance changes detected. No tokens are being sent or received in this transaction.',
 			),
-			divider(),
+
 		);
 		return contentArray;
 	}
