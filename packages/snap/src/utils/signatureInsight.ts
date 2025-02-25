@@ -215,7 +215,7 @@ async function createContentForSignatureInsight(
 				row('Risk Level', text('⛔ High Risk ⛔')),
 				row('Spender', address(spender)),
 				text(
-					'This transaction’s spender is an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
+					'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.'
 				),
 				divider(),
 				heading('Website Screening'),
@@ -251,14 +251,14 @@ async function createContentForSignatureInsight(
 		}
 	}
 	// Fallback content value if (not a supported chain and spender is not EOA), or (API return overall_risk level of -1 / unknown)
-
+	const spenderRiskInfo = determineSpenderRiskInfo(0)
 	contentArray.push(
 		divider(),
 		heading('Spender Screening'),
 		row('Risk Level', text('Low')),
 		row('Spender', address(spender)),
 		text(
-			'This transaction’s spender is not blacklisted by HashDit. However, approving it grants a third-party direct access to your funds, which could lead to potential loss. To minimize risk, only approve the exact amount you are willing to use in this transaction. Please proceed with caution. Default risk level.',
+			spenderRiskInfo[1],
 		),
 		divider(),
 		heading('Website Screening'),
@@ -280,7 +280,7 @@ export function determineSpenderRiskInfo(riskLevel: number) {
 	} else if (riskLevel >= 0) {
 		return [
 			'Low',
-			'This transaction’s spender is not blacklisted by HashDit. However, approving it grants a third-party direct access to your funds, which could lead to potential loss. To minimize risk, only approve the exact amount you are willing to use in this transaction. Please proceed with caution. Default risk level.',
+			'This spender is not blacklisted by HashDit, but approving it gives third-party access to your funds, posing a risk. We recommend only approving the exact amount needed.',
 		];
 	} else {
 		return [

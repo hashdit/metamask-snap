@@ -383,13 +383,14 @@ async function getUserApprovalChanges(
 					}
 				}
 			}
+			const spenderRiskInfo = determineSpenderRiskInfo(0)
 			contentArray.push(
 				row('Risk Level', text('Low')),
 				row('Approver', address(approver)),
 				row('Spender', address(spender)),
 				row('Amount', text(formattedBalanceChange)),
 				text(
-					'This transaction’s spender is not blacklisted by HashDit. However, approving it will give a third-party direct access to your funds, risking potential loss. Please proceed with caution. Default risk level.',
+					spenderRiskInfo[1],
 				),
 				divider(),
 			);
