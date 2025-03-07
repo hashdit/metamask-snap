@@ -38,7 +38,8 @@
   "dependencies": {
     "@metamask/snaps-types": "^3.1.0",
     "@metamask/snaps-ui": "^2.0.0",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "js-sha3": "^0.9.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",

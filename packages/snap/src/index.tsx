@@ -17,23 +17,24 @@ import {
 
 import {
 	getHashDitResponse,
+	parseTransactingValue,
+	getNativeToken,
 	authenticateHashDit,
 	isEOA,
+	addressPoisoningDetection,
 	determineTransactionAndDestinationRiskInfo,
 	parseSignature,
 	verifyContractAndFunction,
 	authenticateDiTing,
 } from './utils/utils';
-import { parseSignature } from './utils/signatureInsight';
-import { addressPoisoningDetection } from './utils/addressPoisoning';
-
-import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
 	onInstallContent,
 	onHomePageContent,
 	errorContent,
 } from './utils/content';
+
+import { Box, Heading, Text, Divider } from "@metamask/snaps-sdk/jsx";
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -77,7 +78,7 @@ export const onInstall: OnInstallHandler = async () => {
 
 		// Call HashDit API to authenticate user
 		try {
-			await authenticateHashDit(from, signature);
+			await authenticateHashDit(newState);
 		} catch (error) {
 			console.error('Error during HashDit API authentication:', error);
 		}
@@ -87,7 +88,7 @@ export const onInstall: OnInstallHandler = async () => {
 			const DiTingResult = await authenticateDiTing(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log('DitingResult', DiTingResult);
+				//console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -123,7 +124,7 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
-	console.log('OnSig:', JSON.stringify(signature, null, 2));
+	console.log("onSig")
 	// Retrieve the content array if the signature is v3 or v4
 	const parseSignatureArrayResult = await parseSignature(
 		signature,
@@ -133,22 +134,22 @@ export const onSignature: OnSignatureHandler = async ({
 	// Return the results if they exist
 	if (parseSignatureArrayResult != null) {
 		const content = panel(parseSignatureArrayResult);
-		console.log('pareseSigResult');
 		return { content };
 	}
 
-	let contentArray: any[] = [];
+	let contentArray: JSX.Element[] = [
+		
+	  ];
 
 	// We consider personal_sign to be safe
 	if (signature.signatureMethod === 'personal_sign') {
-		contentArray.push(
-			heading('Signature Screening'),
-			row("Risk Level", text("Low")),
-			text(
-				"This signature confirms that you own this address. It’s a common way to verify your identity without sharing your private key. This process is generally safe.",
-			),
-			divider(),
-		);
+		// contentArray.push(
+		// 	<Heading >Signature Screening</Heading>,
+		// 	<Text >
+		// 	  This signature uses the personal_sign method. It allows users to sign arbitrary messages to verify address ownership. It is generally safe.
+		// 	</Text>,
+		// 	<Divider />,
+		// );
 	}
 
 	// Retrieve user data, and get website risk level
@@ -159,13 +160,15 @@ export const onSignature: OnSignatureHandler = async ({
 			params: { operation: 'get' },
 		});
 	} catch (error) {
+		console.log("HERE");
 		contentArray.push(
-			heading('HashDit Snap'),
-			text(
-				'If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.',
-			),
+			// <Heading >HashDit Snap</Heading>,
+			// <Text >
+			//   If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.
+			// </Text>,
 		);
-		return { content: panel(contentArray) };
+		console.log(contentArray);
+		return { content: <Box><Text>test</Text></Box> };
 	}
 	// User data exists. Call website screening API, and add results to content array.
 	if (persistedUserData !== null) {
@@ -205,7 +208,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log('Transaction:', JSON.stringify(transaction, null, 2));
+	//console.log('onTransaction', transaction);
 
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
@@ -275,6 +278,17 @@ export const onTransaction: OnTransactionHandler = async ({
 				);
 			}
 
+			const transactingValue = parseTransactingValue(transaction.value);
+			const nativeToken = getNativeToken(chainId);
+
+			contentArray.push(
+				heading('Transfer Details'),
+				row('Your Address', address(transaction.from)),
+				row('Amount', text(`${transactingValue} ${nativeToken}`)),
+				row('To', address(transaction.to)),
+				divider(),
+			);
+
 			contentArray.push(
 				text(
 					'HashDit Security Insights is not fully supported on this chain.',
@@ -296,6 +310,7 @@ export const onTransaction: OnTransactionHandler = async ({
 			});
 
 			let contentArray: any[] = [];
+			var respData;
 			var urlRespData;
 			if (persistedUserData !== null) {
 				const poisonResultArray = addressPoisoningDetection(accounts, [
@@ -306,31 +321,20 @@ export const onTransaction: OnTransactionHandler = async ({
 				}
 
 				// Parallelize Destination Screening call and Website Screening call
-				const [respData, urlRespData, txSimulationContentArray] =
-					await Promise.all([
-						getHashDitResponse(
-							'internal_address_lables_tags',
-							persistedUserData,
-							transactionOrigin,
-							transaction,
-							chainId,
-						),
-						getHashDitResponse(
-							'hashdit_snap_tx_api_url_detection',
-							persistedUserData,
-							transactionOrigin,
-						),
-						callDiTingTxSimulation(
-							persistedUserData,
-							chainId,
-							transaction.to,
-							transaction.from,
-							transaction.gas,
-							transaction.value,
-							transaction.data ? transaction.data : '',
-						),
-					]);
-
+				const [respData, urlRespData] = await Promise.all([
+					getHashDitResponse(
+						'internal_address_lables_tags',
+						persistedUserData,
+						transactionOrigin,
+						transaction,
+						chainId,
+					),
+					getHashDitResponse(
+						'hashdit_snap_tx_api_url_detection',
+						persistedUserData,
+						transactionOrigin,
+					),
+				]);
 
 				if (respData.overall_risk != '-1') {
 					const [riskTitle, riskOverview] =
@@ -365,14 +369,6 @@ export const onTransaction: OnTransactionHandler = async ({
 					text(urlRespData.url_risk_detail),
 					divider(),
 				);
-
-				console.log(
-					'txSimulationContentArray',
-					txSimulationContentArray,
-				);
-				if (txSimulationContentArray != undefined) {
-					contentArray.push(...txSimulationContentArray);
-				}
 			} else {
 				contentArray.push(
 					heading('HashDit Security Insights'),
@@ -393,6 +389,16 @@ export const onTransaction: OnTransactionHandler = async ({
 					divider(),
 				);
 			}
+
+			const transactingValue = parseTransactingValue(transaction.value);
+			const nativeToken = getNativeToken(chainId);
+
+			contentArray.push(
+				heading('Transfer Details'),
+				row('Your Address', address(transaction.from)),
+				row('Amount', text(`${transactingValue} ${nativeToken}`)),
+				row('To', address(transaction.to)),
+			);
 
 			const content = panel(contentArray);
 			return { content };
@@ -490,49 +496,34 @@ export const onTransaction: OnTransactionHandler = async ({
 		let contentArray: any[] = [];
 		if (persistedUserData !== null) {
 			// Parallelize Transaction, Destination, and Website Screening calls
-			const [
-				interactionRespData,
-				addressRespData,
-				urlRespData,
-				txSimulationContentArray,
-			] = await Promise.all([
-				getHashDitResponse(
-					'hashdit_snap_tx_api_transaction_request',
-					persistedUserData,
-					transactionOrigin,
-					transaction,
-					chainId,
-				),
-				getHashDitResponse(
-					'internal_address_lables_tags',
-					persistedUserData,
-					transactionOrigin,
-					transaction,
-					chainId,
-				),
-				getHashDitResponse(
-					'hashdit_snap_tx_api_url_detection',
-					persistedUserData,
-					transactionOrigin,
-				),
-				callDiTingTxSimulation(
-					persistedUserData,
-					chainId,
-					transaction.to,
-					transaction.from,
-					transaction.gas,
-					transaction.value,
-					transaction.data,
-				),
-			]);
-
+			const [interactionRespData, addressRespData, urlRespData] =
+				await Promise.all([
+					getHashDitResponse(
+						'hashdit_snap_tx_api_transaction_request',
+						persistedUserData,
+						transactionOrigin,
+						transaction,
+						chainId,
+					),
+					getHashDitResponse(
+						'internal_address_lables_tags',
+						persistedUserData,
+						transactionOrigin,
+						transaction,
+						chainId,
+					),
+					getHashDitResponse(
+						'hashdit_snap_tx_api_url_detection',
+						persistedUserData,
+						transactionOrigin,
+					),
+				]);
 
 			// Address Poisoning Detection on destination address and function parameters
 			let targetAddresses = [];
 			// Add destination address to `targetAddresses[]`
 			targetAddresses.push(transaction.to);
 			// Add all addresses from the function's parameters to `targetAddresses[]`
-			//console.log("interactionRespData",interactionRespData)
 			if (
 				interactionRespData.function_name != null &&
 				interactionRespData.function_name != ''
@@ -555,8 +546,6 @@ export const onTransaction: OnTransactionHandler = async ({
 			}
 
 			// We display the bigger risk between Transaction screening and Destination screening
-			console.log('interactionRespData', JSON.stringify(interactionRespData));
-			console.log('addressRespData', JSON.stringify(addressRespData));
 			if (
 				interactionRespData.overall_risk >= addressRespData.overall_risk
 			) {
@@ -572,12 +561,11 @@ export const onTransaction: OnTransactionHandler = async ({
 						'Risk Details',
 						text(interactionRespData.transaction_risk_detail),
 					),
-					divider(),
 				);
 			} else {
 				const [riskTitle, riskOverview] =
 					determineTransactionAndDestinationRiskInfo(
-						addressRespData.overall_risk,
+						interactionRespData.overall_risk,
 					);
 				contentArray.push(
 					heading('Destination Screening'),
@@ -587,23 +575,17 @@ export const onTransaction: OnTransactionHandler = async ({
 						text(`${addressRespData.transaction_risk_detail}`),
 					),
 					text(`${riskOverview}`),
-					divider(),
 				);
 			}
 
 			// Display Website Screening results
 			contentArray.push(
+				divider(),
 				heading('Website Screening'),
 				row('Website', text(transactionOrigin)),
 				row('Risk Level', text(urlRespData.url_risk_level)),
 				text(urlRespData.url_risk_detail),
-				divider(),
 			);
-
-
-			console.log('txSimulationContentArray', txSimulationContentArray);
-			if (txSimulationContentArray != undefined) {
-				contentArray.push(...txSimulationContentArray);
 
 			const signatureCheckResultArray = await verifyContractAndFunction(
 				transaction,
@@ -628,7 +610,6 @@ export const onTransaction: OnTransactionHandler = async ({
 					row('Amount', text(`${transactingValue} ${nativeToken}`)),
 					row('To', address(transaction.to)),
 				);
-
 			}
 
 			// Display function call insight (function names and parameters)
@@ -668,7 +649,7 @@ export const onTransaction: OnTransactionHandler = async ({
 		} else {
 			// User public key not found, display error message to snap
 			contentArray = [
-				heading('HashDit Securitfy Insights'),
+				heading('HashDit Security Insights'),
 				text('⚠️ The full functionality of HashDit is not working. ⚠️'),
 				text('To resolve this issue, please follow these steps:'),
 				divider(),
@@ -691,6 +672,12 @@ export const onTransaction: OnTransactionHandler = async ({
 
 export const onHomePage: OnHomePageHandler = async () => {
 	return {
-		content: panel(onHomePageContent),
+		content: (
+			<Box>
+			  <Heading>My Transaction Insights</Heading>
+			  <Text>Here are the insights:</Text>
+			
+			</Box>
+		  ),
 	};
 };
