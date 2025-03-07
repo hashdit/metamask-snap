@@ -541,8 +541,8 @@ export const onTransaction: OnTransactionHandler = async ({
 			}
 
 			// We display the bigger risk between Transaction screening and Destination screening
-			console.log('interactionRespData', interactionRespData);
-			console.log('addressRespData', addressRespData);
+			console.log('interactionRespData', JSON.stringify(interactionRespData));
+			console.log('addressRespData', JSON.stringify(addressRespData));
 			if (
 				interactionRespData.overall_risk >= addressRespData.overall_risk
 			) {

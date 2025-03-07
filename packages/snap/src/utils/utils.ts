@@ -87,6 +87,7 @@ export async function getHashDitResponse(
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
+		console.log("hashdit_snap_tx_api_transaction_request");
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 		postBody.trace_id = trace_id;
@@ -229,6 +230,7 @@ async function customFetch(
 	nonce: any,
 	signatureFinal: any,
 ) {
+	
 	const response = await fetch(url, {
 		method: 'POST',
 		mode: 'cors',
@@ -245,6 +247,7 @@ async function customFetch(
 		referrerPolicy: 'no-referrer',
 		body: JSON.stringify(postBody),
 	});
+	console.log(appId, timestamp.toString(), nonce, signatureFinal,  JSON.stringify(postBody));
 
 	const resp = await response.json();
 	if (resp.status == 'OK' && resp.data) {
