@@ -20,6 +20,8 @@ import {
 	authenticateHashDit,
 	isEOA,
 	determineTransactionAndDestinationRiskInfo,
+	parseSignature,
+	verifyContractAndFunction,
 	authenticateDiTing,
 } from './utils/utils';
 import { parseSignature } from './utils/signatureInsight';
@@ -204,6 +206,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transactionOrigin,
 }) => {
 	console.log('Transaction:', JSON.stringify(transaction, null, 2));
+
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
 		params: [],
@@ -328,6 +331,7 @@ export const onTransaction: OnTransactionHandler = async ({
 						),
 					]);
 
+
 				if (respData.overall_risk != '-1') {
 					const [riskTitle, riskOverview] =
 						determineTransactionAndDestinationRiskInfo(
@@ -422,6 +426,14 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (poisonResultArray.length != 0) {
 				contentArray = poisonResultArray;
 			}
+			const signatureCheckResultArray = await verifyContractAndFunction(
+				transaction,
+				chainId,
+				persistedUserData.DiTingApiKey,
+			);
+			if (signatureCheckResultArray.length !== 0) {
+				contentArray.push(...signatureCheckResultArray);
+			}
 			// Website Screening call
 			const urlRespData = await getHashDitResponse(
 				'hashdit_snap_tx_api_url_detection',
@@ -514,11 +526,13 @@ export const onTransaction: OnTransactionHandler = async ({
 				),
 			]);
 
+
 			// Address Poisoning Detection on destination address and function parameters
 			let targetAddresses = [];
 			// Add destination address to `targetAddresses[]`
 			targetAddresses.push(transaction.to);
 			// Add all addresses from the function's parameters to `targetAddresses[]`
+			//console.log("interactionRespData",interactionRespData)
 			if (
 				interactionRespData.function_name != null &&
 				interactionRespData.function_name != ''
@@ -586,9 +600,35 @@ export const onTransaction: OnTransactionHandler = async ({
 				divider(),
 			);
 
+
 			console.log('txSimulationContentArray', txSimulationContentArray);
 			if (txSimulationContentArray != undefined) {
 				contentArray.push(...txSimulationContentArray);
+
+			const signatureCheckResultArray = await verifyContractAndFunction(
+				transaction,
+				chainId,
+				persistedUserData.DiTingApiKey,
+			);
+			if (signatureCheckResultArray.length !== 0) {
+				contentArray.push(...signatureCheckResultArray);
+			}
+
+			/*
+	  	Only display Transfer Details if transferring more than 0 native tokens
+	  	This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
+	  	*/
+			const transactingValue = parseTransactingValue(transaction.value);
+			const nativeToken = getNativeToken(chainId);
+			if (transactingValue > 0) {
+				contentArray.push(
+					divider(),
+					heading('Transfer Details'),
+					row('Your Address', address(transaction.from)),
+					row('Amount', text(`${transactingValue} ${nativeToken}`)),
+					row('To', address(transaction.to)),
+				);
+
 			}
 
 			// Display function call insight (function names and parameters)

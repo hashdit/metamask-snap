@@ -4,6 +4,18 @@ import hmacSHA256 from 'crypto-js/hmac-sha256';
 import encHex from 'crypto-js/enc-hex';
 import { CHAINS_INFO } from './chains';
 
+import {
+	heading,
+	panel,
+	text,
+	copyable,
+	divider,
+	address,
+	row,
+	Signature,
+} from '@metamask/snaps-sdk';
+import { errorContent } from './content';
+
 
 // Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
 export async function authenticateDiTing(
@@ -24,6 +36,7 @@ export async function authenticateDiTing(
 	});
 	const resp = await response.json();
 
+
 	return resp;
 }
 
@@ -32,6 +45,7 @@ export async function authenticateHashDit(
 	userAddress: string,
 	messageSignature: string,
 ) {
+
 	const timestamp = Date.now();
 	const nonce = uuidv4().replace(/-/g, '');
 
@@ -293,6 +307,7 @@ export async function isEOA(address: any) {
 	}
 }
 
+
 // Determine the risk title and description for each risk level. Used by URL screening.
 function determineUrlRiskInfo(urlRiskLevel: number): string[] {
 	if (urlRiskLevel == 0) {
@@ -356,4 +371,4 @@ export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
 			'The risk level of this transaction is unknown. Please proceed with caution.',
 		];
 	}
-}
+
