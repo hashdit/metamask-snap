@@ -20,13 +20,12 @@ import {
 	authenticateHashDit,
 	isEOA,
 	determineTransactionAndDestinationRiskInfo,
-	parseSignature,
-	verifyContractAndFunction,
+	
 	authenticateDiTing,
 } from './utils/utils';
 import { parseSignature } from './utils/signatureInsight';
 import { addressPoisoningDetection } from './utils/addressPoisoning';
-
+import {verifyContractAndFunction} from './utils/unverifiedCheck';
 import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -306,7 +305,8 @@ export const onTransaction: OnTransactionHandler = async ({
 				}
 
 				// Parallelize Destination Screening call and Website Screening call
-				const [respData, urlRespData, txSimulationContentArray] =
+	
+				const [respData, urlRespData] =
 					await Promise.all([
 						getHashDitResponse(
 							'internal_address_lables_tags',
@@ -320,16 +320,34 @@ export const onTransaction: OnTransactionHandler = async ({
 							persistedUserData,
 							transactionOrigin,
 						),
-						callDiTingTxSimulation(
-							persistedUserData,
-							chainId,
-							transaction.to,
-							transaction.from,
-							transaction.gas,
-							transaction.value,
-							transaction.data ? transaction.data : '',
-						),
+						
 					]);
+
+				// ToDo: Re-add simulation code
+				// const [respData, urlRespData, txSimulationContentArray] =
+				// 	await Promise.all([
+				// 		getHashDitResponse(
+				// 			'internal_address_lables_tags',
+				// 			persistedUserData,
+				// 			transactionOrigin,
+				// 			transaction,
+				// 			chainId,
+				// 		),
+				// 		getHashDitResponse(
+				// 			'hashdit_snap_tx_api_url_detection',
+				// 			persistedUserData,
+				// 			transactionOrigin,
+				// 		),
+				// 		callDiTingTxSimulation(
+				// 			persistedUserData,
+				// 			chainId,
+				// 			transaction.to,
+				// 			transaction.from,
+				// 			transaction.gas,
+				// 			transaction.value,
+				// 			transaction.data ? transaction.data : '',
+				// 		),
+				// 	]);
 
 
 				if (respData.overall_risk != '-1') {
@@ -366,13 +384,13 @@ export const onTransaction: OnTransactionHandler = async ({
 					divider(),
 				);
 
-				console.log(
-					'txSimulationContentArray',
-					txSimulationContentArray,
-				);
-				if (txSimulationContentArray != undefined) {
-					contentArray.push(...txSimulationContentArray);
-				}
+				// console.log(
+				// 	'txSimulationContentArray',
+				// 	txSimulationContentArray,
+				// );
+				// if (txSimulationContentArray != undefined) {
+				// 	contentArray.push(...txSimulationContentArray);
+				// }
 			} else {
 				contentArray.push(
 					heading('HashDit Security Insights'),
@@ -494,7 +512,7 @@ export const onTransaction: OnTransactionHandler = async ({
 				interactionRespData,
 				addressRespData,
 				urlRespData,
-				txSimulationContentArray,
+				
 			] = await Promise.all([
 				getHashDitResponse(
 					'hashdit_snap_tx_api_transaction_request',
@@ -515,16 +533,44 @@ export const onTransaction: OnTransactionHandler = async ({
 					persistedUserData,
 					transactionOrigin,
 				),
-				callDiTingTxSimulation(
-					persistedUserData,
-					chainId,
-					transaction.to,
-					transaction.from,
-					transaction.gas,
-					transaction.value,
-					transaction.data,
-				),
+				
 			]);
+			// ToDo: Re-add Simulation code
+			// const [
+			// 	interactionRespData,
+			// 	addressRespData,
+			// 	urlRespData,
+			// 	txSimulationContentArray,
+			// ] = await Promise.all([
+			// 	getHashDitResponse(
+			// 		'hashdit_snap_tx_api_transaction_request',
+			// 		persistedUserData,
+			// 		transactionOrigin,
+			// 		transaction,
+			// 		chainId,
+			// 	),
+			// 	getHashDitResponse(
+			// 		'internal_address_lables_tags',
+			// 		persistedUserData,
+			// 		transactionOrigin,
+			// 		transaction,
+			// 		chainId,
+			// 	),
+			// 	getHashDitResponse(
+			// 		'hashdit_snap_tx_api_url_detection',
+			// 		persistedUserData,
+			// 		transactionOrigin,
+			// 	),
+			// 	callDiTingTxSimulation(
+			// 		persistedUserData,
+			// 		chainId,
+			// 		transaction.to,
+			// 		transaction.from,
+			// 		transaction.gas,
+			// 		transaction.value,
+			// 		transaction.data,
+			// 	),
+			// ]);
 
 
 			// Address Poisoning Detection on destination address and function parameters
@@ -601,35 +647,36 @@ export const onTransaction: OnTransactionHandler = async ({
 			);
 
 
-			console.log('txSimulationContentArray', txSimulationContentArray);
-			if (txSimulationContentArray != undefined) {
-				contentArray.push(...txSimulationContentArray);
-
+			// console.log('txSimulationContentArray', txSimulationContentArray);
+			// if (txSimulationContentArray != undefined) {
+			// 	contentArray.push(...txSimulationContentArray);
+			
 			const signatureCheckResultArray = await verifyContractAndFunction(
 				transaction,
 				chainId,
 				persistedUserData.DiTingApiKey,
+
 			);
 			if (signatureCheckResultArray.length !== 0) {
 				contentArray.push(...signatureCheckResultArray);
 			}
 
-			/*
-	  	Only display Transfer Details if transferring more than 0 native tokens
-	  	This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-	  	*/
-			const transactingValue = parseTransactingValue(transaction.value);
-			const nativeToken = getNativeToken(chainId);
-			if (transactingValue > 0) {
-				contentArray.push(
-					divider(),
-					heading('Transfer Details'),
-					row('Your Address', address(transaction.from)),
-					row('Amount', text(`${transactingValue} ${nativeToken}`)),
-					row('To', address(transaction.to)),
-				);
+		// 	/*
+	  	// Only display Transfer Details if transferring more than 0 native tokens
+	  	// This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
+	  	// */
+		// 	const transactingValue = parseTransactingValue(transaction.value);
+		// 	const nativeToken = getNativeToken(chainId);
+		// 	if (transactingValue > 0) {
+		// 		contentArray.push(
+		// 			divider(),
+		// 			heading('Transfer Details'),
+		// 			row('Your Address', address(transaction.from)),
+		// 			row('Amount', text(`${transactingValue} ${nativeToken}`)),
+		// 			row('To', address(transaction.to)),
+		// 		);
 
-			}
+		// 	}
 
 			// Display function call insight (function names and parameters)
 			if (

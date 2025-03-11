@@ -372,3 +372,4 @@ export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
 		];
 	}
 
+}
