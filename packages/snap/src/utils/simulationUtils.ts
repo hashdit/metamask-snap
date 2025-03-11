@@ -11,8 +11,9 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { keccak256 } from 'js-sha3';
-import { getHashDitResponse, isEOA } from './utils';
+import { isEOA } from './utils';
 import { determineSpenderRiskInfo } from './signatureInsight';
+import { getHashDitResponse } from './api';
 
 export async function callDiTingTxSimulation(
 	persistedUserData: any,

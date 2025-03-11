@@ -10,7 +10,8 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
-import { getHashDitResponse, isEOA } from './utils';
+import {isEOA } from './utils';
+import {getHashDitResponse} from "./api"
 
 // Expected structure for EIP712 signature
 export interface SignatureParsed {

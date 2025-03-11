@@ -16,12 +16,14 @@ import {
 } from '@metamask/snaps-sdk';
 
 import {
-	getHashDitResponse,
-	authenticateHashDit,
 	isEOA,
 	determineTransactionAndDestinationRiskInfo,
-	authenticateDiTing,
 } from './utils/utils';
+import {
+	getHashDitResponse,
+	authenticateHashDit,
+	authenticateDiTing,
+} from './utils/api';
 import { parseSignature } from './utils/signatureInsight';
 import { addressPoisoningDetection } from './utils/addressPoisoning';
 import { verifyContractAndFunction } from './utils/unverifiedCheck';
@@ -651,23 +653,6 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (signatureCheckResultArray.length !== 0) {
 				contentArray.push(...signatureCheckResultArray);
 			}
-
-			// 	/*
-			// Only display Transfer Details if transferring more than 0 native tokens
-			// This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-			// */
-			// 	const transactingValue = parseTransactingValue(transaction.value);
-			// 	const nativeToken = getNativeToken(chainId);
-			// 	if (transactingValue > 0) {
-			// 		contentArray.push(
-			// 			divider(),
-			// 			heading('Transfer Details'),
-			// 			row('Your Address', address(transaction.from)),
-			// 			row('Amount', text(`${transactingValue} ${nativeToken}`)),
-			// 			row('To', address(transaction.to)),
-			// 		);
-
-			// 	}
 
 			// Display function call insight (function names and parameters)
 			if (
