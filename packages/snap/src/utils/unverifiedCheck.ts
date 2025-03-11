@@ -20,9 +20,7 @@ export async function verifyContractAndFunction(
 	chainId: string,
 	apiKey: string,
 ) {
-
 	const resultArray = [];
-
 
 	const chain = chainMap[chainId] || '';
 

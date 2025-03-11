@@ -215,7 +215,7 @@ async function createContentForSignatureInsight(
 				row('Risk Level', text('⛔ High Risk ⛔')),
 				row('Spender', address(spender)),
 				text(
-					'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.'
+					'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
 				),
 				divider(),
 				heading('Website Screening'),
@@ -251,15 +251,13 @@ async function createContentForSignatureInsight(
 		}
 	}
 	// Fallback content value if (not a supported chain and spender is not EOA), or (API return overall_risk level of -1 / unknown)
-	const spenderRiskInfo = determineSpenderRiskInfo(0)
+	const spenderRiskInfo = determineSpenderRiskInfo(0);
 	contentArray.push(
 		divider(),
 		heading('Spender Screening'),
 		row('Risk Level', text('Low')),
 		row('Spender', address(spender)),
-		text(
-			spenderRiskInfo[1],
-		),
+		text(spenderRiskInfo[1]),
 		divider(),
 		heading('Website Screening'),
 		row('Website', text(signatureOrigin)),

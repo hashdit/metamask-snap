@@ -12,7 +12,7 @@ import {
 } from '@metamask/snaps-sdk';
 import { keccak256 } from 'js-sha3';
 import { getHashDitResponse, isEOA } from './utils';
-import {determineSpenderRiskInfo} from "./signatureInsight"
+import { determineSpenderRiskInfo } from './signatureInsight';
 
 export async function callDiTingTxSimulation(
 	persistedUserData: any,
@@ -128,9 +128,9 @@ export async function callDiTingTxSimulation(
 			const errorMessages: Record<string, string> = {
 				Gas_Insufficient: `${errorMessage}. You need to increase the gas limit to complete this transaction.`,
 				Transaction_Reverted:
-				"This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.",
+					'This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.',
 				Insufficient_Native_Token:
-					"This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.",
+					'This transaction is likely to fail. A transaction might fail because of insufficient gas, insufficient tokens to transfer, missing permissions, or network congestion.',
 				Node_Connection_Error:
 					"We're having trouble connecting to the network. This might be due to internet issues or network congestion. Please try again later.",
 				Gas_Exceeds_Block_Limit:
@@ -237,10 +237,7 @@ export async function callDiTingTxSimulation(
 				...(headingArray || []),
 				...(balanceChangeArray || []),
 				...(approvalChangeArray && approvalChangeArray?.length > 0
-					? [
-						divider(), 
-						heading('Spender Screening')
-					]
+					? [divider(), heading('Spender Screening')]
 					: []),
 				...(approvalChangeArray || []),
 			];
@@ -252,8 +249,10 @@ export async function callDiTingTxSimulation(
 		console.error('Error in callDiTingTxSimulation:', error);
 		return [
 			heading('Transaction Simulation'),
-			text("An error has occurred while simulating the transaction. Please try again.")
-		]
+			text(
+				'An error has occurred while simulating the transaction. Please try again.',
+			),
+		];
 	}
 }
 
@@ -365,7 +364,7 @@ async function getUserApprovalChanges(
 										spenderBlacklistResp.overall_risk,
 									);
 								contentArray.push(
-									row('Risk Level', text(riskTitle)),								
+									row('Risk Level', text(riskTitle)),
 									row('Spender', address(spender)),
 									row('Amount', text(formattedBalanceChange)),
 									text(riskOverview),
@@ -383,15 +382,13 @@ async function getUserApprovalChanges(
 					}
 				}
 			}
-			const spenderRiskInfo = determineSpenderRiskInfo(0)
+			const spenderRiskInfo = determineSpenderRiskInfo(0);
 			contentArray.push(
 				row('Risk Level', text('Low')),
 				row('Approver', address(approver)),
 				row('Spender', address(spender)),
 				row('Amount', text(formattedBalanceChange)),
-				text(
-					spenderRiskInfo[1],
-				),
+				text(spenderRiskInfo[1]),
 				divider(),
 			);
 		}
@@ -500,11 +497,9 @@ function getUserBalanceChanges(
 	let negativeValue = 0;
 	if (!balanceChanges || Object.entries(balanceChanges).length == 0) {
 		contentArray.push(
-
 			text(
 				'No balance changes detected. No tokens are being sent or received in this transaction.',
 			),
-
 		);
 		return contentArray;
 	}

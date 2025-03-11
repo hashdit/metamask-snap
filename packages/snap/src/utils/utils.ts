@@ -16,7 +16,6 @@ import {
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
 
-
 // Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
 export async function authenticateDiTing(
 	userAddress: string,
@@ -36,7 +35,6 @@ export async function authenticateDiTing(
 	});
 	const resp = await response.json();
 
-
 	return resp;
 }
 
@@ -45,7 +43,6 @@ export async function authenticateHashDit(
 	userAddress: string,
 	messageSignature: string,
 ) {
-
 	const timestamp = Date.now();
 	const nonce = uuidv4().replace(/-/g, '');
 
@@ -101,7 +98,7 @@ export async function getHashDitResponse(
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
-		console.log("hashdit_snap_tx_api_transaction_request");
+		console.log('hashdit_snap_tx_api_transaction_request');
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 		postBody.trace_id = trace_id;
@@ -244,7 +241,6 @@ async function customFetch(
 	nonce: any,
 	signatureFinal: any,
 ) {
-	
 	const response = await fetch(url, {
 		method: 'POST',
 		mode: 'cors',
@@ -261,7 +257,13 @@ async function customFetch(
 		referrerPolicy: 'no-referrer',
 		body: JSON.stringify(postBody),
 	});
-	console.log(appId, timestamp.toString(), nonce, signatureFinal,  JSON.stringify(postBody));
+	console.log(
+		appId,
+		timestamp.toString(),
+		nonce,
+		signatureFinal,
+		JSON.stringify(postBody),
+	);
 
 	const resp = await response.json();
 	if (resp.status == 'OK' && resp.data) {
@@ -306,7 +308,6 @@ export async function isEOA(address: any) {
 		return false;
 	}
 }
-
 
 // Determine the risk title and description for each risk level. Used by URL screening.
 function determineUrlRiskInfo(urlRiskLevel: number): string[] {
@@ -371,5 +372,4 @@ export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
 			'The risk level of this transaction is unknown. Please proceed with caution.',
 		];
 	}
-
 }
