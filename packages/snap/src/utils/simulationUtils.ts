@@ -11,7 +11,7 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { keccak256 } from 'js-sha3';
-import { isEOA } from './utils';
+import { isEOA, chainIdHexToNumber } from './utils';
 import { determineSpenderRiskInfo } from './signatureInsight';
 import { getHashDitResponse } from './api';
 
@@ -766,13 +766,6 @@ function toChecksumAddress(address: string): string {
 	return checksumAddress;
 }
 
-function chainIdHexToNumber(chainId: string): number {
-	const chainMap: Record<string, number> = {
-		'0x1': 1,
-		'0x38': 56,
-	};
-	return chainMap[chainId] || 56;
-}
 
 export async function getBlockHeight() {
 	try {

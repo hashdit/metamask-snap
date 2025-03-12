@@ -22,11 +22,12 @@ import {
 import {
 	getHashDitResponse,
 	authenticateHashDit,
-	authenticateDiTing,
+	authenticateHashDitV2,
 } from './utils/api';
 import { parseSignature } from './utils/signatureInsight';
 import { addressPoisoningDetection } from './utils/addressPoisoning';
 import { verifyContractAndFunction } from './utils/unverifiedCheck';
+import { callHashDitAddressSecurityV2, createContentForAddressSecurityV2 } from './utils/api';
 import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -84,7 +85,7 @@ export const onInstall: OnInstallHandler = async () => {
 
 		// Call DiTing Auth API to retrieve personal API key
 		try {
-			const DiTingResult = await authenticateDiTing(from, signature);
+			const DiTingResult = await authenticateHashDitV2(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
 				console.log('DitingResult', DiTingResult);
@@ -307,14 +308,9 @@ export const onTransaction: OnTransactionHandler = async ({
 
 				// Parallelize Destination Screening call and Website Screening call
 
-				const [respData, urlRespData] = await Promise.all([
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
-						chainId,
-					),
+				const [addressSecurityResult, urlRespData] = await Promise.all([
+					callHashDitAddressSecurityV2(chainId, transaction.to, persistedUserData.DiTingApiKey),
+
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
 						persistedUserData,
@@ -348,30 +344,9 @@ export const onTransaction: OnTransactionHandler = async ({
 				// 		),
 				// 	]);
 
-				if (respData.overall_risk != '-1') {
-					const [riskTitle, riskOverview] =
-						determineTransactionAndDestinationRiskInfo(
-							respData.overall_risk,
-						);
-					contentArray.push(
-						heading('Destination Screening'),
-						row('Risk Level', text(`${riskTitle}`)),
-						row(
-							'Risk Details',
-							text(`${respData.transaction_risk_detail}`),
-						),
-						text(`${riskOverview}`),
-						divider(),
-					);
-				} else {
-					contentArray.push(
-						heading('Destination Screening'),
-						row('Risk Level', text('Unknown')),
-						text(
-							'The risk level of this transaction is unknown. Please proceed with caution.',
-						),
-						divider(),
-					);
+				if (addressSecurityResult != null) {
+					const addressSecurityArray = createContentForAddressSecurityV2(addressSecurityResult)
+					contentArray.push(...addressSecurityArray);
 				}
 
 				contentArray.push(
@@ -506,7 +481,7 @@ export const onTransaction: OnTransactionHandler = async ({
 		let contentArray: any[] = [];
 		if (persistedUserData !== null) {
 			// Parallelize Transaction, Destination, and Website Screening calls
-			const [interactionRespData, addressRespData, urlRespData] =
+			const [interactionRespData, addressSecurityResult, urlRespData] =
 				await Promise.all([
 					getHashDitResponse(
 						'hashdit_snap_tx_api_transaction_request',
@@ -515,13 +490,7 @@ export const onTransaction: OnTransactionHandler = async ({
 						transaction,
 						chainId,
 					),
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
-						chainId,
-					),
+					callHashDitAddressSecurityV2(chainId, transaction.to, persistedUserData.DiTingApiKey),
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
 						persistedUserData,
@@ -592,45 +561,51 @@ export const onTransaction: OnTransactionHandler = async ({
 				contentArray = poisonResultArray;
 			}
 
-			// We display the bigger risk between Transaction screening and Destination screening
-			console.log(
-				'interactionRespData',
-				JSON.stringify(interactionRespData),
-			);
-			console.log('addressRespData', JSON.stringify(addressRespData));
-			if (
-				interactionRespData.overall_risk >= addressRespData.overall_risk
-			) {
-				const [riskTitle, riskOverview] =
-					determineTransactionAndDestinationRiskInfo(
-						interactionRespData.overall_risk,
-					);
-				contentArray.push(
-					heading('Transaction Screening'),
-					row('Risk Level', text(riskTitle)),
-					row('Risk Overview', text(riskOverview)),
-					row(
-						'Risk Details',
-						text(interactionRespData.transaction_risk_detail),
-					),
-					divider(),
-				);
-			} else {
-				const [riskTitle, riskOverview] =
-					determineTransactionAndDestinationRiskInfo(
-						addressRespData.overall_risk,
-					);
-				contentArray.push(
-					heading('Destination Screening'),
-					row('Risk Level', text(`${riskTitle}`)),
-					row(
-						'Risk Details',
-						text(`${addressRespData.transaction_risk_detail}`),
-					),
-					text(`${riskOverview}`),
-					divider(),
-				);
+			if (addressSecurityResult != null) {
+				const addressSecurityArray = createContentForAddressSecurityV2(addressSecurityResult)
+				contentArray.push(...addressSecurityArray);
 			}
+
+		
+			// We display the bigger risk between Transaction screening and Destination screening
+			// console.log(
+			// 	'interactionRespData',
+			// 	JSON.stringify(interactionRespData),
+			// );
+			// console.log('addressRespData', JSON.stringify(addressRespData));
+			// if (
+			// 	interactionRespData.overall_risk >= addressRespData.overall_risk
+			// ) {
+			// 	const [riskTitle, riskOverview] =
+			// 		determineTransactionAndDestinationRiskInfo(
+			// 			interactionRespData.overall_risk,
+			// 		);
+			// 	contentArray.push(
+			// 		heading('Transaction Screening'),
+			// 		row('Risk Level', text(riskTitle)),
+			// 		row('Risk Overview', text(riskOverview)),
+			// 		row(
+			// 			'Risk Details',
+			// 			text(interactionRespData.transaction_risk_detail),
+			// 		),
+			// 		divider(),
+			// 	);
+			// } else {
+			// 	const [riskTitle, riskOverview] =
+			// 		determineTransactionAndDestinationRiskInfo(
+			// 			addressRespData.overall_risk,
+			// 		);
+			// 	contentArray.push(
+			// 		heading('Destination Screening'),
+			// 		row('Risk Level', text(`${riskTitle}`)),
+			// 		row(
+			// 			'Risk Details',
+			// 			text(`${addressRespData.transaction_risk_detail}`),
+			// 		),
+			// 		text(`${riskOverview}`),
+			// 		divider(),
+			// 	);
+			// }
 
 			// Display Website Screening results
 			contentArray.push(

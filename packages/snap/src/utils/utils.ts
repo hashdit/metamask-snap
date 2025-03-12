@@ -1,5 +1,13 @@
 /* eslint-disable */
 
+export function chainIdHexToNumber(chainId: string): number {
+	const chainMap: Record<string, number> = {
+		'0x1': 1,
+		'0x38': 56,
+	};
+	return chainMap[chainId] || 56;
+}
+
 // Used to determine if an address is a smart contract or an EOA
 export async function isEOA(address: any) {
 	// The 'eth_getCode' method returns the bytecode of the address.

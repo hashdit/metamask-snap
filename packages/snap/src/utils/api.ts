@@ -13,10 +13,131 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
-import {determineUrlRiskInfo} from "./utils"
+import { determineUrlRiskInfo, chainIdHexToNumber } from './utils';
+
+export async function callHashDitAddressSecurityV2(
+	chainId: string,
+	addressToCheck: string,
+	apiKey: any,
+) {
+	const chainIdNumber = chainIdHexToNumber(chainId).toString();
+	const requestBody = [
+		{
+			chain_id: chainIdNumber,
+			address: addressToCheck,
+		},
+	];
+	console.log(
+		'callHashDitAddressSecurityV2',
+		chainIdNumber,
+		addressToCheck,
+		apiKey,
+	);
+
+	try {
+		const response = await fetch(
+			'https://service.hashdit.io/v2/hashdit/batch-address-security',
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-API-Key': apiKey,
+				},
+				body: JSON.stringify(requestBody),
+			},
+		);
+
+		// Check for HTTP errors
+		if (!response.ok) {
+			console.error(`HTTP error! Status: ${response.status}`);
+			return null;
+		}
+
+		const resp = await response.json();
+		console.log('blacklist resp', resp);
+
+		// Check if the response has `code: 0` and `status: "ok"`
+		if (resp.code === '0' && resp.status === 'ok') {
+			console.log('Response is valid');
+			return parseHashditAddressSecurityV2(resp);
+		} else {
+			console.error('Unexpected response:', resp);
+			return null;
+		}
+	} catch (error) {
+		console.error(
+			`Error when checking address: ${addressToCheck} on chain ${chainId}:`,
+			error,
+		);
+		return null;
+	}
+}
+
+function parseHashditAddressSecurityV2(resp: any) {
+	const { data } = resp;
+
+	// If no data, show 'Unknown' risk level
+	if (!data || !data[0]) {
+		return 'unknown';
+		// return [
+		// 	heading('Destination Screening'),
+		// 	row('Risk Level', text('Unknown')),
+		// 	text(
+		// 		'The address is neither whitelisted nor blacklisted. Proceed with caution.',
+		// 	),
+		// 	divider(),
+		// ];
+	}
+
+	const firstEntry = data[0]; // Access the first object in the data array
+	const blackLabels = firstEntry?.black_labels;
+	const whiteLabels = firstEntry?.white_labels;
+
+	// Determine the risk level and appropriate message
+	if (blackLabels && blackLabels !== null && firstEntry.risk_level >= 3) {
+		return 'blacklist';
+	} else if (whiteLabels && whiteLabels.length > 0) {
+		return 'whitelist';
+	} else {
+		return 'unknown';
+	}
+}
+
+export function createContentForAddressSecurityV2(result: string) {
+	let resultArray: any[] = [];
+	if (result == 'blacklist') {
+		resultArray.push(
+			heading('Destination Screening'),
+			row('Risk Level', text('⛔ High ⛔')),
+			text(
+				`The address you're interacting with is **blacklisted by HashDit** as unsafe, associated with malicious activities. **Avoid** interacting with it.`,
+			),
+			divider(),
+		);
+	} else if (result == 'whitelist') {
+		resultArray.push(
+			heading('Destination Screening'),
+			row('Risk Level', text('✅ Safe')),
+			text(
+				'The address is whitelisted by HashDit, indicating high community credibility or longevity.',
+			),
+			divider(),
+		);
+	} else if (result == 'unknown') {
+		resultArray.push(
+			heading('Destination Screening'),
+			row('Risk Level', text('Unknown')),
+			text(
+				'The address is neither whitelisted nor blacklisted. Proceed with caution.',
+			),
+			divider(),
+		);
+	}
+	return resultArray;
+}
 
 // Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
-export async function authenticateDiTing(
+export async function authenticateHashDitV2(
 	userAddress: string,
 	signature: string,
 ) {
