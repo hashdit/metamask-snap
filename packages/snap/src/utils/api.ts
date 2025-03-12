@@ -214,20 +214,14 @@ export async function getHashDitResponse(
 	let postBody: any = {};
 	if (businessName == 'hashdit_snap_tx_api_url_detection') {
 		postBody.url = transactionUrl;
-	} else if (businessName == 'internal_address_lables_tags') {
-		postBody.address = transaction.to;
-		postBody.chain_id = chain;
-	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
+	}else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
 		console.log('hashdit_snap_tx_api_transaction_request');
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 		postBody.trace_id = trace_id;
 		postBody.transaction = JSON.stringify(transaction);
 		postBody.url = transactionUrl;
-	} else if (businessName == 'signature_insight_blacklist') {
-		postBody.address = signatureInsightAddress;
-		postBody.chain_id = chain;
-	}
+
 
 	let appId: string;
 	let appSecret: string;
@@ -243,10 +237,6 @@ export async function getHashDitResponse(
 	appId = persistedUserData.userAddress;
 	appSecret = persistedUserData.publicKey;
 
-	// Handle signature insight blacklist
-	if (businessName == 'signature_insight_blacklist') {
-		url.searchParams.append('business', 'internal_address_lables_tags');
-	}
 	// Other regular business names
 	else {
 		url.searchParams.append('business', businessName);
@@ -294,34 +284,7 @@ function formatResponse(resp: any, businessName: string) {
 		responseData.url_risk_level = url_risk_level;
 		responseData.url_risk_detail = url_risk_detail;
 
-		// Destination Screening, checks if destination address is in blacklist or whitelist
-	} else if (
-		businessName == 'internal_address_lables_tags' ||
-		businessName == 'signature_insight_blacklist'
-	) {
-		responseData.overall_risk = resp.risk_level;
-
-		try {
-			const black_labels = JSON.parse(resp.black_labels);
-			const white_labels = JSON.parse(resp.white_labels);
-			const risk_detail_simple = JSON.parse(resp.risk_detail_simple);
-			if (Array.isArray(black_labels) && black_labels.length > 0) {
-				responseData.transaction_risk_detail =
-					'Destination address is in HashDit blacklist';
-			} else if (Array.isArray(white_labels) && white_labels.length > 0) {
-				responseData.transaction_risk_detail =
-					'Destination address is in whitelisted, please still review the transaction details';
-			} else if (
-				risk_detail_simple.length > 0 &&
-				risk_detail_simple[0].hasOwnProperty('value')
-			) {
-				responseData.transaction_risk_detail =
-					risk_detail_simple[0].value;
-			}
-		} catch {
-			//console.log('No black or white labels');
-		}
-
+		
 		// Transaction Screening, checks transaction data.
 	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
 		if (resp.detection_result != null) {

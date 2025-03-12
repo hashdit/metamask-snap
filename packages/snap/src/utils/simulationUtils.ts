@@ -344,6 +344,8 @@ async function getUserApprovalChanges(
 					} catch (error) {
 						console.error('Error with spender EOA check: ', error);
 					}
+
+					// Todo: Switch to new blacklist API
 					try {
 						const spenderBlacklistResp = await getHashDitResponse(
 							'signature_insight_blacklist',
