@@ -27,7 +27,10 @@ import {
 import { parseSignature } from './utils/signatureInsight';
 import { addressPoisoningDetection } from './utils/addressPoisoning';
 import { verifyContractAndFunction } from './utils/unverifiedCheck';
-import { callHashDitAddressSecurityV2, createContentForAddressSecurityV2 } from './utils/api';
+import {
+	callHashDitAddressSecurityV2,
+	createContentForAddressSecurityV2,
+} from './utils/api';
 import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -88,7 +91,7 @@ export const onInstall: OnInstallHandler = async () => {
 			const DiTingResult = await authenticateHashDitV2(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log('DitingResult', DiTingResult);
+				//console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -124,7 +127,7 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
-	console.log('OnSig:', JSON.stringify(signature, null, 2));
+	//console.log('OnSig:', JSON.stringify(signature, null, 2));
 	// Retrieve the content array if the signature is v3 or v4
 	const parseSignatureArrayResult = await parseSignature(
 		signature,
@@ -134,7 +137,7 @@ export const onSignature: OnSignatureHandler = async ({
 	// Return the results if they exist
 	if (parseSignatureArrayResult != null) {
 		const content = panel(parseSignatureArrayResult);
-		console.log('pareseSigResult');
+		//console.log('pareseSigResult');
 		return { content };
 	}
 
@@ -206,7 +209,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log('Transaction:', JSON.stringify(transaction, null, 2));
+	//console.log('Transaction:', JSON.stringify(transaction, null, 2));
 
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
@@ -309,7 +312,11 @@ export const onTransaction: OnTransactionHandler = async ({
 				// Parallelize Destination Screening call and Website Screening call
 
 				const [addressSecurityResult, urlRespData] = await Promise.all([
-					callHashDitAddressSecurityV2(chainId, transaction.to, persistedUserData.DiTingApiKey),
+					callHashDitAddressSecurityV2(
+						chainId,
+						transaction.to,
+						persistedUserData.DiTingApiKey,
+					),
 
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
@@ -345,7 +352,10 @@ export const onTransaction: OnTransactionHandler = async ({
 				// 	]);
 
 				if (addressSecurityResult != null) {
-					const addressSecurityArray = createContentForAddressSecurityV2(addressSecurityResult)
+					const addressSecurityArray =
+						createContentForAddressSecurityV2(
+							addressSecurityResult,
+						);
 					contentArray.push(...addressSecurityArray);
 				}
 
@@ -490,7 +500,11 @@ export const onTransaction: OnTransactionHandler = async ({
 						transaction,
 						chainId,
 					),
-					callHashDitAddressSecurityV2(chainId, transaction.to, persistedUserData.DiTingApiKey),
+					callHashDitAddressSecurityV2(
+						chainId,
+						transaction.to,
+						persistedUserData.DiTingApiKey,
+					),
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
 						persistedUserData,
@@ -562,11 +576,12 @@ export const onTransaction: OnTransactionHandler = async ({
 			}
 
 			if (addressSecurityResult != null) {
-				const addressSecurityArray = createContentForAddressSecurityV2(addressSecurityResult)
+				const addressSecurityArray = createContentForAddressSecurityV2(
+					addressSecurityResult,
+				);
 				contentArray.push(...addressSecurityArray);
 			}
 
-		
 			// We display the bigger risk between Transaction screening and Destination screening
 			// console.log(
 			// 	'interactionRespData',

@@ -27,12 +27,6 @@ export async function callHashDitAddressSecurityV2(
 			address: addressToCheck,
 		},
 	];
-	console.log(
-		'callHashDitAddressSecurityV2',
-		chainIdNumber,
-		addressToCheck,
-		apiKey,
-	);
 
 	try {
 		const response = await fetch(
@@ -54,11 +48,11 @@ export async function callHashDitAddressSecurityV2(
 		}
 
 		const resp = await response.json();
-		console.log('blacklist resp', resp);
+		//console.log('blacklist resp', resp);
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
-			console.log('Response is valid');
+			//console.log('Response is valid');
 			return parseHashditAddressSecurityV2(resp);
 		} else {
 			console.error('Unexpected response:', resp);
@@ -214,14 +208,13 @@ export async function getHashDitResponse(
 	let postBody: any = {};
 	if (businessName == 'hashdit_snap_tx_api_url_detection') {
 		postBody.url = transactionUrl;
-	}else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
-		console.log('hashdit_snap_tx_api_transaction_request');
+	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
+		//console.log('hashdit_snap_tx_api_transaction_request');
 		postBody.address = transaction.to;
 		postBody.chain_id = chain;
 		postBody.trace_id = trace_id;
 		postBody.transaction = JSON.stringify(transaction);
 		postBody.url = transactionUrl;
-
 	}
 	let appId: string;
 	let appSecret: string;
@@ -239,7 +232,6 @@ export async function getHashDitResponse(
 
 	// Other regular business names
 	url.searchParams.append('business', businessName);
-	
 
 	const query = url.search.substring(1);
 	dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(
@@ -283,7 +275,6 @@ function formatResponse(resp: any, businessName: string) {
 		responseData.url_risk_level = url_risk_level;
 		responseData.url_risk_detail = url_risk_detail;
 
-		
 		// Transaction Screening, checks transaction data.
 	} else if (businessName == 'hashdit_snap_tx_api_transaction_request') {
 		if (resp.detection_result != null) {
@@ -339,13 +330,13 @@ async function customFetch(
 		referrerPolicy: 'no-referrer',
 		body: JSON.stringify(postBody),
 	});
-	console.log(
-		appId,
-		timestamp.toString(),
-		nonce,
-		signatureFinal,
-		JSON.stringify(postBody),
-	);
+	// console.log(
+	// 	appId,
+	// 	timestamp.toString(),
+	// 	nonce,
+	// 	signatureFinal,
+	// 	JSON.stringify(postBody),
+	// );
 
 	const resp = await response.json();
 	if (resp.status == 'OK' && resp.data) {

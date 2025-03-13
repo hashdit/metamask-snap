@@ -88,3 +88,23 @@ export function determineTransactionAndDestinationRiskInfo(riskLevel: number) {
 		];
 	}
 }
+
+// Determine the risk title and description for each risk level. Used by Simulation Insight.
+export function determineSpenderRiskInfo(riskLevel: number) {
+	if (riskLevel >= 2) {
+		return [
+			'⛔ High ⛔',
+			'This transaction’s spender is **blacklisted** by HashDit, likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
+		];
+	} else if (riskLevel >= 0) {
+		return [
+			'Low',
+			'This spender is not blacklisted by HashDit, but approving it gives third-party access to your funds, posing a risk. We recommend only approving the exact amount needed.',
+		];
+	} else {
+		return [
+			'Unknown',
+			'The risk level of this transaction is unknown. Please proceed with caution.',
+		];
+	}
+}

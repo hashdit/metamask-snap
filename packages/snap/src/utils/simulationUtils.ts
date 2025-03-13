@@ -12,7 +12,7 @@ import {
 } from '@metamask/snaps-sdk';
 import { keccak256 } from 'js-sha3';
 import { isEOA, chainIdHexToNumber } from './utils';
-import { determineSpenderRiskInfo } from './signatureInsight';
+import { determineSpenderRiskInfo } from './utils';
 import { getHashDitResponse } from './api';
 
 export async function callDiTingTxSimulation(
@@ -27,19 +27,13 @@ export async function callDiTingTxSimulation(
 	let transferAmount;
 	let transferRecipient;
 	const isERC20Transfer = isERC20TransferOrTransferFrom(transactionData);
-	console.log('isERC20Transfer', isERC20Transfer);
+	//console.log('isERC20Transfer', isERC20Transfer);
 
 	if (isERC20Transfer) {
 		// Destructure the result into respective variables
 		const result = extractTransferAmountAndRecipient(transactionData);
 		transferRecipient = result[0];
 		transferAmount = result[1];
-
-		console.log(
-			'Transfer Selector Detected',
-			transferAmount,
-			transferRecipient,
-		);
 	}
 
 	try {
@@ -80,7 +74,7 @@ export async function callDiTingTxSimulation(
 			},
 		};
 
-		console.log('Post Body:', postBody);
+		//console.log('Post Body:', postBody);
 
 		// Make the API call
 		const response = await fetch(url, {
@@ -94,7 +88,7 @@ export async function callDiTingTxSimulation(
 
 		// Parse the response
 		const result = await response.json();
-		console.log('Simulation Result:', JSON.stringify(result, null, 2));
+		//console.log('Simulation Result:', JSON.stringify(result, null, 2));
 
 		// Validate result structure
 		if (
@@ -231,7 +225,7 @@ export async function callDiTingTxSimulation(
 				}
 			}
 
-			console.log('balanceArray', balanceChangeArray);
+			//console.log('balanceArray', balanceChangeArray);
 
 			// Merge all the resulting arrays
 			const mergedArray = [
@@ -273,31 +267,29 @@ async function getUserApprovalChanges(
 
 	// If object is empty, then no approvals found.
 	if (!approvalChanges || Object.entries(approvalChanges).length == 0) {
-		console.log('No Approval Changes found');
+		//console.log('No Approval Changes found');
 		return contentArray;
 	}
 
 	// Loop through each token being approved in `approvalChanges`
 	for (const tokenBeingApproved in approvalChanges) {
-		console.log(
-			'tokenBeingApproved:',
-			JSON.stringify(tokenBeingApproved, null, 2),
-		);
+		// console.log(
+		// 	'tokenBeingApproved:',
+		// 	JSON.stringify(tokenBeingApproved, null, 2),
+		// );
 
 		// Array of approval changes for a given token
 		const approvalDetails = approvalChanges[tokenBeingApproved];
-		console.log(
-			'Approval Details :',
-			JSON.stringify(approvalDetails, null, 2),
-		);
+		// console.log(
+		// 	'Approval Details :',
+		// 	JSON.stringify(approvalDetails, null, 2),
+		// );
 
 		// Go through each user's address, since there can be an approval to the user's other accounts.
 		const userAccounts = await ethereum.request({
 			method: 'eth_accounts',
 			params: [],
 		});
-
-		console.log('userAccounts', userAccounts);
 
 		for (const singleApproval of approvalDetails) {
 			const tokenInfo = tokenDetails[tokenBeingApproved];
@@ -311,22 +303,22 @@ async function getUserApprovalChanges(
 				amount / Math.pow(10, divisor)
 			).toString();
 
-			console.log(
-				'singleApproval',
-				amount,
-				formattedBalanceChange,
-				spender,
-				approver,
-			);
+			// console.log(
+			// 	'singleApproval',
+			// 	amount,
+			// 	formattedBalanceChange,
+			// 	spender,
+			// 	approver,
+			// );
 			if (Array.isArray(userAccounts)) {
 				if (userAccounts.includes(approver)) {
-					console.log(`Approver ${approver} exists in userAccounts.`);
+					//console.log(`Approver ${approver} exists in userAccounts.`);
 
 					try {
 						// Check if spender is an Externally Owned Address.
 						// We consider approving to an EOA spender to be a high risk because there are few scenarios where this is needed.
 						let isSpenderEOA = await isEOA(spender);
-						console.log('isSpenderEOA', isSpenderEOA);
+						//console.log('isSpenderEOA', isSpenderEOA);
 						// If spender is EOA and spender isn't blacklisted
 						if (isSpenderEOA) {
 							contentArray.push(
@@ -338,7 +330,7 @@ async function getUserApprovalChanges(
 								),
 								divider(),
 							);
-							console.log('approval contentArray', contentArray);
+							//console.log('approval contentArray', contentArray);
 							return contentArray;
 						}
 					} catch (error) {
@@ -355,10 +347,7 @@ async function getUserApprovalChanges(
 							chainId,
 							spender,
 						);
-						console.log(
-							'spenderBlacklistResp',
-							spenderBlacklistResp,
-						);
+
 						if (spenderBlacklistResp != undefined) {
 							if (spenderBlacklistResp.overall_risk != -1) {
 								// Convert risk level to risk title
@@ -396,7 +385,6 @@ async function getUserApprovalChanges(
 			);
 		}
 
-		console.log('approval contentArray', contentArray);
 		return;
 	}
 }
@@ -410,71 +398,68 @@ function getTransferTax(
 		const balanceChanges =
 			simulationResult?.data?.txn_summaries?.[0]?.balance_changes;
 		if (!balanceChanges || Object.keys(balanceChanges).length === 0) {
-			console.log('No balance change found');
+			//console.log('No balance change found');
 			return 0;
 		}
 
 		// Get sender's token changes safely
 		const senderTokenChange = balanceChanges[senderAddress];
 		if (!senderTokenChange || Object.keys(senderTokenChange).length === 0) {
-			console.log('No token changes found for sender');
+			//console.log('No token changes found for sender');
 			return 0;
 		}
 
 		// Get the first token (assuming sender sends only one type of token)
 		const firstToken = Object.keys(senderTokenChange)[0];
 		if (!firstToken) {
-			console.log('No token found in sender balance changes');
+			//console.log('No token found in sender balance changes');
 			return 0;
 		}
 
 		// Ensure the sender has a balance change for the token
 		const senderBalanceChange = senderTokenChange[firstToken];
 		if (senderBalanceChange === undefined) {
-			console.log('No matching token found for the sender address');
+			//console.log('No matching token found for the sender address');
 			return 0;
 		}
 
 		// Ensure sender balance change is a positive number
 		const absSenderBalanceChange = Math.abs(Number(senderBalanceChange));
 		if (absSenderBalanceChange === 0) {
-			console.log(
-				'Sender balance change is zero, avoiding division by zero',
-			);
+			// console.log(
+			// 	'Sender balance change is zero, avoiding division by zero',
+			// );
 			return 0;
 		}
-
-		console.log('Sender', senderTokenChange, firstToken);
 
 		// Get receiver's token change safely
 		const receiverTokenChange = balanceChanges[receiverAddress];
 		if (!receiverTokenChange) {
-			console.log('No token changes found for receiver');
+			//console.log('No token changes found for receiver');
 			return 0;
 		}
 
 		// Ensure the receiver has a balance change for the same token
 		const receiverBalanceChange = receiverTokenChange[firstToken];
 		if (receiverBalanceChange === undefined) {
-			console.log('No matching token found for the receiver address');
+			//console.log('No matching token found for the receiver address');
 			return 0;
 		}
 
 		// Convert receiverBalanceChange to a number
 		const numReceiverBalanceChange = Number(receiverBalanceChange);
 
-		console.log(
-			'Sender & Receiver',
-			firstToken,
-			receiverTokenChange,
-			numReceiverBalanceChange,
-			absSenderBalanceChange,
-		);
+		// console.log(
+		// 	'Sender & Receiver',
+		// 	firstToken,
+		// 	receiverTokenChange,
+		// 	numReceiverBalanceChange,
+		// 	absSenderBalanceChange,
+		// );
 
 		// Compute and return transfer tax
 		const transferTax =
 			(1 - numReceiverBalanceChange / absSenderBalanceChange) * 100;
-		console.log('Transfer Tax:', transferTax);
 
 		return transferTax;
 	} catch (error) {
@@ -528,15 +513,15 @@ function getUserBalanceChanges(
 					tokenBalanceChange / Math.pow(10, divisor),
 				);
 				const transferValue = price * formattedBalanceChange;
-				console.log(
-					'Token Info',
-					tokenInfo,
-					symbol,
-					price,
-					divisor,
-					formattedBalanceChange,
-					transferValue,
-				);
+				// console.log(
+				// 	'Token Info',
+				// 	tokenInfo,
+				// 	symbol,
+				// 	price,
+				// 	divisor,
+				// 	formattedBalanceChange,
+				// 	transferValue,
+				// );
 				// If token is native_token key, then manually set symbol to ETH or BNB, depending on chain.
 				// Simulation should only be called on ETH and BSC chain, so no need to handle other chains
 				if (token == 'native_token') {
@@ -624,9 +609,9 @@ function getUserBalanceChanges(
 
 					negativeValue += transferValue;
 
-					console.log(
-						`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
-					);
+					// console.log(
+					// 	`Token: ${token}, Balance Change: ${formattedBalanceChange}`,
+					// );
 				}
 			}
 			// Calculate value difference between assets in and assets out
@@ -643,12 +628,6 @@ function getUserBalanceChanges(
 
 				contentArray.push(row('Total Value Change', text(`N/A`)));
 			} else {
-				console.log(
-					'Diff',
-					positiveValue,
-					negativeValue,
-					valueDifference,
-				);
 				if (valueDifference < 0) {
 					sign = '-';
 				}
@@ -767,7 +746,6 @@ function toChecksumAddress(address: string): string {
 
 	return checksumAddress;
 }
-
 
 export async function getBlockHeight() {
 	try {

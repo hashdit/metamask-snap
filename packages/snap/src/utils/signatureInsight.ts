@@ -101,12 +101,6 @@ async function callHashDitAPIForSignatureInsight(
 	spender: any,
 	signatureOrigin: any,
 ) {
-	console.log(
-		callHashDitAPIForSignatureInsight,
-		primaryType,
-		spender,
-		signatureOrigin,
-	);
 	let contentArray: any[] = [];
 	let persistedUserData;
 	// Retrieve persisted user data
@@ -182,18 +176,13 @@ async function createContentForSignatureInsight(
 	urlResp = responses[0];
 	spenderAddressSecurityResult = responses[1];
 
-
 	// Start of Spender Screening array
-	contentArray.push(
-		divider(),
-		heading('Spender Screening'),
-	)
+	contentArray.push(divider(), heading('Spender Screening'));
 
 	// We consider approving to an EOA spender to be a high risk because there are few scenarios where this is needed.
 	isSpenderEOA = await isEOA(spender);
 	if (isSpenderEOA) {
 		contentArray.push(
-			
 			row('Risk Level', text('⛔ High Risk ⛔')),
 			row('Spender', address(spender)),
 			text(
@@ -203,7 +192,6 @@ async function createContentForSignatureInsight(
 	} else if (spenderAddressSecurityResult != null) {
 		if (spenderAddressSecurityResult == 'blacklist') {
 			contentArray.push(
-				
 				row('Risk Level', text('⛔ High Risk ⛔')),
 				row('Spender', address(spender)),
 				text(
@@ -212,7 +200,6 @@ async function createContentForSignatureInsight(
 			);
 		} else if (spenderAddressSecurityResult == 'whitelist') {
 			contentArray.push(
-				
 				row('Risk Level', text('✅ Safe ')),
 				row('Spender', address(spender)),
 				text(
@@ -221,7 +208,6 @@ async function createContentForSignatureInsight(
 			);
 		} else if (spenderAddressSecurityResult == 'unknown') {
 			contentArray.push(
-				
 				row('Risk Level', text('Low')),
 				row('Spender', address(spender)),
 				text(
@@ -231,7 +217,6 @@ async function createContentForSignatureInsight(
 		}
 	} else {
 		contentArray.push(
-		
 			row('Risk Level', text('Low')),
 			row('Spender', address(spender)),
 			text(
@@ -251,4 +236,3 @@ async function createContentForSignatureInsight(
 
 	return contentArray;
 }
-

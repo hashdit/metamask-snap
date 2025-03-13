@@ -9,11 +9,11 @@ import { GetSnapsResponse, Snap } from '../types';
  * @returns The snaps installed in MetaMask.
  */
 export const getSnaps = async (
-  provider?: MetaMaskInpageProvider,
+	provider?: MetaMaskInpageProvider,
 ): Promise<GetSnapsResponse> =>
-  (await (provider ?? window.ethereum).request({
-    method: 'wallet_getSnaps',
-  })) as unknown as GetSnapsResponse;
+	(await (provider ?? window.ethereum).request({
+		method: 'wallet_getSnaps',
+	})) as unknown as GetSnapsResponse;
 
 /**
  * Connect a snap to MetaMask.
@@ -22,15 +22,15 @@ export const getSnaps = async (
  * @param params - The params to pass with the snap to connect.
  */
 export const connectSnap = async (
-  snapId: string = defaultSnapOrigin,
-  params: Record<'version' | string, unknown> = {},
+	snapId: string = defaultSnapOrigin,
+	params: Record<'version' | string, unknown> = {},
 ) => {
-  await window.ethereum.request({
-    method: 'wallet_requestSnaps',
-    params: {
-      [snapId]: params,
-    },
-  });
+	await window.ethereum.request({
+		method: 'wallet_requestSnaps',
+		params: {
+			[snapId]: params,
+		},
+	});
 };
 
 /**
@@ -40,23 +40,22 @@ export const connectSnap = async (
  * @returns The snap object returned by the extension.
  */
 export const getSnap = async (version?: string): Promise<Snap | undefined> => {
-  try {
-    const snaps = await getSnaps();
+	try {
+		const snaps = await getSnaps();
 
-    return Object.values(snaps).find(
-      (snap) =>
-        snap.id === defaultSnapOrigin && (!version || snap.version === version), // Replace 'defaultSnapOrigin' with 'npm:hashdit-snap-security' to test live version of snap
-    );
-  } catch (e) {
-    console.log('Failed to obtain installed snap', e);
-    return undefined;
-  }
+		return Object.values(snaps).find(
+			(snap) =>
+				snap.id === defaultSnapOrigin &&
+				(!version || snap.version === version), // Replace 'defaultSnapOrigin' with 'npm:hashdit-snap-security' to test live version of snap
+		);
+	} catch (e) {
+		//console.log('Failed to obtain installed snap', e);
+		return undefined;
+	}
 };
 
 /**
  * Invoke the "hello" method from the example snap.
  */
-
-
 
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');
