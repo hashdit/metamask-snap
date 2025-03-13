@@ -10,7 +10,8 @@ import {
 	Signature,
 } from '@metamask/snaps-sdk';
 import { errorContent } from './content';
-import { getHashDitResponse, isEOA } from './utils';
+import { isEOA, chainIdHexToNumber } from './utils';
+import { getHashDitResponse, callHashDitAddressSecurityV2 } from './api';
 
 // Expected structure for EIP712 signature
 export interface SignatureParsed {
@@ -100,12 +101,6 @@ async function callHashDitAPIForSignatureInsight(
 	spender: any,
 	signatureOrigin: any,
 ) {
-	console.log(
-		callHashDitAPIForSignatureInsight,
-		primaryType,
-		spender,
-		signatureOrigin,
-	);
 	let contentArray: any[] = [];
 	let persistedUserData;
 	// Retrieve persisted user data
@@ -128,45 +123,27 @@ async function callHashDitAPIForSignatureInsight(
 			signatureOrigin,
 		);
 
-		// Set up additional promises depending on the primaryType
+		// Set up blacklist call on spender if Permit detected
 		const blacklistPromises: Array<Promise<any>> = [];
 		const chainId = await ethereum.request({ method: 'eth_chainId' });
-		if (
-			typeof chainId === 'string' &&
-			(chainId === '0x38' || chainId === '0x1')
-		) {
-			if (primaryType === 'Permit' || primaryType === 'PermitSingle') {
-				// Call blacklist API on spender and token address
+		const validChainIds = ['0x38', '0x1'];
+
+		if (validChainIds.includes(chainId)) {
+			const permitTypes = [
+				'Permit',
+				'PermitSingle',
+				'PermitForAll',
+				'PermitBatch',
+			];
+
+			// If the primaryType is one of the permit types, add the blacklist API call
+			const chainIdNumber = chainIdHexToNumber(chainId).toString();
+			if (permitTypes.includes(primaryType)) {
 				blacklistPromises.push(
-					getHashDitResponse(
-						'signature_insight_blacklist',
-						persistedUserData,
-						null,
-						null,
-						chainId,
+					callHashDitAddressSecurityV2(
+						chainIdNumber,
 						spender,
-					),
-				);
-			} else if (primaryType === 'PermitForAll') {
-				blacklistPromises.push(
-					getHashDitResponse(
-						'signature_insight_blacklist',
-						persistedUserData,
-						null,
-						null,
-						chainId,
-						spender,
-					),
-				);
-			} else if (primaryType === 'PermitBatch') {
-				blacklistPromises.push(
-					getHashDitResponse(
-						'signature_insight_blacklist',
-						persistedUserData,
-						null,
-						null,
-						chainId,
-						spender,
+						persistedUserData.DitingApiKey,
 					),
 				);
 			}
@@ -182,6 +159,8 @@ async function callHashDitAPIForSignatureInsight(
 			spender,
 			signatureOrigin,
 		);
+	} else {
+		//todo
 	}
 }
 
@@ -192,72 +171,62 @@ async function createContentForSignatureInsight(
 	signatureOrigin: string,
 ) {
 	// Define variables for responses
-	let urlResp, spenderBlacklistResp, isSpenderEOA;
+	let urlResp, spenderAddressSecurityResult, isSpenderEOA;
 	let contentArray: any[] = [];
-
-	// Assign responses based on primaryType
 	urlResp = responses[0];
-	spenderBlacklistResp = responses[1];
+	spenderAddressSecurityResult = responses[1];
 
-	// Check if spender is an Externally Owned Address.
+	// Start of Spender Screening array
+	contentArray.push(divider(), heading('Spender Screening'));
+
 	// We consider approving to an EOA spender to be a high risk because there are few scenarios where this is needed.
 	isSpenderEOA = await isEOA(spender);
-	// If spender is EOA and spender isn't blacklisted
 	if (isSpenderEOA) {
-		// If the chain is not ETH or BSC, then spenderBlacklistResp will be undefined
-		if (
-			spenderBlacklistResp == undefined ||
-			spenderBlacklistResp.overall_risk <= 2
-		) {
+		contentArray.push(
+			row('Risk Level', text('⛔ High Risk ⛔')),
+			row('Spender', address(spender)),
+			text(
+				'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
+			),
+		);
+	} else if (spenderAddressSecurityResult != null) {
+		if (spenderAddressSecurityResult == 'blacklist') {
 			contentArray.push(
-				divider(),
-				heading('Spender Screening'),
 				row('Risk Level', text('⛔ High Risk ⛔')),
 				row('Spender', address(spender)),
 				text(
-					'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
+					'This transaction is trying to approve your tokens to an address **blacklisted by HashDit**, likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
 				),
-				divider(),
-				heading('Website Screening'),
-				row('Website', text(signatureOrigin)),
-				row('Risk Level', text(urlResp.url_risk_level)),
-				text(urlResp.url_risk_detail),
 			);
-			return contentArray;
-		}
-	}
-
-	// Supported chain
-	if (spenderBlacklistResp != undefined) {
-		if (spenderBlacklistResp.overall_risk != -1) {
-			// Convert risk level to risk title
-			const [riskTitle, riskOverview] = determineSpenderRiskInfo(
-				spenderBlacklistResp.overall_risk,
-			);
+		} else if (spenderAddressSecurityResult == 'whitelist') {
 			contentArray.push(
-				divider(),
-				heading('Spender Screening'),
-				row('Risk Level', text(riskTitle)),
+				row('Risk Level', text('✅ Safe ')),
 				row('Spender', address(spender)),
-				text(riskOverview),
-				divider(),
-				heading('Website Screening'),
-				row('Website', text(signatureOrigin)),
-				row('Risk Level', text(urlResp.url_risk_level)),
-				text(urlResp.url_risk_detail),
+				text(
+					'This transaction is trying to approve your tokens to an address whitelisted by HashDit.',
+				),
 			);
-
-			return contentArray;
+		} else if (spenderAddressSecurityResult == 'unknown') {
+			contentArray.push(
+				row('Risk Level', text('Low')),
+				row('Spender', address(spender)),
+				text(
+					'This spender is neither blacklisted or whitelisted by HashDit, but approving it gives third-party access to your funds. We recommend only approving the exact amount needed.',
+				),
+			);
 		}
+	} else {
+		contentArray.push(
+			row('Risk Level', text('Low')),
+			row('Spender', address(spender)),
+			text(
+				'This spender is neither blacklisted or whitelisted by HashDit, but approving it gives third-party access to your funds. We recommend only approving the exact amount needed.',
+			),
+			divider(),
+		);
 	}
-	// Fallback content value if (not a supported chain and spender is not EOA), or (API return overall_risk level of -1 / unknown)
-	const spenderRiskInfo = determineSpenderRiskInfo(0);
+
 	contentArray.push(
-		divider(),
-		heading('Spender Screening'),
-		row('Risk Level', text('Low')),
-		row('Spender', address(spender)),
-		text(spenderRiskInfo[1]),
 		divider(),
 		heading('Website Screening'),
 		row('Website', text(signatureOrigin)),
@@ -266,24 +235,4 @@ async function createContentForSignatureInsight(
 	);
 
 	return contentArray;
-}
-
-// Determine the risk title and description for each risk level. Used by Signature Insight.
-export function determineSpenderRiskInfo(riskLevel: number) {
-	if (riskLevel >= 2) {
-		return [
-			'⛔ High ⛔',
-			'This transaction’s spender is **blacklisted** by HashDit, likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
-		];
-	} else if (riskLevel >= 0) {
-		return [
-			'Low',
-			'This spender is not blacklisted by HashDit, but approving it gives third-party access to your funds, posing a risk. We recommend only approving the exact amount needed.',
-		];
-	} else {
-		return [
-			'Unknown',
-			'The risk level of this transaction is unknown. Please proceed with caution.',
-		];
-	}
 }

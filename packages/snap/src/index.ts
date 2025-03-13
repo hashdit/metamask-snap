@@ -16,15 +16,21 @@ import {
 } from '@metamask/snaps-sdk';
 
 import {
-	getHashDitResponse,
-	authenticateHashDit,
 	isEOA,
 	determineTransactionAndDestinationRiskInfo,
-	authenticateDiTing,
 } from './utils/utils';
+import {
+	getHashDitResponse,
+	authenticateHashDit,
+	authenticateHashDitV2,
+} from './utils/api';
 import { parseSignature } from './utils/signatureInsight';
 import { addressPoisoningDetection } from './utils/addressPoisoning';
 import { verifyContractAndFunction } from './utils/unverifiedCheck';
+import {
+	callHashDitAddressSecurityV2,
+	createContentForAddressSecurityV2,
+} from './utils/api';
 import { callDiTingTxSimulation } from './utils/simulationUtils';
 import { extractPublicKeyFromSignature } from './utils/cryptography';
 import {
@@ -82,10 +88,10 @@ export const onInstall: OnInstallHandler = async () => {
 
 		// Call DiTing Auth API to retrieve personal API key
 		try {
-			const DiTingResult = await authenticateDiTing(from, signature);
+			const DiTingResult = await authenticateHashDitV2(from, signature);
 			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
 				newState.DiTingApiKey = DiTingResult.apiKey;
-				console.log('DitingResult', DiTingResult);
+				//console.log('DitingResult', DiTingResult);
 			} else {
 				throw new Error(
 					`Authentication failed: ${DiTingResult.message}`,
@@ -121,7 +127,7 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
-	console.log('OnSig:', JSON.stringify(signature, null, 2));
+	//console.log('OnSig:', JSON.stringify(signature, null, 2));
 	// Retrieve the content array if the signature is v3 or v4
 	const parseSignatureArrayResult = await parseSignature(
 		signature,
@@ -131,7 +137,7 @@ export const onSignature: OnSignatureHandler = async ({
 	// Return the results if they exist
 	if (parseSignatureArrayResult != null) {
 		const content = panel(parseSignatureArrayResult);
-		console.log('pareseSigResult');
+		//console.log('pareseSigResult');
 		return { content };
 	}
 
@@ -203,7 +209,7 @@ export const onTransaction: OnTransactionHandler = async ({
 	transaction,
 	transactionOrigin,
 }) => {
-	console.log('Transaction:', JSON.stringify(transaction, null, 2));
+	//console.log('Transaction:', JSON.stringify(transaction, null, 2));
 
 	const accounts = await ethereum.request({
 		method: 'eth_accounts',
@@ -305,14 +311,13 @@ export const onTransaction: OnTransactionHandler = async ({
 
 				// Parallelize Destination Screening call and Website Screening call
 
-				const [respData, urlRespData] = await Promise.all([
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
+				const [addressSecurityResult, urlRespData] = await Promise.all([
+					callHashDitAddressSecurityV2(
 						chainId,
+						transaction.to,
+						persistedUserData.DiTingApiKey,
 					),
+
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
 						persistedUserData,
@@ -346,30 +351,12 @@ export const onTransaction: OnTransactionHandler = async ({
 				// 		),
 				// 	]);
 
-				if (respData.overall_risk != '-1') {
-					const [riskTitle, riskOverview] =
-						determineTransactionAndDestinationRiskInfo(
-							respData.overall_risk,
+				if (addressSecurityResult != null) {
+					const addressSecurityArray =
+						createContentForAddressSecurityV2(
+							addressSecurityResult,
 						);
-					contentArray.push(
-						heading('Destination Screening'),
-						row('Risk Level', text(`${riskTitle}`)),
-						row(
-							'Risk Details',
-							text(`${respData.transaction_risk_detail}`),
-						),
-						text(`${riskOverview}`),
-						divider(),
-					);
-				} else {
-					contentArray.push(
-						heading('Destination Screening'),
-						row('Risk Level', text('Unknown')),
-						text(
-							'The risk level of this transaction is unknown. Please proceed with caution.',
-						),
-						divider(),
-					);
+					contentArray.push(...addressSecurityArray);
 				}
 
 				contentArray.push(
@@ -504,7 +491,7 @@ export const onTransaction: OnTransactionHandler = async ({
 		let contentArray: any[] = [];
 		if (persistedUserData !== null) {
 			// Parallelize Transaction, Destination, and Website Screening calls
-			const [interactionRespData, addressRespData, urlRespData] =
+			const [interactionRespData, addressSecurityResult, urlRespData] =
 				await Promise.all([
 					getHashDitResponse(
 						'hashdit_snap_tx_api_transaction_request',
@@ -513,12 +500,10 @@ export const onTransaction: OnTransactionHandler = async ({
 						transaction,
 						chainId,
 					),
-					getHashDitResponse(
-						'internal_address_lables_tags',
-						persistedUserData,
-						transactionOrigin,
-						transaction,
+					callHashDitAddressSecurityV2(
 						chainId,
+						transaction.to,
+						persistedUserData.DiTingApiKey,
 					),
 					getHashDitResponse(
 						'hashdit_snap_tx_api_url_detection',
@@ -590,45 +575,52 @@ export const onTransaction: OnTransactionHandler = async ({
 				contentArray = poisonResultArray;
 			}
 
-			// We display the bigger risk between Transaction screening and Destination screening
-			console.log(
-				'interactionRespData',
-				JSON.stringify(interactionRespData),
-			);
-			console.log('addressRespData', JSON.stringify(addressRespData));
-			if (
-				interactionRespData.overall_risk >= addressRespData.overall_risk
-			) {
-				const [riskTitle, riskOverview] =
-					determineTransactionAndDestinationRiskInfo(
-						interactionRespData.overall_risk,
-					);
-				contentArray.push(
-					heading('Transaction Screening'),
-					row('Risk Level', text(riskTitle)),
-					row('Risk Overview', text(riskOverview)),
-					row(
-						'Risk Details',
-						text(interactionRespData.transaction_risk_detail),
-					),
-					divider(),
+			if (addressSecurityResult != null) {
+				const addressSecurityArray = createContentForAddressSecurityV2(
+					addressSecurityResult,
 				);
-			} else {
-				const [riskTitle, riskOverview] =
-					determineTransactionAndDestinationRiskInfo(
-						addressRespData.overall_risk,
-					);
-				contentArray.push(
-					heading('Destination Screening'),
-					row('Risk Level', text(`${riskTitle}`)),
-					row(
-						'Risk Details',
-						text(`${addressRespData.transaction_risk_detail}`),
-					),
-					text(`${riskOverview}`),
-					divider(),
-				);
+				contentArray.push(...addressSecurityArray);
 			}
+
+			// We display the bigger risk between Transaction screening and Destination screening
+			// console.log(
+			// 	'interactionRespData',
+			// 	JSON.stringify(interactionRespData),
+			// );
+			// console.log('addressRespData', JSON.stringify(addressRespData));
+			// if (
+			// 	interactionRespData.overall_risk >= addressRespData.overall_risk
+			// ) {
+			// 	const [riskTitle, riskOverview] =
+			// 		determineTransactionAndDestinationRiskInfo(
+			// 			interactionRespData.overall_risk,
+			// 		);
+			// 	contentArray.push(
+			// 		heading('Transaction Screening'),
+			// 		row('Risk Level', text(riskTitle)),
+			// 		row('Risk Overview', text(riskOverview)),
+			// 		row(
+			// 			'Risk Details',
+			// 			text(interactionRespData.transaction_risk_detail),
+			// 		),
+			// 		divider(),
+			// 	);
+			// } else {
+			// 	const [riskTitle, riskOverview] =
+			// 		determineTransactionAndDestinationRiskInfo(
+			// 			addressRespData.overall_risk,
+			// 		);
+			// 	contentArray.push(
+			// 		heading('Destination Screening'),
+			// 		row('Risk Level', text(`${riskTitle}`)),
+			// 		row(
+			// 			'Risk Details',
+			// 			text(`${addressRespData.transaction_risk_detail}`),
+			// 		),
+			// 		text(`${riskOverview}`),
+			// 		divider(),
+			// 	);
+			// }
 
 			// Display Website Screening results
 			contentArray.push(
@@ -651,23 +643,6 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (signatureCheckResultArray.length !== 0) {
 				contentArray.push(...signatureCheckResultArray);
 			}
-
-			// 	/*
-			// Only display Transfer Details if transferring more than 0 native tokens
-			// This is a contract interaction. This check is necessary here because not all contract interactions transfer tokens.
-			// */
-			// 	const transactingValue = parseTransactingValue(transaction.value);
-			// 	const nativeToken = getNativeToken(chainId);
-			// 	if (transactingValue > 0) {
-			// 		contentArray.push(
-			// 			divider(),
-			// 			heading('Transfer Details'),
-			// 			row('Your Address', address(transaction.from)),
-			// 			row('Amount', text(`${transactingValue} ${nativeToken}`)),
-			// 			row('To', address(transaction.to)),
-			// 		);
-
-			// 	}
 
 			// Display function call insight (function names and parameters)
 			if (
