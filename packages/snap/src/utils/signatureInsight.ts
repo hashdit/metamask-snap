@@ -222,7 +222,7 @@ async function createContentForSignatureInsight(
 		} else if (spenderAddressSecurityResult == 'unknown') {
 			contentArray.push(
 				
-				row('Risk Level', text('Unknown')),
+				row('Risk Level', text('Low')),
 				row('Spender', address(spender)),
 				text(
 					'This spender is neither blacklisted or whitelisted by HashDit, but approving it gives third-party access to your funds. We recommend only approving the exact amount needed.',

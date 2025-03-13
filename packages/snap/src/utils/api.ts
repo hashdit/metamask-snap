@@ -222,7 +222,7 @@ export async function getHashDitResponse(
 		postBody.transaction = JSON.stringify(transaction);
 		postBody.url = transactionUrl;
 
-
+	}
 	let appId: string;
 	let appSecret: string;
 
@@ -238,9 +238,8 @@ export async function getHashDitResponse(
 	appSecret = persistedUserData.publicKey;
 
 	// Other regular business names
-	else {
-		url.searchParams.append('business', businessName);
-	}
+	url.searchParams.append('business', businessName);
+	
 
 	const query = url.search.substring(1);
 	dataToSign = `${appId};${timestamp};${nonce};POST;/security-api/public/chain/v1/web3/detect;${query};${JSON.stringify(
