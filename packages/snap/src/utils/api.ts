@@ -15,6 +15,8 @@ import {
 import { errorContent } from './content';
 import { determineUrlRiskInfo, chainIdHexToNumber } from './utils';
 
+type SecurityLevel = 'unknown' | 'whitelist' | 'blacklist';
+
 export async function callHashDitAddressSecurityV2(
 	chainId: string,
 	addressToCheck: string,
@@ -48,7 +50,6 @@ export async function callHashDitAddressSecurityV2(
 		}
 
 		const resp = await response.json();
-		//console.log('blacklist resp', resp);
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
@@ -67,34 +68,33 @@ export async function callHashDitAddressSecurityV2(
 	}
 }
 
-function parseHashditAddressSecurityV2(resp: any) {
-	const { data } = resp;
-
-	// If no data, show 'Unknown' risk level
-	if (!data || !data[0]) {
+function parseHashditAddressSecurityV2(resp: any): SecurityLevel {
+	// If no response or no data array, show 'Unknown' risk level
+	if (!resp || !resp.data || !resp.data[0]) {
 		return 'unknown';
-		// return [
-		// 	heading('Destination Screening'),
-		// 	row('Risk Level', text('Unknown')),
-		// 	text(
-		// 		'The address is neither whitelisted nor blacklisted. Proceed with caution.',
-		// 	),
-		// 	divider(),
-		// ];
 	}
 
-	const firstEntry = data[0]; // Access the first object in the data array
-	const blackLabels = firstEntry?.black_labels;
-	const whiteLabels = firstEntry?.white_labels;
+	const firstEntry = resp.data[0];
+	// Check if risk_detail exists and has entries
+	if (!firstEntry.risk_detail || !firstEntry.risk_detail[0]) {
+		return 'unknown';
+	}
+	const risk_detail_name = firstEntry.risk_detail[0].name;
 
-	// Determine the risk level and appropriate message
-	if (blackLabels && blackLabels !== null && firstEntry.risk_level >= 3) {
-		return 'blacklist';
-	} else if (whiteLabels && whiteLabels.length > 0) {
+	if (!risk_detail_name) {
+		return 'unknown';
+	}
+
+	// Check the name property
+	if (risk_detail_name === 'is_in_wlist') {
 		return 'whitelist';
-	} else {
-		return 'unknown';
 	}
+
+	if (risk_detail_name === 'is_in_blist') {
+		return 'blacklist';
+	}
+
+	return 'unknown';
 }
 
 export function createContentForAddressSecurityV2(result: string) {
@@ -104,7 +104,7 @@ export function createContentForAddressSecurityV2(result: string) {
 			heading('Destination Screening'),
 			row('Risk Level', text('⛔ High ⛔')),
 			text(
-				`The address you're interacting with is **blacklisted by HashDit** as unsafe, associated with malicious activities. **Avoid** interacting with it.`,
+				`The address you're interacting with is **BLACKLISTED by HashDit** as unsafe, associated with malicious activities. **Avoid** interacting with it.`,
 			),
 			divider(),
 		);
@@ -113,7 +113,7 @@ export function createContentForAddressSecurityV2(result: string) {
 			heading('Destination Screening'),
 			row('Risk Level', text('✅ Safe')),
 			text(
-				'The address is whitelisted by HashDit, indicating high community credibility or longevity.',
+				'The address is **whitelisted by HashDit**, indicating high community credibility or longevity.',
 			),
 			divider(),
 		);
@@ -249,7 +249,6 @@ export async function getHashDitResponse(
 		nonce,
 		signatureFinal,
 	);
-	//console.log(response);
 	return formatResponse(response, businessName);
 }
 

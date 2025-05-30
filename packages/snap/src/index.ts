@@ -310,7 +310,6 @@ export const onTransaction: OnTransactionHandler = async ({
 				}
 
 				// Parallelize Destination Screening call and Website Screening call
-
 				const [addressSecurityResult, urlRespData] = await Promise.all([
 					callHashDitAddressSecurityV2(
 						chainId,

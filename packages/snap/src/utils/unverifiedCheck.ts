@@ -25,7 +25,7 @@ export async function verifyContractAndFunction(
 	const chain = chainMap[chainId] || '';
 
 	if (chain) {
-		const isDestinationVerifiedResult = await isDestinationUnverified(
+		const isDestinationVerifiedResult = await isDestinationVerified(
 			transaction.to,
 			chain,
 			apiKey,
@@ -33,13 +33,13 @@ export async function verifyContractAndFunction(
 		// If contract is unverified, return unverified risk
 		if (!isDestinationVerifiedResult) {
 			resultArray.push(
-				divider(),
 				heading('Unverified Risk'),
 				row('Contract', address(transaction.to)),
 				row('Risk Level', text('⛔ High ⛔')),
 				text(
 					'The contract you are about to interact with is unverified, meaning its source code is not publicly available. This makes it impossible to determine its behavior or intentions, significantly increasing the risk of malicious activity. We strongly recommend rejecting this transaction to protect your assets.',
 				),
+				divider(),
 			);
 
 			return resultArray;
@@ -60,12 +60,12 @@ export async function verifyContractAndFunction(
 			if (data.count == 0) {
 				//console.log('Function Signature Not Found');
 				resultArray.push(
-					divider(),
 					heading('Unverified Risk'),
 					row('Function Signature', text(functionSelector)),
 					text(
-						'The function you’re calling is not commonly used. Please confirm that the function details are correct, and check that the contract is safe and not harmful before continuing.',
+						"The function you're calling is not commonly used. Please confirm that the function details are correct, and check that the contract is safe and not harmful before continuing.",
 					),
+					divider(),
 				);
 			}
 		} else {
@@ -78,16 +78,19 @@ export async function verifyContractAndFunction(
 	return resultArray;
 }
 
-// Check if the contract address is unverified
-async function isDestinationUnverified(
-	contractAddress: string,
-	chainId: string,
-	apiKey: string,
+async function isDestinationVerified(
+	contractAddress: any,
+	chainId: any,
+	apiKey: any,
 ) {
-	if (!contractAddress) return false;
+	// Input validation
+	if (!contractAddress || !chainId || !apiKey) {
+		console.error('Missing required parameter for contract verification');
+		return true;
+	}
 
 	const requestBody = {
-		chain_id: chainId,
+		chainId: chainId,
 		address: contractAddress,
 	};
 
@@ -108,20 +111,26 @@ async function isDestinationUnverified(
 			console.error(
 				`API Error: ${response.status} ${response.statusText}`,
 			);
-			return false;
+			return true;
 		}
 
-		const { status, data } = await response.json();
+		const resp = await response.json();
 
-		if (status === 'ok' && data) {
-			return !(
-				data.address_type === 'Contract' &&
-				data.verify_status === 'unverified'
-			);
+		// Validate response structure
+		if (resp.status !== 'ok' || !resp.data || !resp.data.details) {
+			console.error('Invalid API response structure');
+			return true;
 		}
+
+		// Only check verification status if it's a contract
+		if (resp.data.address_type === 'Contract') {
+			return resp.data.details.is_verified;
+		}
+
+		// For non-contract addresses, return true
+		return true;
 	} catch (error) {
 		console.error('Fetch error:', error);
+		return true;
 	}
-
-	return false;
 }
