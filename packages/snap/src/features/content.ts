@@ -10,6 +10,7 @@ import {
 	MethodNotFoundError,
 	NotificationType,
 } from '@metamask/snaps-sdk';
+import { Box, Heading, Text } from "@metamask/snaps-sdk/jsx";
 
 export const onInstallContent = [
 	heading('🛠️ Next Steps For Your Installation'),

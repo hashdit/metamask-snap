@@ -18,108 +18,32 @@ import {
 import {
 	isEOA,
 	determineTransactionAndDestinationRiskInfo,
-} from './utils/utils';
+} from './features/utils';
 import {
 	getHashDitResponse,
 	authenticateHashDit,
 	authenticateHashDitV2,
-} from './utils/api';
-import { parseSignature } from './utils/signatureInsight';
-import { addressPoisoningDetection } from './utils/addressPoisoning';
-import { verifyContractAndFunction } from './utils/unverifiedCheck';
+} from './features/api';
+import { parseSignature } from './features/signatureInsight';
+import { addressPoisoningDetection } from './features/AddressPoisoning';
+import { verifyContractAndFunction } from './features/unverifiedCheck';
 import {
 	callHashDitAddressSecurityV2,
 	createContentForAddressSecurityV2,
-} from './utils/api';
-import { callDiTingTxSimulation } from './utils/simulationUtils';
-import { extractPublicKeyFromSignature } from './utils/cryptography';
+} from './features/api';
+import { callDiTingTxSimulation } from './features/SimulationUtils';
+import { extractPublicKeyFromSignature } from './features/cryptography';
 import {
 	onInstallContent,
 	onHomePageContent,
 	errorContent,
-} from './utils/content';
+} from './features/content';
+import { runInstaller } from './installer';
+import { callDomainSecurity } from './features/blacklistCheck';
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-	await snap.request({
-		method: 'snap_dialog',
-		params: {
-			type: 'alert',
-			content: panel(onInstallContent),
-		},
-	});
-	try {
-		// Get user's accounts
-		const accounts = await ethereum.request({
-			method: 'eth_requestAccounts',
-		});
-		const from = accounts[0];
-
-		// Request user to sign a message -> get user's signature -> get user's public key.
-		const message = `Hashdit Security: ${from}, Please sign this message to authenticate the HashDit API.`;
-		let signature;
-		try {
-			signature = (await ethereum.request({
-				method: 'personal_sign',
-				params: [message, from],
-			})) as string;
-		} catch (error) {
-			console.error('Error signing message:', error);
-			return; // Exit if there's an error
-		}
-
-		let publicKey = extractPublicKeyFromSignature(
-			message,
-			signature,
-			from,
-		)?.substring(2);
-		const newState: any = {
-			publicKey: publicKey,
-			userAddress: from,
-			messageSignature: signature,
-		};
-
-		// Call HashDit API to authenticate user
-		try {
-			await authenticateHashDit(from, signature);
-		} catch (error) {
-			console.error('Error during HashDit API authentication:', error);
-		}
-
-		// Call DiTing Auth API to retrieve personal API key
-		try {
-			const DiTingResult = await authenticateHashDitV2(from, signature);
-			if (DiTingResult.message === 'ok' && DiTingResult.apiKey != '') {
-				newState.DiTingApiKey = DiTingResult.apiKey;
-				//console.log('DitingResult', DiTingResult);
-			} else {
-				throw new Error(
-					`Authentication failed: ${DiTingResult.message}`,
-				);
-			}
-		} catch (error) {
-			console.error(
-				'An error occurred during DiTing authentication:',
-				error,
-			);
-		}
-
-		// Finally, update the state with all the collected data
-		try {
-			await snap.request({
-				method: 'snap_manageState',
-				params: {
-					operation: 'update',
-					newState: newState,
-				},
-			});
-		} catch (error) {
-			console.error(
-				'An error occurred during saving to local storage:',
-				error,
-			);
-		}
-	} catch (error) {}
+	await runInstaller();
 };
 
 // Called during a signature request transaction. Show insights
@@ -127,81 +51,56 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
-	//console.log('OnSig:', JSON.stringify(signature, null, 2));
-	// Retrieve the content array if the signature is v3 or v4
-	const parseSignatureArrayResult = await parseSignature(
-		signature,
-		signatureOrigin,
-	);
+	let persistedUserData;
+	// Retrieve persisted user data
 
-	// Return the results if they exist
-	if (parseSignatureArrayResult != null) {
-		const content = panel(parseSignatureArrayResult);
-		//console.log('pareseSigResult');
-		return { content };
-	}
-
-	let contentArray: any[] = [];
-
-	// We consider personal_sign to be safe
-	if (signature.signatureMethod === 'personal_sign') {
-		contentArray.push(
-			heading('Signature Screening'),
-			row('Risk Level', text('Low')),
-			text(
-				'This signature confirms that you own this address. It’s a common way to verify your identity without sharing your private key. This process is generally safe.',
-			),
-			divider(),
-		);
-	}
-
-	// Retrieve user data, and get website risk level
-	let persistedUserData = null;
 	try {
 		persistedUserData = await snap.request({
 			method: 'snap_manageState',
 			params: { operation: 'get' },
 		});
-	} catch (error) {
-		contentArray.push(
-			heading('HashDit Snap'),
-			text(
-				'If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.',
-			),
-		);
-		return { content: panel(contentArray) };
-	}
-	// User data exists. Call website screening API, and add results to content array.
-	if (persistedUserData !== null) {
-		try {
-			const urlResp = await getHashDitResponse(
-				'hashdit_snap_tx_api_url_detection',
-				persistedUserData,
+
+		if (persistedUserData !== null) {
+			let contentArray: any[] = [];
+
+			const signatureContent = await parseSignature(
+				signature,
+
+				persistedUserData.DiTingApiKey,
+			);
+
+			const domainSecurityContent = await callDomainSecurity(
 				signatureOrigin,
+				persistedUserData.DiTingApiKey,
 			);
 
-			if (urlResp) {
-				contentArray.push(
-					heading('Website Screening'),
-					row('Website', text(signatureOrigin)),
-					row('Risk Level', text(urlResp.url_risk_level)),
-					text(urlResp.url_risk_detail),
-				);
-				return { content: panel(contentArray) };
+			// Merge the signature parsing results if they exist
+			if (signatureContent != null && Array.isArray(signatureContent)) {
+				console.log(signatureContent, 'signatureContent');
+				contentArray.push(...signatureContent);
 			}
-		} catch (error) {
-			// Handle any errors from getHashDitResponse
-			console.error('Error with HashDit Snap:', error);
-			contentArray.push(
-				text(
-					'An error occurred while attempting to retrieve website screening information.',
-				),
-			);
-		}
-	}
 
-	// Fallback error message if none of the above conditions were met
-	return { content: panel(errorContent) };
+			// Merge the Domain Security content if it exists
+			if (
+				domainSecurityContent != null &&
+				Array.isArray(domainSecurityContent)
+			) {
+				console.log(domainSecurityContent, 'domainSecurityContent');
+				contentArray.push(...domainSecurityContent);
+			}
+
+			if (contentArray.length > 0) {
+				const content = panel(contentArray);
+				console.log(contentArray, 'final content array');
+				return { content };
+			}
+		}
+		// Fallback error message if none of the above conditions were met
+		return { content: panel(errorContent) };
+	} catch (error) {
+		console.error('Error retrieving persisted user data:', error);
+		return { content: panel(errorContent) };
+	}
 };
 
 // Called when a transaction is pending. Handle outgoing transactions.

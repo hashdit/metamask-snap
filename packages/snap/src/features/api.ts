@@ -182,6 +182,8 @@ export async function authenticateHashDit(
 	const resp = await response.json();
 }
 
+
+
 export async function getHashDitResponse(
 	businessName: string,
 	persistedUserData: any,

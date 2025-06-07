@@ -38,8 +38,15 @@ export interface SignatureParsed {
 // Determine if the signature is a Permit signature.
 export async function parseSignature(
 	signature: Signature,
-	signatureOrigin: any,
+	apiKey: any,
 ) {
+	console.log("HErE1")
+	// We consider personal_sign to be safe
+	if (signature.signatureMethod == 'personal_sign') {
+		console.log("HErE2")
+		return personalSignatureContent();
+	}
+
 	let signatureParsed: SignatureParsed;
 	let decodedData;
 
@@ -48,6 +55,7 @@ export async function parseSignature(
 		//console.log('Invalid data type for signature.data:', typeof signature.data);
 		return null;
 	}
+
 
 	decodedData = signature.data;
 
@@ -92,6 +100,7 @@ export async function parseSignature(
 		primaryType,
 		spender,
 		signatureOrigin,
+		apiKey
 	);
 }
 
@@ -100,68 +109,43 @@ async function callHashDitAPIForSignatureInsight(
 	primaryType: any,
 	spender: any,
 	signatureOrigin: any,
+	apiKey: any
 ) {
 	let contentArray: any[] = [];
-	let persistedUserData;
-	// Retrieve persisted user data
-	try {
-		persistedUserData = await snap.request({
-			method: 'snap_manageState',
-			params: { operation: 'get' },
-		});
-	} catch (error) {
-		console.error('Error retrieving persisted user data:', error);
-		contentArray = errorContent;
-		return contentArray;
-	}
 
-	if (persistedUserData !== null) {
-		// Set up the URL detection request promise. This is executed for all permit types.
-		const urlRequestPromise = getHashDitResponse(
-			'hashdit_snap_tx_api_url_detection',
-			persistedUserData,
-			signatureOrigin,
-		);
+	// Set up blacklist call on spender if Permit detected
+	const blacklistPromises: Array<Promise<any>> = [];
+	const chainId = await ethereum.request({ method: 'eth_chainId' });
+	const validChainIds = ['0x38', '0x1'];
 
-		// Set up blacklist call on spender if Permit detected
-		const blacklistPromises: Array<Promise<any>> = [];
-		const chainId = await ethereum.request({ method: 'eth_chainId' });
-		const validChainIds = ['0x38', '0x1'];
+	if (validChainIds.includes(chainId)) {
+		const permitTypes = [
+			'Permit',
+			'PermitSingle',
+			'PermitForAll',
+			'PermitBatch',
+		];
 
-		if (validChainIds.includes(chainId)) {
-			const permitTypes = [
-				'Permit',
-				'PermitSingle',
-				'PermitForAll',
-				'PermitBatch',
-			];
-
-			// If the primaryType is one of the permit types, add the blacklist API call
-			const chainIdNumber = chainIdHexToNumber(chainId).toString();
-			if (permitTypes.includes(primaryType)) {
-				blacklistPromises.push(
-					callHashDitAddressSecurityV2(
-						chainIdNumber,
-						spender,
-						persistedUserData.DitingApiKey,
-					),
-				);
-			}
+		// If the primaryType is one of the permit types, add the blacklist API call
+		const chainIdNumber = chainIdHexToNumber(chainId).toString();
+		if (permitTypes.includes(primaryType)) {
+			blacklistPromises.push(
+				callHashDitAddressSecurityV2(
+					chainIdNumber,
+					spender,
+					apiKey
+				),
+			);
 		}
-
-		// Resolve all promises, including the URL request and blacklist requests concurrently
-		const responses = await Promise.all([
-			urlRequestPromise,
-			...blacklistPromises,
-		]);
-		return await createContentForSignatureInsight(
-			responses,
-			spender,
-			signatureOrigin,
-		);
-	} else {
-		//todo
 	}
+
+	// Resolve all promises, including the URL request and blacklist requests concurrently
+	const responses = await Promise.all([...blacklistPromises]);
+	return await createContentForSignatureInsight(
+		responses,
+		spender,
+		signatureOrigin,
+	);
 }
 
 // Take the API results and create the contentArrays returned to onSignature() function.
@@ -177,7 +161,7 @@ async function createContentForSignatureInsight(
 	spenderAddressSecurityResult = responses[1];
 
 	// Start of Spender Screening array
-	contentArray.push(divider(), heading('Spender Screening'));
+	contentArray.push( heading('Spender Screening'));
 
 	// We consider approving to an EOA spender to be a high risk because there are few scenarios where this is needed.
 	isSpenderEOA = await isEOA(spender);
@@ -188,6 +172,7 @@ async function createContentForSignatureInsight(
 			text(
 				'This transaction is trying to approve your tokens to an Externally Owned Account (EOA), likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
 			),
+			divider(),
 		);
 	} else if (spenderAddressSecurityResult != null) {
 		if (spenderAddressSecurityResult == 'blacklist') {
@@ -197,6 +182,7 @@ async function createContentForSignatureInsight(
 				text(
 					'This transaction is trying to approve your tokens to an address **blacklisted by HashDit**, likely indicating a scam. Approving it will give a third-party direct access to your funds, risking potential loss. It is advised to reject this transaction.',
 				),
+				divider(),
 			);
 		} else if (spenderAddressSecurityResult == 'whitelist') {
 			contentArray.push(
@@ -205,6 +191,7 @@ async function createContentForSignatureInsight(
 				text(
 					'This transaction is trying to approve your tokens to an address whitelisted by HashDit.',
 				),
+				divider(),
 			);
 		} else if (spenderAddressSecurityResult == 'unknown') {
 			contentArray.push(
@@ -213,6 +200,7 @@ async function createContentForSignatureInsight(
 				text(
 					'This spender is neither blacklisted or whitelisted by HashDit, but approving it gives third-party access to your funds. We recommend only approving the exact amount needed.',
 				),
+				divider(),
 			);
 		}
 	} else {
@@ -226,13 +214,20 @@ async function createContentForSignatureInsight(
 		);
 	}
 
-	contentArray.push(
-		divider(),
-		heading('Website Screening'),
-		row('Website', text(signatureOrigin)),
-		row('Risk Level', text(urlResp.url_risk_level)),
-		text(urlResp.url_risk_detail),
-	);
+	return contentArray;
+}
 
+
+
+function personalSignatureContent() {
+	let contentArray: any[] = [];
+	contentArray.push(
+		heading('Signature Screening'),
+		row('Risk Level', text('✅ Safe')),
+		text(
+			'This signature is trying to confirm you own this address. It’s a common way to verify your identity without sharing your private key. This process is generally safe.',
+		),
+		divider(),
+	);
 	return contentArray;
 }
