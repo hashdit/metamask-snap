@@ -1,4 +1,5 @@
 import { heading, row, text, divider, Component } from '@metamask/snaps-sdk';
+import { getRiskLevelText, getRiskLevelColor } from '../utils/utilFunctions';
 
 type DomainSecurityResponse = {
 	code: string;
@@ -11,44 +12,6 @@ type DomainSecurityResponse = {
 		risk_level: number;
 	};
 };
-
-function getRiskLevelText(riskLevel: number): string {
-	switch (riskLevel) {
-		case 0:
-			return 'Safe';
-		case 1:
-			return 'Low';
-		case 2:
-			return 'Medium';
-		case 3:
-			return 'Medium';
-		case 4:
-			return 'High';
-		case 5:
-			return 'Critical';
-		default:
-			return 'Unknown';
-	}
-}
-
-function getRiskLevelColor(riskLevel: number): string {
-	switch (riskLevel) {
-		case 0:
-			return '🟢';
-		case 1:
-			return '🟢';
-		case 2:
-			return '🟡';
-		case 3:
-			return '🟠';
-		case 4:
-			return '🔴';
-		case 5:
-			return '🔴';
-		default:
-			return '⚪';
-	}
-}
 
 export async function callDomainSecurity(
 	transactionUrl?: any,
@@ -69,7 +32,7 @@ export async function callDomainSecurity(
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'X-API-Key': apiKey, //TODO
+					'X-API-Key': apiKey,
 				},
 				body: JSON.stringify(requestBody),
 			},
@@ -84,7 +47,7 @@ export async function callDomainSecurity(
 			const riskLevelColor = getRiskLevelColor(riskLevel);
 
 			const contentArray: Component[] = [
-				heading('Website Security Checkerr'),
+				heading('Website Security Check'),
 				row('Website', text(transactionUrl)),
 				row('Risk Level', text(`${riskLevelColor} ${riskLevelText}`)),
 			];

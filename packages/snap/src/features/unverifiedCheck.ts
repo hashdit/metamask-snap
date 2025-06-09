@@ -7,48 +7,78 @@ import {
 	address,
 	row,
 	Signature,
+	Component,
 } from '@metamask/snaps-sdk';
-
-// We only support checking if contract is verified on BSC and ETH
-const chainMap: Record<string, string> = {
-	'0x38': '56',
-	'0x1': '1',
-};
 
 export async function verifyContractAndFunction(
 	transaction: any,
-	chainId: string,
-	apiKey: string,
-) {
-	const resultArray = [];
+	chainNumber: string,
+	apiKey: any,
+): Promise<Component[]> {
+	const resultArray: Component[] = [];
 
-	const chain = chainMap[chainId] || '';
+	console.log('verifyContractAndFunction()', transaction, chainNumber, apiKey);
 
-	if (chain) {
+	if (chainNumber == '56' || chainNumber == '1') {
 		const isDestinationVerifiedResult = await isDestinationVerified(
 			transaction.to,
-			chain,
+			chainNumber,
 			apiKey,
 		);
 		// If contract is unverified, return unverified risk
-		if (!isDestinationVerifiedResult) {
+		if (isDestinationVerifiedResult == 'unverified') {
 			resultArray.push(
-				heading('Unverified Risk'),
+				heading('Unverified Contract'),
 				row('Contract', address(transaction.to)),
 				row('Risk Level', text('⛔ High ⛔')),
 				text(
-					'The contract you are about to interact with is unverified, meaning its source code is not publicly available. This makes it impossible to determine its behavior or intentions, significantly increasing the risk of malicious activity. We strongly recommend rejecting this transaction to protect your assets.',
+					'🚨 WARNING: This contract is unverified and could steal your funds! The code is hidden and may be designed to scam you. REJECT this transaction immediately to protect your assets.',
 				),
 				divider(),
 			);
 
 			return resultArray;
 		}
+		if(isDestinationVerifiedResult == 'EOA'){
+			return resultArray;
+		}
+	}
+	// If isDestinationVerifiedResult returns null, or if chain not supported, continue.
+	// Validate transaction data and extract function selector
+	if (!transaction.data || typeof transaction.data !== 'string' || transaction.data.length < 10) {
+		console.log('No valid transaction data found - skipping function validation');
+		return resultArray;
 	}
 
-	// Contract is verified, continue to check if the function signature is in the 4Byte database
 	const functionSelector = transaction.data.slice(0, 10);
+	
+	// Check if it's not just zeros (which might indicate no function call)
+	if (functionSelector === '0x00000000') {
+		console.log('Function selector is all zeros - skipping function validation');
+		return resultArray;
+	}
 
+	const is4ByteDatabaseVerified = await check4ByteDatabase(functionSelector);
+
+	if (!is4ByteDatabaseVerified) {
+		resultArray.push(
+			heading('Unverified Function'),
+			row('Function Signature', text(functionSelector)),
+			row('Risk Level', text('⚠️ Medium ⚠️')),
+			text(
+				"This function is uncommon and potentially risky. Verify the contract before proceeding.",
+			),
+			divider(),
+		);
+		return resultArray;
+	}
+
+	// All checks passed - no security warnings needed
+	return resultArray;
+}
+
+async function check4ByteDatabase(functionSelector: string): Promise<boolean> {
+	// Check if the function signature is in the 4Byte database
 	try {
 		const response = await fetch(
 			`https://www.4byte.directory/api/v1/signatures/?hex_signature=${functionSelector}`,
@@ -56,41 +86,34 @@ export async function verifyContractAndFunction(
 
 		if (response.ok) {
 			const data = await response.json();
-			// 0 results returned by the API, meaning the function signature was not found
-			if (data.count == 0) {
-				//console.log('Function Signature Not Found');
-				resultArray.push(
-					heading('Unverified Risk'),
-					row('Function Signature', text(functionSelector)),
-					text(
-						"The function you're calling is not commonly used. Please confirm that the function details are correct, and check that the contract is safe and not harmful before continuing.",
-					),
-					divider(),
-				);
-			}
+			// Return true if signature is found (known function)
+			// Return false if signature is not found (unknown function)
+			return data.count > 0;
 		} else {
 			console.error('Error querying 4byte API:', response.status);
+			// On API error, assume function is known (safer default)
+			return true;
 		}
 	} catch (error) {
 		console.error('Fetch error:', error);
+		// On network error, assume function is known (safer default)
+		return true;
 	}
-
-	return resultArray;
 }
 
 async function isDestinationVerified(
 	contractAddress: any,
-	chainId: any,
+	chainNumber: any,
 	apiKey: any,
 ) {
 	// Input validation
-	if (!contractAddress || !chainId || !apiKey) {
+	if (!contractAddress || !chainNumber || !apiKey) {
 		console.error('Missing required parameter for contract verification');
 		return true;
 	}
 
 	const requestBody = {
-		chainId: chainId,
+		chainId: chainNumber,
 		address: contractAddress,
 	};
 
@@ -111,7 +134,7 @@ async function isDestinationVerified(
 			console.error(
 				`API Error: ${response.status} ${response.statusText}`,
 			);
-			return true;
+			return null;
 		}
 
 		const resp = await response.json();
@@ -119,18 +142,24 @@ async function isDestinationVerified(
 		// Validate response structure
 		if (resp.status !== 'ok' || !resp.data || !resp.data.details) {
 			console.error('Invalid API response structure');
-			return true;
+			return null;
 		}
 
+		console.log('address-classify', JSON.stringify(resp, null, 2));
 		// Only check verification status if it's a contract
 		if (resp.data.address_type === 'Contract') {
-			return resp.data.details.is_verified;
+			if(resp.data.details.is_verified == true) {
+				return 'verified';
+			}
+			else {
+				return 'unverified';
+			}
 		}
 
 		// For non-contract addresses, return true
-		return true;
+		return "EOA";
 	} catch (error) {
 		console.error('Fetch error:', error);
-		return true;
+		return null;
 	}
 }

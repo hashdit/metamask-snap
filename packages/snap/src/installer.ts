@@ -6,7 +6,6 @@ import {
 	address,
 	row,
 } from '@metamask/snaps-sdk';
-import { authenticateHashDitV2 } from './features/api';
 import { onInstallContent } from './features/content';
 import { extractPublicKeyFromSignature } from './features/cryptography';
 
@@ -86,3 +85,25 @@ export const runInstaller = async () => {
 		console.error('Error during HashDit Snap installation:', error);
 	}
 };
+
+// Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
+async function authenticateHashDitV2(
+	userAddress: string,
+	signature: string,
+) {
+	const requestBody = {
+		userAddr: userAddress,
+		signature: signature,
+	};
+
+	const response = await fetch('https://service.hashdit.io/v2/auth', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify(requestBody),
+	});
+	const resp = await response.json();
+
+	return resp;
+}
