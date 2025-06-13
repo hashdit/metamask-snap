@@ -7,7 +7,7 @@
     "url": "https://github.com/hashdit/metamask-snap.git"
   },
   "source": {
-    "shasum": "ZfnPhSxTss3OEUm9zXbbu25XpGQYYsJIJHqvB91bAO0=",
+    "shasum": "uLFINZRYe4eDCms4wf303xTMzf+LsDZPg6ixTsoFeyM=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -31,5 +31,6 @@
       "allowSignatureOrigin": true
     }
   },
+  "platformVersion": "6.24.0",
   "manifestVersion": "0.1"
 }
