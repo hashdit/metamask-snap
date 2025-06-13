@@ -1,18 +1,22 @@
-/* eslint-disable */
-
 import {
-	heading,
-	panel,
-	text,
-	copyable,
-	divider,
-	address,
-	row,
-	Signature,
-} from '@metamask/snaps-sdk';
+	Heading,
+	Text,
+	Copyable,
+	Divider,
+	Address,
+	Row,
+	Box,
+	Section,
+	Value,
+	Tooltip,
+	Card,
+	Image,
+	Icon,
+} from '@metamask/snaps-sdk/jsx';
 import { keccak256 } from 'js-sha3';
 import { isEOA, chainIdHexToNumber } from './utils';
 import { getBlockHeight, toChecksumAddress } from '../utils/utilFunctions';
+import { addressPoisoningDetection } from './AddressPoisoning';
 
 export async function callTransactionSimulation(
 	apiKey: any,
@@ -28,8 +32,6 @@ export async function callTransactionSimulation(
 	const valueNumber = parseInt(transactionValue, 16).toString();
 	const currentBlockHeight = await getBlockHeight();
 
-	// Convert addresses to checksum format
-
 	const toAddressChecksum = toChecksumAddress(toAddress);
 	const fromAddressChecksum = toChecksumAddress(fromAddress);
 
@@ -38,7 +40,6 @@ export async function callTransactionSimulation(
 		const postBody = {
 			chain_id: chainIdNumber,
 			block_height: currentBlockHeight,
-
 			evm_transactions: [
 				{
 					from: fromAddressChecksum,
@@ -58,7 +59,7 @@ export async function callTransactionSimulation(
 			},
 		};
 		console.log('simulation postBody', JSON.stringify(postBody, null, 2));
-		// Make the API call
+
 		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
@@ -75,7 +76,7 @@ export async function callTransactionSimulation(
 
 		const resp = await response.json();
 		console.log('Simulation Response', JSON.stringify(resp, null, 2));
-		// Check if the response has required fields
+
 		if (resp && resp.code === '000000000') {
 			const [result] = extractSimulationResult(resp);
 			console.log(
@@ -84,16 +85,15 @@ export async function callTransactionSimulation(
 				result.approve_changes,
 			);
 
-			// Extract token_details from the response
 			const tokenDetails = resp.data.token_details || {};
-
-			const simulationContent = createSimulationContent(
+			const involved_addresses = resp.data.involved_addresses || [];
+			return createSimulationContent(
 				result.balance_changes,
 				result.approve_changes,
 				tokenDetails,
 				chainIdNumber,
+				involved_addresses,
 			);
-			return simulationContent;
 		} else {
 			return createErrorContent(resp);
 		}
@@ -109,7 +109,6 @@ function extractSimulationResult(response: any) {
 	const filtered = summaries.map((txn: any) => {
 		const sender = txn.from.toLowerCase();
 
-		// Get all balance changes for the sender, case-insensitive
 		let filteredBalanceChanges: any[] = [];
 		if (txn.balance_changes) {
 			for (const [key, value] of Object.entries(txn.balance_changes)) {
@@ -131,26 +130,28 @@ function extractSimulationResult(response: any) {
 	return filtered;
 }
 
-function createSimulationContent(
+async function createSimulationContent(
 	balance_changes: any,
 	approve_changes: any,
 	tokenDetails: any,
 	chainNumber: number,
+	involved_addresses: any,
 ) {
 	console.log('APPROVE CHANGES: ', approve_changes);
-	const contentArray: any[] = [];
-	const positiveBalanceChanges: any[] = [];
-	const negativeBalanceChanges: any[] = [];
-	const approvalChanges: any[] = [];
+	const positiveBalanceChanges: JSX.Element[] = [];
+	const negativeBalanceChanges: JSX.Element[] = [];
+	const approvalChanges: JSX.Element[] = [];
+	const addressPoisoningContent: JSX.Element[] = [];
+
 	if (balance_changes) {
 		for (const item of balance_changes) {
 			for (const [key, value] of Object.entries(item)) {
 				console.log('EACH BALANCE CHANGE: ', key, value);
 
-				// Find the matching token detail for this key
 				const tokenDetail = tokenDetails[key] || {};
 				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
 				let tokenName = tokenDetail?.tokenName || 'Unknown Token';
+
 				if (symbol == 'native_token') {
 					if (chainNumber == 1) {
 						symbol = 'ETH';
@@ -164,32 +165,36 @@ function createSimulationContent(
 				const numericValue = Number(value);
 				const normalizedTokenAmount =
 					numericValue / 10 ** (tokenDetail?.divisor || 18);
-				const transferAmountInUSD = tokenDetail?.tokenPriceUSD 
-					? (normalizedTokenAmount * tokenDetail.tokenPriceUSD).toFixed(2)
+				const transferAmountInUSD = tokenDetail?.tokenPriceUSD
+					? (
+							normalizedTokenAmount * tokenDetail.tokenPriceUSD
+						).toFixed(2)
 					: 'Unknown';
 
+				const rowContent = (
+					<Box>
+						<Card
+							title={symbol}
+							description={tokenName}
+							value={`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}
+							extra={`${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`}
+						/>
+						{Object.keys(balance_changes).indexOf(key) !==
+							Object.keys(balance_changes).length - 1 && (
+							<Divider />
+						)}
+					</Box>
+				);
+
 				if (numericValue > 0) {
-					positiveBalanceChanges.push(
-						row(
-							`${tokenName} (${symbol})`,
-							text(
-								`+${normalizedTokenAmount} ${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`,
-							),
-						),
-					);
+					positiveBalanceChanges.push(rowContent);
 				} else {
-					negativeBalanceChanges.push(
-						row(
-							`${tokenName} (${symbol})`,
-							text(
-								`${normalizedTokenAmount} ${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`,
-							),
-						),
-					);
+					negativeBalanceChanges.push(rowContent);
 				}
 			}
 		}
 	}
+
 	if (approve_changes) {
 		for (const item of approve_changes) {
 			console.log('APPROVE CHANGES ITEM: ', item);
@@ -199,7 +204,7 @@ function createSimulationContent(
 					tokenAddress,
 					approvals,
 				);
-				// Find the matching token detail for this key
+
 				const tokenDetail = tokenDetails[tokenAddress] || {};
 				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
 				let tokenName = tokenDetail?.tokenName || 'Unknown Token';
@@ -218,82 +223,121 @@ function createSimulationContent(
 					approver_address: string;
 					spender_address: string;
 				}>;
+
 				for (const approval of approvalList) {
 					approvalChanges.push(
-						row('Token', text(`${tokenName} (${symbol})`)),
-						row(
-							'Token Address',
-							address(tokenAddress as `0x${string}`),
-						),
-						row(
-							'Spender',
-							address(approval.spender_address as `0x${string}`),
-						),
-						row(
-							'Approval Amount',
-							text(approval.approve_amount.toString()),
-						),
-						divider(),
+						<Box
+							key={`approval-${tokenAddress}-${approval.spender_address}`}
+						>
+							<Row label="Token">
+								<Value
+									value={`${tokenName} (${symbol})`}
+									extra=""
+								/>
+							</Row>
+							<Row label="Token Address">
+								<Address
+									address={tokenAddress as `0x${string}`}
+								/>
+							</Row>
+							<Row label="Spender">
+								<Address
+									address={
+										approval.spender_address as `0x${string}`
+									}
+								/>
+							</Row>
+							<Row label="Approval Amount">
+								<Value
+									value={approval.approve_amount.toString()}
+									extra=""
+								/>
+							</Row>
+						</Box>,
 					);
 				}
 			}
 		}
 	}
-	if (approvalChanges.length > 0) {
-		contentArray.push(
-			heading('⚠️ Approval Changes ⚠️'),
-			...approvalChanges,
-		);
+
+	if (involved_addresses.length > 0) {
+		const accounts = (await ethereum.request({ method: 'eth_accounts' })) as string[];
+		console.log('Connected accounts:', accounts);
+		if (accounts) {
+			const similarityResult = addressPoisoningDetection(
+				accounts,
+				involved_addresses,
+			);
+			if (similarityResult != null) {
+				addressPoisoningContent.push(similarityResult);
+			}
+		}
 	}
 
-	if (positiveBalanceChanges.length > 0) {
-		contentArray.push(
-			heading('⬇️ Asset Inflows ⬇️'),
-			...positiveBalanceChanges,
-		);
-	}
-	if (negativeBalanceChanges.length > 0) {
-		contentArray.push(
-			heading('⚠️ Asset Outflows ⚠️'),
-			...negativeBalanceChanges,
-		);
-	}
-	if (
-		positiveBalanceChanges.length == 0 &&
-		negativeBalanceChanges.length == 0
-	) {
-		contentArray.push(text('No balance changes found'));
-	}
-	contentArray.push(divider());
-	return contentArray;
+	return (
+		<Box>
+			{addressPoisoningContent.length > 0 && (
+				<Box>
+					<Heading>Address Poisoning</Heading>
+					<Section>{addressPoisoningContent}</Section>
+				</Box>
+			)}
+			{approvalChanges.length > 0 && (
+				<Box>
+					<Heading>Approval Changes</Heading>
+					<Section>{approvalChanges}</Section>
+				</Box>
+			)}
+
+			{positiveBalanceChanges.length > 0 && (
+				<Box>
+					<Heading>⬇️ Asset Inflows ⬇️</Heading>
+					<Section>{positiveBalanceChanges}</Section>
+				</Box>
+			)}
+
+			{negativeBalanceChanges.length > 0 && (
+				<Box>
+					<Heading>⚠️ Asset Outflows ⚠️</Heading>
+					<Section>{negativeBalanceChanges}</Section>
+				</Box>
+			)}
+
+			{positiveBalanceChanges.length === 0 &&
+				negativeBalanceChanges.length === 0 && (
+					<Text>No balance changes found</Text>
+				)}
+		</Box>
+	);
 }
 
 function createErrorContent(resp: any) {
-	const contentArray: any[] = [];
 	console.log('Error Code:', resp.code);
 
 	if (resp.code == '0040005') {
-		contentArray.push(
-			heading('⚠️ Transaction Simulation Failed ⚠️'),
-			text(
-				'The transaction simulation reverted. This transaction will likely fail.',
-			),
+		return (
+			<Box>
+				<Heading>⚠️ Transaction Simulation Failed ⚠️</Heading>
+				<Text>
+					The transaction simulation reverted. This transaction will
+					likely fail.
+				</Text>
+			</Box>
 		);
-		console.log('Content Array for 0040005:', contentArray);
 	}
-	else if (resp.code == '0040006') {
-		contentArray.push(
-			heading('Transaction Simulation Failed'),
-			text(
-				'The transaction simulation reverted without a reason. This transaction will likely fail.',
-			),
-			
+
+	if (resp.code == '0040006') {
+		return (
+			<Box>
+				<Heading>Transaction Simulation Failed</Heading>
+				<Text>
+					The transaction simulation reverted without a reason. This
+					transaction will likely fail.
+				</Text>
+			</Box>
 		);
-		console.log('Content Array for 0040006:', contentArray);
 	}
-	else {
-		console.error('Simulation error code:', resp.code), resp.error_data;
-		return null;
-	}
-	return contentArray;
+
+	console.error('Simulation error code:', resp.code, resp.error_data);
+	return null;
 }

@@ -8,13 +8,14 @@ import {
 } from '@metamask/snaps-sdk';
 import { onInstallContent } from './features/content';
 import { extractPublicKeyFromSignature } from './features/cryptography';
+import { Box, Heading, Text, Bold, Divider, Banner } from "@metamask/snaps-sdk/jsx";
 
 export const runInstaller = async () => {
 	await snap.request({
 		method: 'snap_dialog',
 		params: {
 			type: 'alert',
-			content: panel(onInstallContent),
+			content: onInstallContent,
 		},
 	});
 	try {
@@ -107,3 +108,5 @@ async function authenticateHashDitV2(
 
 	return resp;
 }
+
+

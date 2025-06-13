@@ -1,46 +1,65 @@
 /* eslint-disable */
 
 import {
-	heading,
-	panel,
-	text,
-	copyable,
-	divider,
-	address,
-	row,
-	Signature,
-} from '@metamask/snaps-sdk';
+	Box,
+	Heading,
+	Text,
+	Divider,
+	Row,
+	Address,
+	Section,
+	Tooltip,
+	Avatar,
+	Banner,
+} from '@metamask/snaps-sdk/jsx';
+import { toChecksumAddress } from '../utils/utilFunctions';
+
 
 // Perform similarity score to detect address poisoning attacks
 export function addressPoisoningDetection(
 	userAddresses: string[],
 	targetAddresses: string[],
 ) {
-	let resultArray: any[] = [];
 	let similarityResult = detectSimilarity(userAddresses, targetAddresses);
 	if (similarityResult.length > 0) {
-		resultArray.push(
-			heading('Address Poisoning'),
-			text(
-				`You are about to interact with an address that appears similar to one of your personal addresses. This could be an attempt to steal your funds. Please verify the addresses before proceeding.`,
-			),
+		return (
+			<Box>
+				       <Banner title="Danger" severity="danger">
+          <Text>High Risk: Please review transaction details carefully.</Text>
+        </Banner>
+				{similarityResult.map((result, index) => (
+					<Box key={`address-poisoning-${index}`}>
+						<Row label="Risk Level" variant="critical">
+							<Text>{result.similarityRiskLevel || ''}</Text>
+						</Row>
+						<Row label="Your Address">
+							<Address
+								address={result.userAddress as `0x${string}`}
+							/>
+						</Row>
+						<Row label="Fake Address">
+							<Address
+								address={result.targetAddress as `0x${string}`}
+							/>
+						</Row>
+
+						{index !== similarityResult.length - 1 && <Divider />}
+					</Box>
+				))}
+				
+
+				<Text color="muted">
+					⚠️ Warning: You are about to interact with an address that
+					looks very similar to one of your own addresses. This is a
+					common scam technique called "address poisoning" where
+					scammers create addresses that look similar to yours to
+					trick you into sending funds to the wrong address. Please
+					double-check the address carefully before proceeding.
+				</Text>
+			</Box>
 		);
-		for (var i = 0; i < similarityResult.length; i++) {
-			resultArray.push(
-				row('Your Address', address(similarityResult[i].userAddress)),
-				row(
-					'Similar Address',
-					address(similarityResult[i].targetAddress),
-				),
-				row(
-					'Risk Level',
-					text(`${similarityResult[i].similarityRiskLevel}`),
-				),
-				divider(),
-			);
-		}
 	}
-	return resultArray;
+	return null;
 }
 
 /**
@@ -88,19 +107,19 @@ function detectSimilarity(
 				let similarityRiskLevel;
 				switch (similarityScore) {
 					case 3:
-						similarityRiskLevel = '🚫 **High Risk**';
+						similarityRiskLevel = '🚫 High Risk';
 						break;
 					case 4:
-						similarityRiskLevel = '🚫 **High Risk**';
+						similarityRiskLevel = '🚫 High Risk';
 						break;
 					case 5:
-						similarityRiskLevel = '🚫 **Critical Risk** 🚫';
+						similarityRiskLevel = '🚫 Critical Risk';
 						break;
 				}
 
 				similarityScoreResultArray.push({
-					userAddress,
-					targetAddress,
+					userAddress: toChecksumAddress(userAddress),
+					targetAddress: toChecksumAddress(targetAddress),
 					similarityRiskLevel,
 				});
 			}

@@ -1,4 +1,12 @@
-import { heading, row, text, divider, Component } from '@metamask/snaps-sdk';
+import {
+	Heading,
+	Row,
+	Text,
+	Divider,
+	Box,
+	Value,
+	Section,
+} from '@metamask/snaps-sdk/jsx';
 import { getRiskLevelText, getRiskLevelColor } from '../utils/utilFunctions';
 
 type DomainSecurityResponse = {
@@ -16,7 +24,7 @@ type DomainSecurityResponse = {
 export async function callDomainSecurity(
 	transactionUrl?: any,
 	apiKey?: any,
-): Promise<Component[] | null> {
+): Promise<JSX.Element | null> {
 	if (!transactionUrl) {
 		return null;
 	}
@@ -45,30 +53,40 @@ export async function callDomainSecurity(
 			const riskLevel = resp.data.risk_level;
 			const riskLevelText = getRiskLevelText(riskLevel);
 			const riskLevelColor = getRiskLevelColor(riskLevel);
+			const riskVariant =
+				riskLevel >= 4
+					? 'critical'
+					: riskLevel === 3
+						? 'warning'
+						: 'default';
 
-			const contentArray: Component[] = [
-				heading('Website Security Check'),
-				row('Website', text(transactionUrl)),
-				row('Risk Level', text(`${riskLevelColor} ${riskLevelText}`)),
-			];
-
-			// Add appropriate message based on risk level
-			if (riskLevel === 0) {
-				contentArray.push(
-					text(
-						'This website appears to be safe based on our security analysis.',
-					),
-				);
-			} else {
-				contentArray.push(
-					text(
-						'Please exercise caution when interacting with this website.',
-					),
-				);
-			}
-
-			contentArray.push(divider());
-			return contentArray;
+			return (
+				<Box>
+					<Heading>Website Security Check</Heading>
+					<Section>
+						<Row label="Website">
+							<Value value={`${transactionUrl}`} extra="" />
+						</Row>
+						<Row label="Risk Level" variant={riskVariant}>
+							<Value
+								value={`${riskLevelColor} ${riskLevelText}`}
+								extra=""
+							/>
+						</Row>
+						{riskLevel === 0 ? (
+							<Text color="muted">
+								This website appears to be safe based on our
+								security analysis.
+							</Text>
+						) : (
+							<Text color="muted">
+								Please exercise caution when interacting with
+								this website.
+							</Text>
+						)}
+					</Section>
+				</Box>
+			);
 		}
 	} catch (error) {
 		console.error('Domain security check failed:', error);
