@@ -36,11 +36,107 @@ import { callDomainSecurity } from './features/blacklistCheck';
 import { callTransactionSimulation } from './features/SimulationCheck';
 import { callHashDitAddressSecurityV2 } from './features/AddressCheck';
 import {TransactionInsight} from './features/TransactionInsight';
+import { Box, Heading, Text, Bold, Divider } from "@metamask/snaps-sdk/jsx";
 
 
+const test = (
+	<Box>
+		<Heading>🚀 HashDit Security Snap - Installation Complete!</Heading>
+		
+		<Text>
+			<Bold>Welcome to enhanced Web3 security!</Bold> Your snap is now ready to protect you from malicious transactions, phishing attempts, and security threats.
+		</Text>
+
+		<Divider />
+
+		<Heading>⚡ Quick Setup (2 minutes)</Heading>
+		
+		<Text><Bold>1. Connect Your Accounts</Bold></Text>
+		<Text>
+			Connect all your MetaMask accounts to enable comprehensive protection across your entire wallet.
+		</Text>
+		
+		<Text><Bold>2. Complete Authentication</Bold></Text>
+		<Text>
+			Sign the security message to activate real-time threat detection and analysis features.
+		</Text>
+
+		<Divider />
+
+		<Heading>🛡️ What You're Protected Against</Heading>
+		
+		<Text>✅ <Bold>Transaction Analysis</Bold> - Smart contract security verification</Text>
+		<Text>✅ <Bold>Address Poisoning</Bold> - Detection of malicious address patterns</Text>
+		<Text>✅ <Bold>Signature Insights</Bold> - Understanding what you're signing</Text>
+		<Text>✅ <Bold>Blacklist Checking</Bold> - Known malicious addresses and URLs</Text>
+		<Text>✅ <Bold>Unverified Contracts</Bold> - Warnings for risky smart contracts</Text>
+
+		<Divider />
+
+		<Heading>📚 Resources & Support</Heading>
+		
+		<Text>
+			📖 <Bold>Getting Started</Bold>: [Quick Guide](https://hashdit.gitbook.io/hashdit-snap/usage/how-to-use-hashdit-snap)
+		</Text>
+		<Text>
+			🌐 <Bold>Official Website</Bold>: [HashDit.io](https://www.hashdit.io/en/snap)
+		</Text>
+		<Text>
+			❓ <Bold>Need Help?</Bold>: [FAQ & Support](https://hashdit.gitbook.io/hashdit-snap/information/faq-and-knowledge-base)
+		</Text>
+		<Text>
+			📝 <Bold>Feedback</Bold>: [1-Minute Survey](https://forms.gle/fgjAgVjUSyjuDS5BA)
+		</Text>
+
+		<Divider />
+
+		<Heading>🎉 You're All Set!</Heading>
+		<Text>
+			HashDit Snap will now automatically analyze your transactions and warn you of potential security risks. Stay safe in Web3!
+		</Text>
+	</Box>
+);
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-	await runInstaller();
+	//await runInstaller();
+	console.log('onInstall');
+	// return {
+	// 	content: (
+	// 	  <Box>
+	// 		<Heading>Features</Heading>
+	// 		<Box
+	// 		  direction="horizontal"
+	// 		  alignment="space-around"
+			 
+	// 		>
+	// 		  <Text>Feature 1</Text>
+	// 		  <Text>Feature 2</Text>
+	// 		  <Text>Feature 3</Text>
+	// 		</Box>
+	// 	  </Box>
+	// 	),
+	//   };
+	await snap.request({
+		method: 'snap_dialog',
+		params: {
+			type: 'alert',
+			content: (
+					  <Box>
+						<Heading>Features</Heading>
+						<Box
+						  direction="horizontal"
+						  alignment="space-around"
+						 
+						>
+						  <Text>Feature 1</Text>
+						  <Text>Feature 2</Text>
+						  <Text>Feature 3</Text>
+						</Box>
+					  </Box>
+					) 
+		},
+	});
+
 };
 
 // Called during a signature request transaction. Show insights
