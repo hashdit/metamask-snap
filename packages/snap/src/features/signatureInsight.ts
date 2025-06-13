@@ -37,7 +37,7 @@ export interface SignatureParsed {
 
 // Determine if the signature is a Permit signature.
 export async function parseSignature(signature: Signature, apiKey: any) {
-	console.log('parseSignature', signature, apiKey);
+
 	// We consider personal_sign to be safe
 	if (signature.signatureMethod == 'personal_sign') {
 		return personalSignatureContent();
@@ -90,12 +90,12 @@ export async function parseSignature(signature: Signature, apiKey: any) {
 
 		return null;
 	}
-	console.log(
-		'callHashDitAPIForSignatureInsight',
-		primaryType,
-		spender,
-		apiKey,
-	);
+	// console.log(
+	// 	'callHashDitAPIForSignatureInsight',
+	// 	primaryType,
+	// 	spender,
+	// 	apiKey,
+	// );
 	return await callHashDitAPIForSignatureInsight(
 		primaryType,
 		spender,

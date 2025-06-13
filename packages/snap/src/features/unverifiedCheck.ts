@@ -17,7 +17,7 @@ export async function verifyContractAndFunction(
 ): Promise<Component[]> {
 	const resultArray: Component[] = [];
 
-	console.log('verifyContractAndFunction()', transaction, chainNumber, apiKey);
+	//console.log('verifyContractAndFunction()', transaction, chainNumber, apiKey);
 
 	if (chainNumber == '56' || chainNumber == '1') {
 		const isDestinationVerifiedResult = await isDestinationVerified(
@@ -46,7 +46,7 @@ export async function verifyContractAndFunction(
 	// If isDestinationVerifiedResult returns null, or if chain not supported, continue.
 	// Validate transaction data and extract function selector
 	if (!transaction.data || typeof transaction.data !== 'string' || transaction.data.length < 10) {
-		console.log('No valid transaction data found - skipping function validation');
+		//console.log('No valid transaction data found - skipping function validation');
 		return resultArray;
 	}
 
@@ -54,7 +54,7 @@ export async function verifyContractAndFunction(
 	
 	// Check if it's not just zeros (which might indicate no function call)
 	if (functionSelector === '0x00000000') {
-		console.log('Function selector is all zeros - skipping function validation');
+		//console.log('Function selector is all zeros - skipping function validation');
 		return resultArray;
 	}
 
@@ -145,7 +145,7 @@ async function isDestinationVerified(
 			return null;
 		}
 
-		console.log('address-classify', JSON.stringify(resp, null, 2));
+		//console.log('address-classify', JSON.stringify(resp, null, 2));
 		// Only check verification status if it's a contract
 		if (resp.data.address_type === 'Contract') {
 			if(resp.data.details.is_verified == true) {

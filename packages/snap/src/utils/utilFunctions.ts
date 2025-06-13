@@ -42,7 +42,7 @@ export function getRiskLevelText(riskLevel: number): string {
 		case 1:
 			return 'Low';
 		case 2:
-			return 'Medium';
+			return 'Low';
 		case 3:
 			return 'Medium';
 		case 4:
@@ -61,7 +61,7 @@ export function getRiskLevelColor(riskLevel: number): string {
 		case 1:
 			return '🟢';
 		case 2:
-			return '🟠';
+			return '🟢';
 		case 3:
 			return '🟠';
 		case 4:

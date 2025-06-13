@@ -88,10 +88,10 @@ function detectSimilarity(
 				let similarityRiskLevel;
 				switch (similarityScore) {
 					case 3:
-						similarityRiskLevel = '⛔ High Risk ⛔';
+						similarityRiskLevel = '🚫 **High Risk**';
 						break;
 					case 4:
-						similarityRiskLevel = '⛔ High Risk ⛔';
+						similarityRiskLevel = '🚫 **High Risk**';
 						break;
 					case 5:
 						similarityRiskLevel = '🚫 **Critical Risk** 🚫';

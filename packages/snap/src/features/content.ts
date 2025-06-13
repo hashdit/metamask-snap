@@ -28,7 +28,7 @@ export const onInstallContent = [
 		'Please help improve HashDit Snap by taking our 1 minute survey: [Survey](https://forms.gle/fgjAgVjUSyjuDS5BA)',
 	),
 	text(
-		'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)',
+		'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/snap)',
 	),
 	text(
 		'Installation Guide: [Installation](https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap)',
@@ -58,7 +58,7 @@ export const onHomePageContent = [
 		'Please help improve HashDit Snap by taking our 1 minute survey: [Survey](https://forms.gle/fgjAgVjUSyjuDS5BA)',
 	),
 	text(
-		'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/en/snap)',
+		'HashDit Snap Official Website: [Hashdit](https://www.hashdit.io/snap)',
 	),
 	text(
 		'Installation Guide: [Installation](https://hashdit.gitbook.io/hashdit-snap/usage/installing-hashdit-snap)',
@@ -83,3 +83,10 @@ export const errorContent = [
 		'If this is your first time installing HashDit Snap, this message is expected. An error occurred while retrieving the risk details for this transaction. If the issue persists, please try reinstalling HashDit Snap and try again.',
 	),
 ];
+
+export const notSupportedChainContent=[
+	heading('HashDit Security Insights'),
+	text(
+		'Sorry! This blockchain network is not currently supported by HashDit Security Insights. Full security analysis is available for **Ethereum** and **Binance Smart Chain** networks.',
+	),
+]

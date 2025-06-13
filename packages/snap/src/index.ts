@@ -29,11 +29,14 @@ import {
 	onInstallContent,
 	onHomePageContent,
 	errorContent,
+	notSupportedChainContent,
 } from './features/content';
 import { runInstaller } from './installer';
 import { callDomainSecurity } from './features/blacklistCheck';
 import { callTransactionSimulation } from './features/SimulationCheck';
 import { callHashDitAddressSecurityV2 } from './features/AddressCheck';
+import {TransactionInsight} from './features/TransactionInsight';
+
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -45,7 +48,7 @@ export const onSignature: OnSignatureHandler = async ({
 	signature,
 	signatureOrigin,
 }) => {
-	console.log('onSignature', signature, signatureOrigin);
+	//console.log('onSignature', signature, signatureOrigin);
 	try {
 		const persistedUserData = await snap.request({
 			method: 'snap_manageState',
@@ -53,7 +56,7 @@ export const onSignature: OnSignatureHandler = async ({
 		});
 
 		if (persistedUserData !== null) {
-			console.log('persistedUserData', persistedUserData);
+	
 			let contentArray: any[] = [];
 
 			const signatureContent = await parseSignature(
@@ -68,7 +71,7 @@ export const onSignature: OnSignatureHandler = async ({
 
 			// Merge the signature parsing results if they exist
 			if (signatureContent != null && Array.isArray(signatureContent)) {
-				console.log(signatureContent, 'signatureContent');
+				//console.log(signatureContent, 'signatureContent');
 				contentArray.push(...signatureContent);
 			}
 
@@ -77,13 +80,13 @@ export const onSignature: OnSignatureHandler = async ({
 				domainSecurityContent != null &&
 				Array.isArray(domainSecurityContent)
 			) {
-				console.log(domainSecurityContent, 'domainSecurityContent');
+				//console.log(domainSecurityContent, 'domainSecurityContent');
 				contentArray.push(...domainSecurityContent);
 			}
 
 			if (contentArray.length > 0) {
 				const content = panel(contentArray);
-				console.log(contentArray, 'final content array');
+		
 				return { content };
 			}
 		}
@@ -111,40 +114,20 @@ export const onTransaction: OnTransactionHandler = async ({
 	console.log('Chain :', chainNumber);
 	console.log('Transaction Origin:', transactionOrigin);
 
+
+
+
+
 	const persistedUserData = await snap.request({
 		method: 'snap_manageState',
 		params: { operation: 'get' },
 	});
 	if (persistedUserData !== null) {
+
+
 		const apiKey = persistedUserData.DiTingApiKey;
-		console.log('apiKey', apiKey);
+
 		let contentArray: any[] = [];
-
-		const verifiedContractAndFunctionContent =
-			await verifyContractAndFunction(transaction, chainNumber, apiKey);
-		if (
-			verifiedContractAndFunctionContent != null &&
-			Array.isArray(verifiedContractAndFunctionContent)
-		) {
-			console.log(
-				verifiedContractAndFunctionContent,
-				'verifiedContractAndFunctionContent',
-			);
-			contentArray.push(...verifiedContractAndFunctionContent);
-		}
-
-		const addressSecurityContent = await callHashDitAddressSecurityV2(
-			chainNumber,
-			transaction.to,
-			apiKey,
-		);
-		if (
-			addressSecurityContent != null &&
-			Array.isArray(addressSecurityContent)
-		) {
-			console.log(addressSecurityContent, 'addressSecurityContent');
-			contentArray.push(...addressSecurityContent);
-		}
 
 		const domainSecurityContent = await callDomainSecurity(
 			transactionOrigin,
@@ -154,10 +137,44 @@ export const onTransaction: OnTransactionHandler = async ({
 			domainSecurityContent != null &&
 			Array.isArray(domainSecurityContent)
 		) {
-			console.log(domainSecurityContent, 'domainSecurityContent');
+			// console.log(domainSecurityContent, 'domainSecurityContent');
 			contentArray.push(...domainSecurityContent);
 		}
 
+		// Only support Ethereum and BSC Mainnet
+		if(chainNumber == '1' || chainNumber == '56'){
+			const transactionInsightContent = await TransactionInsight(
+				transaction,
+				transactionOrigin,
+				chainNumber,
+				apiKey,
+			);
+			
+			// Add transaction insight content if it exists
+			if (
+				transactionInsightContent != null &&
+				Array.isArray(transactionInsightContent)
+			) {
+				contentArray.push(...transactionInsightContent);
+			}
+
+			const callTransactionSimulationContent = await callTransactionSimulation(
+				apiKey,
+				chainNumber,
+				transaction.to,
+				transaction.from,
+				transaction.gas,
+				transaction.value,
+				transaction.data,
+			);
+			if (callTransactionSimulationContent != null && Array.isArray(callTransactionSimulationContent)) {
+				contentArray.push(...callTransactionSimulationContent);
+			}
+	
+		}
+		else{
+			contentArray.push(...notSupportedChainContent);
+		}
 		const content = panel(contentArray);
 		return { content };
 	}

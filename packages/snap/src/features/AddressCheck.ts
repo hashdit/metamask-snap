@@ -19,7 +19,7 @@ export async function callHashDitAddressSecurityV2(
 	addressToCheck: string,
 	apiKey: any,
 ) {
-	console.log('callHashDitAddressSecurityV2', chainNumber, addressToCheck, apiKey);
+
 
 	const requestBody = [
 		{
@@ -47,10 +47,10 @@ export async function callHashDitAddressSecurityV2(
 		}
 
 		const resp = await response.json();
-		console.log(
-			'callHashDitAddressSecurityV2() response:',
-			JSON.stringify(resp, null, 2),
-		);
+		// console.log(
+		// 	'callHashDitAddressSecurityV2() response:',
+		// 	JSON.stringify(resp, null, 2),
+		// );
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
@@ -82,28 +82,23 @@ function parseHashditAddressSecurityV2(resp: any) {
 	let hasWhitelist = false;
 	let hasBlacklist = false;
 	let hasRedAlarm = false;
+	risk_level = dataItem.risk_level ?? "-1";
 
 	// Check if risk_detail exists and has entries
 	if (dataItem.risk_detail && dataItem.risk_detail.length > 0) {
 		hasRedAlarm = dataItem.risk_detail.some(
-			(detail: any) => detail.name === 'red_alarm',
+			(detail: any) => detail.name === 'red_alarm' && risk_level >= 4
 		);
 		hasWhitelist = dataItem.risk_detail.some(
-			(detail: any) => detail.name === 'is_in_wlist',
+			(detail: any) => detail.name === 'is_in_wlist'  && risk_level == 0,
 		);
 		hasBlacklist = dataItem.risk_detail.some(
-			(detail: any) => detail.name === 'is_in_blist',
+			(detail: any) => detail.name === 'is_in_blist'  && risk_level >= 4,
 		);
 
-		console.log(
-            risk_level,
-			hasRedAlarm,
-			hasWhitelist,
-			hasBlacklist,
-			'risk_level, hasRedAlarm, hasWhitelist, hasBlacklist',
-		);
+
 	}
-	risk_level = dataItem.risk_level ?? "-1";
+
     const riskLevelText = getRiskLevelText(risk_level);
     const riskLevelColor = getRiskLevelColor(risk_level);
 
@@ -172,7 +167,7 @@ export async function callHashDitAddressSecurityV2_SignatureInsight(
 	spenderAddress: string,
 	apiKey: any,
 ) {
-	console.log('callHashDitAddressSecurityV2_SignatureInsight', chainNumber, spenderAddress, apiKey);
+	
 
 	const requestBody = [
 		{
@@ -200,10 +195,10 @@ export async function callHashDitAddressSecurityV2_SignatureInsight(
 		}
 
 		const resp = await response.json();
-		console.log(
-			'callHashDitAddressSecurityV2() response:',
-			JSON.stringify(resp, null, 2),
-		);
+		// console.log(
+		// 	'callHashDitAddressSecurityV2_sig() response:',
+		// 	JSON.stringify(resp, null, 2),
+		// );
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
@@ -215,7 +210,7 @@ export async function callHashDitAddressSecurityV2_SignatureInsight(
 		}
 	} catch (error) {
 		console.error(
-			`Error when checking address: ${addressToCheck} on chain ${chainNumber}:`,
+			`Error when checking address: ${spenderAddress} on chain ${chainNumber}:`,
 			error,
 		);
 		return null;
@@ -248,13 +243,13 @@ function parseHashditAddressSecurityV2_SignatureInsight(resp: any, spenderAddres
 			(detail: any) => detail.name === 'is_in_blist',
 		);
 
-		console.log(
-            risk_level,
-			hasRedAlarm,
-			hasWhitelist,
-			hasBlacklist,
-			'risk_level, hasRedAlarm, hasWhitelist, hasBlacklist',
-		);
+		// console.log(
+        //     risk_level,
+		// 	hasRedAlarm,
+		// 	hasWhitelist,
+		// 	hasBlacklist,
+		// 	'risk_level, hasRedAlarm, hasWhitelist, hasBlacklist',
+		// );
 	}
 	risk_level = dataItem.risk_level ?? "-1";
     const riskLevelText = getRiskLevelText(risk_level);
@@ -283,7 +278,7 @@ async function createContentForAddressSecurityV2_SignatureInsight(
 	if (isSpenderEOA) {
 		contentArray.push(
 			heading('Spender Screen'),
-			row('Risk Level', text('🚫 Critical Risk 🚫')),
+			row('Risk Level', text('🚫 **Critical Risk**')),
 			row('Spender', address(spenderAddress)),
 			text(
 				'🚨 SCAM WARNING: This approval gives someone direct access to spend your tokens WITHOUT asking permission again. They can drain your current balance AND any future tokens you receive of this type. This is likely a scam - REJECT immediately to protect your funds.',
@@ -297,7 +292,7 @@ async function createContentForAddressSecurityV2_SignatureInsight(
 	if (hasBlacklist) {
 		contentArray.push(
 			heading('Spender Screen'),
-			row('Risk Level', text('🚫 Critical Risk 🚫')),
+			row('Risk Level', text('🚫 **Critical Risk**')),
 			row('Spender', address(spenderAddress)),
 			text(
 				'🚨 SCAM WARNING: This approval gives an address **BLACKLISTED** by HashDit direct access to spend your tokens WITHOUT asking permission again. They can drain your current balance AND any future tokens you receive of this type. This is likely a scam - REJECT immediately to protect your funds',
