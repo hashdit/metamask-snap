@@ -71,7 +71,7 @@ export async function callTransactionSimulation(
 
 		if (!response.ok) {
 			console.error(`HTTP error! Status: ${response.status}`);
-			return null;
+			return createErrorContent('9999990');
 		}
 
 		const resp = await response.json();
@@ -95,11 +95,11 @@ export async function callTransactionSimulation(
 				involved_addresses,
 			);
 		} else {
-			return createErrorContent(resp);
+			return createErrorContent(resp.code);
 		}
 	} catch (error) {
 		console.error(`Error when calling simulation insight:${error}`, error);
-		return null;
+		return createErrorContent('9999999');
 	}
 }
 
@@ -142,6 +142,7 @@ async function createSimulationContent(
 	const negativeBalanceChanges: JSX.Element[] = [];
 	const approvalChanges: JSX.Element[] = [];
 	const addressPoisoningContent: JSX.Element[] = [];
+	let maxRiskLevel = 0;
 
 	if (balance_changes) {
 		for (const item of balance_changes) {
@@ -173,16 +174,34 @@ async function createSimulationContent(
 
 				const rowContent = (
 					<Box>
-						<Card
-							title={symbol}
-							description={tokenName}
-							value={`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}
-							extra={`${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`}
-						/>
-						{Object.keys(balance_changes).indexOf(key) !==
-							Object.keys(balance_changes).length - 1 && (
+						<Box>
+							<Box direction="horizontal">
+								<Text>{tokenName}</Text>
+								<Text color="muted">{`(${symbol})`}</Text>
+							</Box>
+							<Box direction="horizontal" alignment="space-between">
+								<Text
+									color={
+										numericValue > 0 ? 'success' : 'error'
+									}
+								>{`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}</Text>
+								<Text color="muted">{`${tokenDetail?.tokenPriceUSD ? `$${transferAmountInUSD} USD` : ''}`}</Text>
+							</Box>
+
 							<Divider />
-						)}
+						</Box>
+						{/* <Box>
+							<Card
+								title={symbol}
+								description={tokenName}
+								value={`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}
+								extra={`${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`}
+							/>
+							{Object.keys(balance_changes).indexOf(key) !==
+								Object.keys(balance_changes).length - 1 && (
+								<Divider />
+							)}
+						</Box> */}
 					</Box>
 				);
 
@@ -224,16 +243,15 @@ async function createSimulationContent(
 					spender_address: string;
 				}>;
 
+				// TODO: Change tokenName and symbol order?
 				for (const approval of approvalList) {
 					approvalChanges.push(
 						<Box
 							key={`approval-${tokenAddress}-${approval.spender_address}`}
 						>
 							<Row label="Token">
-								<Value
-									value={`${tokenName} (${symbol})`}
-									extra=""
-								/>
+								//
+								<Value value={tokenName} extra={`(${symbol})`} />
 							</Row>
 							<Row label="Token Address">
 								<Address
@@ -247,7 +265,7 @@ async function createSimulationContent(
 									}
 								/>
 							</Row>
-							<Row label="Approval Amount">
+							<Row label="Amount">
 								<Value
 									value={approval.approve_amount.toString()}
 									extra=""
@@ -261,20 +279,23 @@ async function createSimulationContent(
 	}
 
 	if (involved_addresses.length > 0) {
-		const accounts = (await ethereum.request({ method: 'eth_accounts' })) as string[];
+		const accounts = (await ethereum.request({
+			method: 'eth_accounts',
+		})) as string[];
 		console.log('Connected accounts:', accounts);
 		if (accounts) {
-			const similarityResult = addressPoisoningDetection(
+			const [similarityResult, riskLevel] = addressPoisoningDetection(
 				accounts,
 				involved_addresses,
-			);
-			if (similarityResult != null) {
+			) as [JSX.Element | null, number];
+			if (similarityResult) {
 				addressPoisoningContent.push(similarityResult);
 			}
+			maxRiskLevel = riskLevel;
 		}
 	}
 
-	return (
+	return [
 		<Box>
 			{addressPoisoningContent.length > 0 && (
 				<Box>
@@ -307,37 +328,54 @@ async function createSimulationContent(
 				negativeBalanceChanges.length === 0 && (
 					<Text>No balance changes found</Text>
 				)}
-		</Box>
-	);
+		</Box>,
+		maxRiskLevel,
+	];
 }
 
-function createErrorContent(resp: any) {
-	console.log('Error Code:', resp.code);
+function createErrorContent(respCode: any) {
+	console.log('Error Code:', respCode);
 
-	if (resp.code == '0040005') {
-		return (
+	if (respCode == '0040005') {
+		return [
 			<Box>
-				<Heading>⚠️ Transaction Simulation Failed ⚠️</Heading>
-				<Text>
-					The transaction simulation reverted. This transaction will
-					likely fail.
-				</Text>
-			</Box>
-		);
+				<Heading>Transaction Simulation Failed </Heading>
+				<Section>
+					<Text color="warning">
+						The transaction simulation reverted. This transaction
+						will likely fail.
+					</Text>
+				</Section>
+			</Box>,
+			3,
+		];
 	}
 
-	if (resp.code == '0040006') {
-		return (
+	if (respCode == '0040006') {
+		return [
 			<Box>
 				<Heading>Transaction Simulation Failed</Heading>
-				<Text>
-					The transaction simulation reverted without a reason. This
-					transaction will likely fail.
-				</Text>
-			</Box>
-		);
+				<Section>
+					<Text color="warning">
+						The transaction simulation reverted without a reason.
+						This transaction will likely fail.
+					</Text>
+				</Section>
+			</Box>,
+			3,
+		];
+	} else {
+		return [
+			<Box>
+				<Heading>Transaction Simulation Failed</Heading>
+				<Section>
+					<Text color="warning">
+						The transaction simulation failed with code: {respCode}.
+						Please try again or try reinstalling the extension.
+					</Text>
+				</Section>
+			</Box>,
+			3,
+		];
 	}
-
-	console.error('Simulation error code:', resp.code, resp.error_data);
-	return null;
 }

@@ -24,9 +24,9 @@ type DomainSecurityResponse = {
 export async function callDomainSecurity(
 	transactionUrl?: any,
 	apiKey?: any,
-): Promise<JSX.Element | null> {
+): Promise<[JSX.Element | null, number]> {
 	if (!transactionUrl) {
-		return null;
+		return [null, 0];
 	}
 
 	const requestBody = {
@@ -60,7 +60,7 @@ export async function callDomainSecurity(
 						? 'warning'
 						: 'default';
 
-			return (
+			return [
 				<Box>
 					<Heading>Website Security Check</Heading>
 					<Section>
@@ -86,10 +86,10 @@ export async function callDomainSecurity(
 						)}
 					</Section>
 				</Box>
-			);
+			, riskLevel];
 		}
 	} catch (error) {
 		console.error('Domain security check failed:', error);
 	}
-	return null;
+	return [null, 0];
 }

@@ -60,7 +60,7 @@ export const TransactionInsight = async (
 		// Check for HTTP errors
 		if (!response.ok) {
 			console.error(`HTTP error! Status: ${response.status}`);
-			return null;
+			return [null, 0];
 		}
 
 		const resp = await response.json();
@@ -74,11 +74,11 @@ export const TransactionInsight = async (
 			return parseTransactionInsight(resp);
 		} else {
 			console.error('Unexpected response:', resp);
-			return null;
+			return [null, 0];
 		}
 	} catch (error) {
 		console.error(`Error when calling transaction insight:${error}`, error);
-		return null;
+		return [null, 0];
 	}
 };
 
@@ -86,47 +86,47 @@ function parseTransactionInsight(resp: any) {
 	const overallRisk = resp.overall_risk;
 	const riskDetails = resp.risk_details || [];
 
-	let riskLevelText = 'Unknown';
-	let riskLevelColor = '❔';
-	let riskVariant: 'default' | 'critical' | 'warning' = 'default';
+	//let riskLevelText = 'Unknown';
+	// let riskLevelColor = '❔';
+	// let riskVariant: 'default' | 'critical' | 'warning' = 'default';
 
-	if (overallRisk === 5) {
-		riskLevelText = 'Critical';
-		riskLevelColor = '🚫';
-		riskVariant = 'critical';
-	} else if (overallRisk === 4) {
-		riskLevelText = 'High';
-		riskLevelColor = '🚫';
-		riskVariant = 'critical';
-	} else if (overallRisk === 3) {
-		riskLevelText = 'Medium';
-		riskLevelColor = '🟠';
-		riskVariant = 'warning';
-	} else if (overallRisk >= 1) {
-		riskLevelText = 'Low';
-		riskLevelColor = '🟢';
-		riskVariant = 'default';
-	} else if (overallRisk === 0) {
-		riskLevelText = 'Safe';
-		riskLevelColor = '✅';
-		riskVariant = 'default';
-	}
+	// if (overallRisk === 5) {
+	// 	riskLevelText = 'Critical';
+	// 	riskLevelColor = '🚫';
+	// 	riskVariant = 'critical';
+	// } else if (overallRisk === 4) {
+	// 	riskLevelText = 'High';
+	// 	riskLevelColor = '🚫';
+	// 	riskVariant = 'critical';
+	// } else if (overallRisk === 3) {
+	// 	riskLevelText = 'Medium';
+	// 	riskLevelColor = '🟠';
+	// 	riskVariant = 'warning';
+	// } else if (overallRisk >= 1) {
+	// 	riskLevelText = 'Low';
+	// 	riskLevelColor = '🟢';
+	// 	riskVariant = 'default';
+	// } else if (overallRisk === 0) {
+	// 	riskLevelText = 'Safe';
+	// 	riskLevelColor = '✅';
+	// 	riskVariant = 'default';
+	// }
 
-	return (
+	return [
 		<Box>
 			<Heading>Transaction Security Analysis</Heading>
 
 			<Section>
-				<Row label="Overall Risk" variant={riskVariant}>
+				{/* <Row label="Overall Risk" variant={riskVariant}>
 					<Value
 						value={`${riskLevelColor} ${riskLevelText}`}
 						extra=""
 					/>
-				</Row>
+				</Row> */}
 
 				{riskDetails.length > 0 ? (
 					<Box>
-						<Divider />
+		
 						{riskDetails.map((detail: any, idx: number) => {
 							const detailRiskText = getRiskLevelText(
 								detail.risk,
@@ -198,7 +198,7 @@ function parseTransactionInsight(resp: any) {
 					</Box>
 				) : (
 					<Box>
-						<Divider />
+		
 						{overallRisk === 5 && (
 							<Row label="Warning" variant="critical">
 								<Value
@@ -244,7 +244,7 @@ function parseTransactionInsight(resp: any) {
 				)}
 			</Section>
 		</Box>
-	);
+		, overallRisk];
 }
 
 function formatRiskName(name: string): string {

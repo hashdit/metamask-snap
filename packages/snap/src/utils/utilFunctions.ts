@@ -1,4 +1,7 @@
 import { keccak256 } from 'js-sha3';
+
+type Severity = "danger" | "info" | "success" | "warning";
+
 export function toChecksumAddress(address: string): string {
 	// Remove '0x' prefix and convert to lowercase
 	address = address.toLowerCase().replace('0x', '');
@@ -72,3 +75,23 @@ export function getRiskLevelColor(riskLevel: number): string {
 			return '❔';
 	}
 }
+
+export function riskLevelToBannerValues(riskLevel: number): [Severity, string, string] {	
+	switch (riskLevel) {
+		case 0:
+			return ['success', 'Safe', 'This transaction appears safe. However, we recommend reviewing all transaction details before proceeding.'];
+		case 1:
+			return ['info', 'Low Risk', 'This transaction poses a low risk. We recommend reviewing all transaction details before proceeding.'];
+		case 2:
+			return ['info', 'Low Risk', 'This transaction poses a low risk. We recommend reviewing all transaction details before proceeding.'];
+		case 3:
+			return ['warning', 'Medium Risk', 'This transaction poses a medium risk. We recommend reviewing all transaction details carefully before proceeding.'];
+		case 4:
+			return ['danger', 'High Risk', 'This transaction poses a high risk. We strongly recommend rejecting this transaction.'];
+		case 5:
+			return ['danger', 'Critical Risk', 'This transaction poses a critical risk. We strongly recommend rejecting this transaction immediately.'];
+		default:
+			return ['info', 'Unknown Risk', 'We could not determine the risk level of this transaction. Please review all transaction details carefully before proceeding.'];
+	}
+}
+

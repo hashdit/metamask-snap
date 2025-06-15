@@ -14,17 +14,6 @@ import {
 	address,
 	row,
 } from '@metamask/snaps-sdk';
-
-import {
-	isEOA,
-	determineTransactionAndDestinationRiskInfo,
-} from './features/utils';
-import { parseSignature } from './features/signatureInsight';
-import { addressPoisoningDetection } from './features/AddressPoisoning';
-import { verifyContractAndFunction } from './features/unverifiedCheck';
-
-import { callDiTingTxSimulation } from './features/SimulationUtils';
-import { extractPublicKeyFromSignature } from './features/cryptography';
 import {
 	onInstallContent,
 	onHomePageContent,
@@ -52,6 +41,7 @@ import {
 	Section,
 	Value,
 } from '@metamask/snaps-sdk/jsx';
+import { riskLevelToBannerValues } from './utils/utilFunctions';
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -124,9 +114,9 @@ export const onTransaction: OnTransactionHandler = async ({
 			if (chainNumber == '1' || chainNumber == '56') {
 				// Run all API calls concurrently
 				const [
-					domainSecurityContent,
-					transactionInsightContent,
-					transactionSimulationContent,
+					[domainSecurityContent, domainRiskScore],
+					[transactionInsightContent, insightRiskScore],
+					[transactionSimulationContent, simulationRiskScore],
 				] = await Promise.all([
 					callDomainSecurity(transactionOrigin, apiKey),
 					TransactionInsight(
@@ -145,14 +135,23 @@ export const onTransaction: OnTransactionHandler = async ({
 						transaction.data,
 					),
 				]);
-				console.log(
-					'transactionInsightContent',
-					transactionInsightContent,
+
+				const maxRiskLevel = Math.max(
+					domainRiskScore,
+					insightRiskScore,
+					Number(simulationRiskScore),
 				);
-				console.log('transactionSimulationContent', transactionSimulationContent);
+				console.log('maxRiskLevel', maxRiskLevel);
+				console.log('domainRiskScore', domainRiskScore);
+				console.log('insightRiskScore', insightRiskScore);
+				console.log('simulationRiskScore', simulationRiskScore);
+				const [severity, title, description] = riskLevelToBannerValues(maxRiskLevel);
 				return {
 					content: (
 						<Box>
+							<Banner title={title} severity={severity}>
+								<Text>{description}</Text>
+							</Banner>
 							{domainSecurityContent}
 							{transactionInsightContent}
 							{transactionSimulationContent}

@@ -22,11 +22,9 @@ export function addressPoisoningDetection(
 ) {
 	let similarityResult = detectSimilarity(userAddresses, targetAddresses);
 	if (similarityResult.length > 0) {
-		return (
+		return [
 			<Box>
-				       <Banner title="Danger" severity="danger">
-          <Text>High Risk: Please review transaction details carefully.</Text>
-        </Banner>
+				       
 				{similarityResult.map((result, index) => (
 					<Box key={`address-poisoning-${index}`}>
 						<Row label="Risk Level" variant="critical">
@@ -57,9 +55,9 @@ export function addressPoisoningDetection(
 					double-check the address carefully before proceeding.
 				</Text>
 			</Box>
-		);
+		,4]
 	}
-	return null;
+	return [null, 0];
 }
 
 /**
