@@ -27,7 +27,6 @@ export async function callTransactionSimulation(
 	transactionValue: string,
 	transactionData: string,
 ) {
-	const chainIdNumber = chainIdHexToNumber(chainId);
 	const transactionGasNumber = parseInt(transactionGasHex, 16);
 	const valueNumber = parseInt(transactionValue, 16).toString();
 	const currentBlockHeight = await getBlockHeight();
@@ -38,7 +37,7 @@ export async function callTransactionSimulation(
 	try {
 		const url = 'https://service.hashdit.io/v2/hashdit/txn-simulation';
 		const postBody = {
-			chain_id: chainIdNumber,
+			chain_id: chainId,
 			block_height: currentBlockHeight,
 			evm_transactions: [
 				{
@@ -91,7 +90,7 @@ export async function callTransactionSimulation(
 				result.balance_changes,
 				result.approve_changes,
 				tokenDetails,
-				chainIdNumber,
+				chainId,
 				involved_addresses,
 			);
 		} else {
@@ -179,7 +178,10 @@ async function createSimulationContent(
 								<Text>{tokenName}</Text>
 								<Text color="muted">{`(${symbol})`}</Text>
 							</Box>
-							<Box direction="horizontal" alignment="space-between">
+							<Box
+								direction="horizontal"
+								alignment="space-between"
+							>
 								<Text
 									color={
 										numericValue > 0 ? 'success' : 'error'
@@ -250,8 +252,10 @@ async function createSimulationContent(
 							key={`approval-${tokenAddress}-${approval.spender_address}`}
 						>
 							<Row label="Token">
-								//
-								<Value value={tokenName} extra={`(${symbol})`} />
+								<Value
+									value={tokenName}
+									extra={`(${symbol})`}
+								/>
 							</Row>
 							<Row label="Token Address">
 								<Address

@@ -103,6 +103,10 @@ export const onTransaction: OnTransactionHandler = async ({
 	try {
 		const chainNumber = chainId.split(':')[1];
 
+		console.log('transaction', transaction);
+		console.log('chainId', chainId);
+		console.log('transactionOrigin', transactionOrigin);
+
 		const persistedUserData = await snap.request({
 			method: 'snap_manageState',
 			params: { operation: 'get' },
