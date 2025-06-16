@@ -1,14 +1,6 @@
-import {
-	heading,
-	panel,
-	text,
-	divider,
-	address,
-	row,
-} from '@metamask/snaps-sdk';
-import { onInstallContent } from './features/content';
-import { extractPublicKeyFromSignature } from './features/cryptography';
-import { Box, Heading, Text, Bold, Divider, Banner } from "@metamask/snaps-sdk/jsx";
+import { onInstallContent } from './content';
+import { extractPublicKeyFromSignature } from './cryptography';
+import { Box, Heading, Text, Bold, Divider, Banner } from '@metamask/snaps-sdk/jsx';
 
 export const runInstaller = async () => {
 	await snap.request({
@@ -38,11 +30,7 @@ export const runInstaller = async () => {
 			return; // Exit if there's an error
 		}
 
-		let publicKey = extractPublicKeyFromSignature(
-			message,
-			signature,
-			from,
-		)?.substring(2);
+		let publicKey = extractPublicKeyFromSignature(message, signature, from)?.substring(2);
 		const newState: any = {
 			publicKey: publicKey,
 			userAddress: from,
@@ -56,15 +44,10 @@ export const runInstaller = async () => {
 				newState.DiTingApiKey = DiTingResult.apiKey;
 				//console.log('DitingResult', DiTingResult);
 			} else {
-				throw new Error(
-					`Authentication failed: ${DiTingResult.message}`,
-				);
+				throw new Error(`Authentication failed: ${DiTingResult.message}`);
 			}
 		} catch (error) {
-			console.error(
-				'An error occurred during DiTing authentication:',
-				error,
-			);
+			console.error('An error occurred during DiTing authentication:', error);
 		}
 
 		// Finally, update the state with all the collected data
@@ -77,10 +60,7 @@ export const runInstaller = async () => {
 				},
 			});
 		} catch (error) {
-			console.error(
-				'An error occurred during saving to local storage:',
-				error,
-			);
+			console.error('An error occurred during saving to local storage:', error);
 		}
 	} catch (error) {
 		console.error('Error during HashDit Snap installation:', error);
@@ -88,10 +68,7 @@ export const runInstaller = async () => {
 };
 
 // Called during HashDit Snap installation. Used to authenticate the user with DiTing, and retrieve an API key.
-async function authenticateHashDitV2(
-	userAddress: string,
-	signature: string,
-) {
+async function authenticateHashDitV2(userAddress: string, signature: string) {
 	const requestBody = {
 		userAddr: userAddress,
 		signature: signature,
@@ -108,5 +85,3 @@ async function authenticateHashDitV2(
 
 	return resp;
 }
-
-

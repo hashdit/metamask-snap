@@ -1,32 +1,8 @@
-import {
-	Heading,
-	Text,
-	Copyable,
-	Divider,
-	Address,
-	Row,
-	Box,
-	Section,
-	Value,
-	Tooltip,
-	Card,
-	Image,
-	Icon,
-} from '@metamask/snaps-sdk/jsx';
-import { keccak256 } from 'js-sha3';
-import { isEOA, chainIdHexToNumber } from './utils';
+import { Heading, Text, Copyable, Divider, Address, Row, Box, Section, Value, Tooltip, Card, Image, Icon } from '@metamask/snaps-sdk/jsx';
 import { getBlockHeight, toChecksumAddress } from '../utils/utilFunctions';
 import { addressPoisoningDetection } from './AddressPoisoning';
 
-export async function callTransactionSimulation(
-	apiKey: any,
-	chainId: any,
-	toAddress: string,
-	fromAddress: string,
-	transactionGasHex: string,
-	transactionValue: string,
-	transactionData: string,
-) {
+export async function callTransactionSimulation(apiKey: any, chainId: any, toAddress: string, fromAddress: string, transactionGasHex: string, transactionValue: string, transactionData: string) {
 	const transactionGasNumber = parseInt(transactionGasHex, 16);
 	const valueNumber = parseInt(transactionValue, 16).toString();
 	const currentBlockHeight = await getBlockHeight();
@@ -78,21 +54,11 @@ export async function callTransactionSimulation(
 
 		if (resp && resp.code === '000000000') {
 			const [result] = extractSimulationResult(resp);
-			console.log(
-				result.from,
-				result.balance_changes,
-				result.approve_changes,
-			);
+			console.log(result.from, result.balance_changes, result.approve_changes);
 
 			const tokenDetails = resp.data.token_details || {};
 			const involved_addresses = resp.data.involved_addresses || [];
-			return createSimulationContent(
-				result.balance_changes,
-				result.approve_changes,
-				tokenDetails,
-				chainId,
-				involved_addresses,
-			);
+			return createSimulationContent(result.balance_changes, result.approve_changes, tokenDetails, chainId, involved_addresses);
 		} else {
 			return createErrorContent(resp.code);
 		}
@@ -129,13 +95,7 @@ function extractSimulationResult(response: any) {
 	return filtered;
 }
 
-async function createSimulationContent(
-	balance_changes: any,
-	approve_changes: any,
-	tokenDetails: any,
-	chainNumber: number,
-	involved_addresses: any,
-) {
+async function createSimulationContent(balance_changes: any, approve_changes: any, tokenDetails: any, chainNumber: number, involved_addresses: any) {
 	console.log('APPROVE CHANGES: ', approve_changes);
 	const positiveBalanceChanges: JSX.Element[] = [];
 	const negativeBalanceChanges: JSX.Element[] = [];
@@ -163,13 +123,8 @@ async function createSimulationContent(
 				}
 
 				const numericValue = Number(value);
-				const normalizedTokenAmount =
-					numericValue / 10 ** (tokenDetail?.divisor || 18);
-				const transferAmountInUSD = tokenDetail?.tokenPriceUSD
-					? (
-							normalizedTokenAmount * tokenDetail.tokenPriceUSD
-						).toFixed(2)
-					: 'Unknown';
+				const normalizedTokenAmount = numericValue / 10 ** (tokenDetail?.divisor || 18);
+				const transferAmountInUSD = tokenDetail?.tokenPriceUSD ? (normalizedTokenAmount * tokenDetail.tokenPriceUSD).toFixed(2) : 'Unknown';
 
 				const rowContent = (
 					<Box>
@@ -178,32 +133,13 @@ async function createSimulationContent(
 								<Text>{tokenName}</Text>
 								<Text color="muted">{`(${symbol})`}</Text>
 							</Box>
-							<Box
-								direction="horizontal"
-								alignment="space-between"
-							>
-								<Text
-									color={
-										numericValue > 0 ? 'success' : 'error'
-									}
-								>{`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}</Text>
+							<Box direction="horizontal" alignment="space-between">
+								<Text color={numericValue > 0 ? 'success' : 'error'}>{`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}</Text>
 								<Text color="muted">{`${tokenDetail?.tokenPriceUSD ? `$${transferAmountInUSD} USD` : ''}`}</Text>
 							</Box>
 
 							<Divider />
 						</Box>
-						{/* <Box>
-							<Card
-								title={symbol}
-								description={tokenName}
-								value={`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}
-								extra={`${tokenDetail?.tokenPriceUSD ? `($${transferAmountInUSD} USD)` : ''}`}
-							/>
-							{Object.keys(balance_changes).indexOf(key) !==
-								Object.keys(balance_changes).length - 1 && (
-								<Divider />
-							)}
-						</Box> */}
 					</Box>
 				);
 
@@ -220,11 +156,7 @@ async function createSimulationContent(
 		for (const item of approve_changes) {
 			console.log('APPROVE CHANGES ITEM: ', item);
 			for (const [tokenAddress, approvals] of Object.entries(item)) {
-				console.log(
-					'APPROVE CHANGES EACH VALUE iN ITEM: ',
-					tokenAddress,
-					approvals,
-				);
+				console.log('APPROVE CHANGES EACH VALUE iN ITEM: ', tokenAddress, approvals);
 
 				const tokenDetail = tokenDetails[tokenAddress] || {};
 				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
@@ -248,32 +180,25 @@ async function createSimulationContent(
 				// TODO: Change tokenName and symbol order?
 				for (const approval of approvalList) {
 					approvalChanges.push(
-						<Box
-							key={`approval-${tokenAddress}-${approval.spender_address}`}
-						>
-							<Row label="Token">
+						<Box key={`approval-${tokenAddress}-${approval.spender_address}`}>
+							{/* <Row label="Token">
 								<Value
 									value={tokenName}
 									extra={`(${symbol})`}
 								/>
-							</Row>
+							</Row> */}
+							<Box direction="horizontal">
+								<Text>{tokenName}</Text>
+								<Text color="muted">{`(${symbol})`}</Text>
+							</Box>
 							<Row label="Token Address">
-								<Address
-									address={tokenAddress as `0x${string}`}
-								/>
+								<Address address={tokenAddress as `0x${string}`} />
 							</Row>
 							<Row label="Spender">
-								<Address
-									address={
-										approval.spender_address as `0x${string}`
-									}
-								/>
+								<Address address={approval.spender_address as `0x${string}`} />
 							</Row>
 							<Row label="Amount">
-								<Value
-									value={approval.approve_amount.toString()}
-									extra=""
-								/>
+								<Value value={approval.approve_amount.toString()} extra="" />
 							</Row>
 						</Box>,
 					);
@@ -288,10 +213,7 @@ async function createSimulationContent(
 		})) as string[];
 		console.log('Connected accounts:', accounts);
 		if (accounts) {
-			const [similarityResult, riskLevel] = addressPoisoningDetection(
-				accounts,
-				involved_addresses,
-			) as [JSX.Element | null, number];
+			const [similarityResult, riskLevel] = addressPoisoningDetection(accounts, involved_addresses) as [JSX.Element | null, number];
 			if (similarityResult) {
 				addressPoisoningContent.push(similarityResult);
 			}
@@ -302,10 +224,7 @@ async function createSimulationContent(
 	return [
 		<Box>
 			{addressPoisoningContent.length > 0 && (
-				<Box>
-					<Heading>Address Poisoning</Heading>
-					<Section>{addressPoisoningContent}</Section>
-				</Box>
+				<Box>{addressPoisoningContent}</Box>
 			)}
 			{approvalChanges.length > 0 && (
 				<Box>
@@ -328,10 +247,7 @@ async function createSimulationContent(
 				</Box>
 			)}
 
-			{positiveBalanceChanges.length === 0 &&
-				negativeBalanceChanges.length === 0 && (
-					<Text>No balance changes found</Text>
-				)}
+			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && <Section><Text>No balance changes found</Text></Section>}
 		</Box>,
 		maxRiskLevel,
 	];
@@ -345,10 +261,7 @@ function createErrorContent(respCode: any) {
 			<Box>
 				<Heading>Transaction Simulation Failed </Heading>
 				<Section>
-					<Text color="warning">
-						The transaction simulation reverted. This transaction
-						will likely fail.
-					</Text>
+					<Text color="warning">The transaction simulation reverted. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
 			3,
@@ -360,10 +273,7 @@ function createErrorContent(respCode: any) {
 			<Box>
 				<Heading>Transaction Simulation Failed</Heading>
 				<Section>
-					<Text color="warning">
-						The transaction simulation reverted without a reason.
-						This transaction will likely fail.
-					</Text>
+					<Text color="warning">The transaction simulation reverted without a reason. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
 			3,
@@ -373,10 +283,7 @@ function createErrorContent(respCode: any) {
 			<Box>
 				<Heading>Transaction Simulation Failed</Heading>
 				<Section>
-					<Text color="warning">
-						The transaction simulation failed with code: {respCode}.
-						Please try again or try reinstalling the extension.
-					</Text>
+					<Text color="warning">The transaction simulation failed with code: {respCode}. Please try again or try reinstalling the extension.</Text>
 				</Section>
 			</Box>,
 			3,

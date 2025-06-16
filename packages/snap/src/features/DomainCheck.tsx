@@ -1,12 +1,4 @@
-import {
-	Heading,
-	Row,
-	Text,
-	Divider,
-	Box,
-	Value,
-	Section,
-} from '@metamask/snaps-sdk/jsx';
+import { Heading, Row, Text, Divider, Box, Value, Section } from '@metamask/snaps-sdk/jsx';
 import { getRiskLevelText, getRiskLevelColor } from '../utils/utilFunctions';
 
 type DomainSecurityResponse = {
@@ -21,10 +13,7 @@ type DomainSecurityResponse = {
 	};
 };
 
-export async function callDomainSecurity(
-	transactionUrl?: any,
-	apiKey?: any,
-): Promise<[JSX.Element | null, number]> {
+export async function callDomainSecurity(transactionUrl?: any, apiKey?: any): Promise<[JSX.Element | null, number]> {
 	if (!transactionUrl) {
 		return [null, 0];
 	}
@@ -34,17 +23,14 @@ export async function callDomainSecurity(
 	};
 
 	try {
-		const response = await fetch(
-			'https://service.hashdit.io/v2/hashdit/domain-security',
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-API-Key': apiKey,
-				},
-				body: JSON.stringify(requestBody),
+		const response = await fetch('https://service.hashdit.io/v2/hashdit/domain-security', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-API-Key': apiKey,
 			},
-		);
+			body: JSON.stringify(requestBody),
+		});
 
 		const resp = (await response.json()) as DomainSecurityResponse;
 		console.log('callDomainSecurity', resp);
@@ -53,12 +39,7 @@ export async function callDomainSecurity(
 			const riskLevel = resp.data.risk_level;
 			const riskLevelText = getRiskLevelText(riskLevel);
 			const riskLevelColor = getRiskLevelColor(riskLevel);
-			const riskVariant =
-				riskLevel >= 4
-					? 'critical'
-					: riskLevel === 3
-						? 'warning'
-						: 'default';
+			const riskVariant = riskLevel >= 4 ? 'critical' : riskLevel === 3 ? 'warning' : 'default';
 
 			return [
 				<Box>
@@ -68,25 +49,17 @@ export async function callDomainSecurity(
 							<Value value={`${transactionUrl}`} extra="" />
 						</Row>
 						<Row label="Risk Level" variant={riskVariant}>
-							<Value
-								value={`${riskLevelColor} ${riskLevelText}`}
-								extra=""
-							/>
+							<Value value={`${riskLevelColor} ${riskLevelText}`} extra="" />
 						</Row>
 						{riskLevel === 0 ? (
-							<Text color="muted">
-								This website appears to be safe based on our
-								security analysis.
-							</Text>
+							<Text color="muted">This website appears to be safe based on our security analysis.</Text>
 						) : (
-							<Text color="muted">
-								Please exercise caution when interacting with
-								this website.
-							</Text>
+							<Text color="muted">Please exercise caution when interacting with this website.</Text>
 						)}
 					</Section>
-				</Box>
-			, riskLevel];
+				</Box>,
+				riskLevel,
+			];
 		}
 	} catch (error) {
 		console.error('Domain security check failed:', error);

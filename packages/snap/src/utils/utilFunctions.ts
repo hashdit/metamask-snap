@@ -1,6 +1,14 @@
 import { keccak256 } from 'js-sha3';
 
-type Severity = "danger" | "info" | "success" | "warning";
+type Severity = 'danger' | 'info' | 'success' | 'warning';
+
+export function chainIdHexToNumber(chainId: string): number | null {
+	const chainMap: Record<string, number> = {
+		'0x1': 1,
+		'0x38': 56,
+	};
+	return chainMap[chainId] || null;
+}
 
 export function toChecksumAddress(address: string): string {
 	// Remove '0x' prefix and convert to lowercase
@@ -13,8 +21,7 @@ export function toChecksumAddress(address: string): string {
 	let checksumAddress = '0x';
 	for (let i = 0; i < address.length; i++) {
 		// Uppercase the address character if the corresponding hash character is greater than 8
-		checksumAddress +=
-			parseInt(hash[i], 16) >= 8 ? address[i].toUpperCase() : address[i];
+		checksumAddress += parseInt(hash[i], 16) >= 8 ? address[i].toUpperCase() : address[i];
 	}
 
 	return checksumAddress;
@@ -76,7 +83,26 @@ export function getRiskLevelColor(riskLevel: number): string {
 	}
 }
 
-export function riskLevelToBannerValues(riskLevel: number): [Severity, string, string] {	
+export function getRiskLevelVariant(riskLevel: number): 'default' | 'critical' | 'warning' {
+	switch (riskLevel) {
+		case 0:
+			return 'default';
+		case 1:
+			return 'default';
+		case 2:
+			return 'default';
+		case 3:
+			return 'warning';
+		case 4:
+			return 'critical';
+		case 5:
+			return 'critical';
+		default:
+			return 'default';
+	}
+}
+
+export function riskLevelToBannerValues(riskLevel: number): [Severity, string, string] {
 	switch (riskLevel) {
 		case 0:
 			return ['success', 'Safe', 'This transaction appears safe. However, we recommend reviewing all transaction details before proceeding.'];
@@ -94,4 +120,3 @@ export function riskLevelToBannerValues(riskLevel: number): [Severity, string, s
 			return ['info', 'Unknown Risk', 'We could not determine the risk level of this transaction. Please review all transaction details carefully before proceeding.'];
 	}
 }
-
