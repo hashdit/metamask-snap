@@ -54,7 +54,7 @@ export async function callTransactionSimulation(apiKey: any, chainId: any, toAdd
 
 		if (resp && resp.code === '000000000') {
 			const [result] = extractSimulationResult(resp);
-			console.log(result.from, result.balance_changes, result.approve_changes);
+
 
 			const tokenDetails = resp.data.token_details || {};
 			const involved_addresses = resp.data.involved_addresses || [];
@@ -96,7 +96,7 @@ function extractSimulationResult(response: any) {
 }
 
 async function createSimulationContent(balance_changes: any, approve_changes: any, tokenDetails: any, chainNumber: number, involved_addresses: any) {
-	console.log('APPROVE CHANGES: ', approve_changes);
+
 	const positiveBalanceChanges: JSX.Element[] = [];
 	const negativeBalanceChanges: JSX.Element[] = [];
 	const approvalChanges: JSX.Element[] = [];
@@ -154,7 +154,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 
 	if (approve_changes) {
 		for (const item of approve_changes) {
-			console.log('APPROVE CHANGES ITEM: ', item);
+		
 			for (const [tokenAddress, approvals] of Object.entries(item)) {
 				console.log('APPROVE CHANGES EACH VALUE iN ITEM: ', tokenAddress, approvals);
 
@@ -211,7 +211,6 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 		const accounts = (await ethereum.request({
 			method: 'eth_accounts',
 		})) as string[];
-		console.log('Connected accounts:', accounts);
 		if (accounts) {
 			const [similarityResult, riskLevel] = addressPoisoningDetection(accounts, involved_addresses) as [JSX.Element | null, number];
 			if (similarityResult) {
@@ -254,7 +253,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 }
 
 function createErrorContent(respCode: any) {
-	console.log('Error Code:', respCode);
+	console.error('Simulation Error Code :', respCode);
 
 	if (respCode == '0040005') {
 		return [

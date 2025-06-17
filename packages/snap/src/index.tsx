@@ -15,10 +15,6 @@ import { addressPoisoningDetection } from './features/AddressPoisoning';
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
-	// console.log('onInstall');
-	// return {
-	// 	content: onInstallContent
-	// };
 	await runInstaller();
 };
 
@@ -75,8 +71,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 		const chainNumber = chainId.split(':')[1];
 
 		console.log('transaction', transaction);
-		console.log('chainId', chainId);
-		console.log('transactionOrigin', transactionOrigin);
+
 
 		const persistedUserData = await snap.request({
 			method: 'snap_manageState',
@@ -95,10 +90,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 				]);
 
 				const maxRiskLevel = Math.max(domainRiskScore, insightRiskScore, Number(simulationRiskScore));
-				console.log('maxRiskLevel', maxRiskLevel);
-				console.log('domainRiskScore', domainRiskScore);
-				console.log('insightRiskScore', insightRiskScore);
-				console.log('simulationRiskScore', simulationRiskScore);
 				const [severity, title, description] = riskLevelToBannerValues(maxRiskLevel);
 				return {
 					content: (
