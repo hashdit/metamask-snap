@@ -45,14 +45,14 @@ export async function callDomainSecurity(transactionUrl?: any, apiKey?: any): Pr
 				<Box>
 					<Heading>Website Security Check</Heading>
 					<Section>
-						<Row label="Website">
-							<Value value={`${transactionUrl}`} extra="" />
-						</Row>
 						<Row label="Risk Level" variant={riskVariant}>
 							<Value value={`${riskLevelColor} ${riskLevelText}`} extra="" />
 						</Row>
+						<Row label="Website">
+							<Value value={`${transactionUrl}`} extra="" />
+						</Row>
 						{riskLevel === 0 ? (
-							<Text color="muted">This website appears to be safe based on our security analysis.</Text>
+							<Text color="muted">Based on our security analysis, this website shows no apparent security concerns.</Text>
 						) : (
 							<Text color="muted">Please exercise caution when interacting with this website.</Text>
 						)}

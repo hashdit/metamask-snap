@@ -6,7 +6,7 @@ import { runInstaller } from './utils/installer';
 import { callDomainSecurity } from './features/DomainCheck';
 import { callTransactionSimulation } from './features/SimulationCheck';
 
-import { TransactionInsight } from './features/TransactionInsight';
+import { callTransactionInsight } from './features/TransactionInsight';
 import { parseSignature } from './features/SignatureCheck';
 import { Box, Heading, Text, Bold, Divider, Banner, Link, Container, Footer, Button, Row, Address, Section, Value } from '@metamask/snaps-sdk/jsx';
 import { riskLevelToBannerValues } from './utils/utilFunctions';
@@ -48,14 +48,24 @@ export const onSignature: OnSignatureHandler = async ({ signature, signatureOrig
 
 		const maxRiskLevel = Math.max(signatureRiskScore, domainRiskScore);
 		const [severity, title, description] = riskLevelToBannerValues(maxRiskLevel);
+
+		// Create array of content with their risk scores for sorting
+		const contentWithScores = [
+			{ content: domainSecurityContent, score: domainRiskScore },
+			{ content: signatureContent, score: signatureRiskScore },
+		].filter((item) => item.content !== null); // Filter out null content
+
+		// Sort by risk score in descending order
+		const sortedContent = contentWithScores.sort((a, b) => b.score - a.score).map((item) => item.content);
+
+
 		return {
 			content: (
 				<Box>
 					<Banner title={title} severity={severity}>
 						<Text>{description}</Text>
 					</Banner>
-					{signatureContent}
-					{domainSecurityContent}
+					{sortedContent}
 				</Box>
 			),
 		};
@@ -72,7 +82,6 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 
 		console.log('transaction', transaction);
 
-
 		const persistedUserData = await snap.request({
 			method: 'snap_manageState',
 			params: { operation: 'get' },
@@ -83,22 +92,38 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 			// Only support all checks on the Ethereum and BSC Mainnet
 			if (chainNumber == '1' || chainNumber == '56') {
 				// Run all API calls concurrently
-				const [[domainSecurityContent, domainRiskScore], [transactionInsightContent, insightRiskScore], [transactionSimulationContent, simulationRiskScore]] = await Promise.all([
+				const [
+					[domainSecurityContent, domainRiskScore],
+					[transactionInsightContent, insightRiskScore],
+					[addressPoisoningContent, addressPoisoningRiskScore, transactionSimulationContent, simulationRiskScore],
+				] = await Promise.all([
 					callDomainSecurity(transactionOrigin, apiKey),
-					TransactionInsight(transaction, transactionOrigin, chainNumber, apiKey),
+					callTransactionInsight(transaction, transactionOrigin, chainNumber, apiKey),
 					callTransactionSimulation(apiKey, chainNumber, transaction.to, transaction.from, transaction.gas, transaction.value, transaction.data),
 				]);
 
-				const maxRiskLevel = Math.max(domainRiskScore, insightRiskScore, Number(simulationRiskScore));
+				const maxRiskLevel = Math.max(domainRiskScore, insightRiskScore, Number(addressPoisoningRiskScore), Number(simulationRiskScore));
 				const [severity, title, description] = riskLevelToBannerValues(maxRiskLevel);
+
+				// Create array of content with their risk scores for sorting
+				const contentWithScores = [
+					{ content: domainSecurityContent, score: domainRiskScore },
+					{ content: transactionInsightContent, score: insightRiskScore },
+					{ content: addressPoisoningContent, score: addressPoisoningRiskScore },
+				].filter((item) => item.content !== null); // Filter out null content
+
+				// Sort by risk score in descending order
+				const sortedContent = contentWithScores.sort((a, b) => b.score - a.score).map((item) => item.content);
+
+				// Transaction Simulation Content will always be the last content
+				// The other content will be sorted by risk score in descending order
 				return {
 					content: (
 						<Box>
 							<Banner title={title} severity={severity}>
 								<Text>{description}</Text>
 							</Banner>
-							{domainSecurityContent}
-							{transactionInsightContent}
+							{sortedContent}
 							{transactionSimulationContent}
 						</Box>
 					),
@@ -115,21 +140,28 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 				const maxRiskLevel = Math.max(domainRiskScore, Number(addressPoisoningRiskScore));
 				const [severity, title, description] = riskLevelToBannerValues(maxRiskLevel);
 
+				// Create array of content with their risk scores for sorting
+				const contentWithScores = [
+					{ content: domainSecurityContent, score: domainRiskScore },
+					{ content: addressPoisoningContent, score: addressPoisoningRiskScore },
+				].filter((item) => item.content !== null); // Filter out null content
+
+				// Sort by risk score in descending order
+				const sortedContent = contentWithScores.sort((a, b) => b.score - a.score).map((item) => item.content);
+
 				return {
 					content: (
 						<Box>
 							<Banner title={title} severity={severity}>
 								<Text>{description}</Text>
 							</Banner>
-							{domainSecurityContent}
-							{addressPoisoningContent}
+							{sortedContent}
 							{notSupportedChainContent}
 						</Box>
 					),
 				};
 			}
-		}
-		else {
+		} else {
 			console.error('Error in onTransaction. Could not retrieve user persisted key');
 			return {
 				content: errorContent,

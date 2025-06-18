@@ -1,8 +1,9 @@
 /* eslint-disable */
 import { getRiskLevelText, getRiskLevelColor, getRiskLevelVariant } from '../utils/utilFunctions';
 import { Box, Heading, Text, Divider, Row, Address, Section, Value } from '@metamask/snaps-sdk/jsx';
+import { getRiskTitle } from '../utils/utilFunctions';
 
-export const TransactionInsight = async (transaction: any, transactionOrigin: any, chainNumber: string, apiKey: any) => {
+export const callTransactionInsight = async (transaction: any, transactionOrigin: any, chainNumber: string, apiKey: any) => {
 	const requestBody = {
 		from: transaction.from,
 		to: transaction.to,
@@ -55,38 +56,41 @@ function parseTransactionInsight(resp: any) {
 			<Section>
 				{riskDetails.length > 0 ? (
 					<Box>
-						{riskDetails.map((detail: any, idx: number) => {
-							const detailRiskText = getRiskLevelText(detail.risk);
-							const detailRiskColor = getRiskLevelColor(detail.risk);
-							const formattedRiskName = formatRiskName(detail.name || 'Unknown');
-							const detailVariant: 'default' | 'critical' | 'warning' = detail.risk >= 4 ? 'critical' : detail.risk === 3 ? 'warning' : 'default';
+						{[...riskDetails]
+							.sort((a, b) => b.risk - a.risk)
+							.map((detail: any, idx: number) => {
+								const detailRiskText = getRiskLevelText(detail.risk);
+								const detailRiskColor = getRiskLevelColor(detail.risk);
+								const formattedRiskName = getRiskTitle(detail.name || 'Unknown');
 
-							return (
-								<Box key={`risk-detail-${idx}`}>
-									<Heading>Risk Detail: {formattedRiskName}</Heading>
+								const detailVariant: 'default' | 'critical' | 'warning' = detail.risk >= 4 ? 'critical' : detail.risk === 3 ? 'warning' : 'default';
 
-									<Row label="Risk Level" variant={detailVariant}>
-										<Value value={`${detailRiskColor} ${detailRiskText}`} extra="" />
-									</Row>
+								return (
+									<Box key={`risk-detail-${idx}`}>
+										<Heading>{formattedRiskName}</Heading>
 
-									{detail.value_type === 'address' && detail.value && (
-										<Row label="Address">
-											<Address address={detail.value} />
+										<Row label="Risk Level" variant={detailVariant}>
+											<Value value={`${detailRiskColor} ${detailRiskText}`} extra="" />
 										</Row>
-									)}
 
-									{detail.value_type !== 'address' && detail.value && (
-										<Row label="Value">
-											<Value value={detail.value} extra="" />
-										</Row>
-									)}
+										{detail.value_type === 'address' && detail.value && (
+											<Row label="Address">
+												<Address address={detail.value} />
+											</Row>
+										)}
 
-									{detail.description && <Text color="muted">{detail.description.replace(/\\n/g, ' ')}</Text>}
+										{detail.value_type !== 'address' && detail.value && (
+											<Row label="Value">
+												<Value value={detail.value} extra="" />
+											</Row>
+										)}
 
-									<Divider />
-								</Box>
-							);
-						})}
+										{detail.description && <Text color="muted">{detail.description.replace(/\\n/g, ' ')}</Text>}
+
+										<Divider />
+									</Box>
+								);
+							})}
 					</Box>
 				) : (
 					<Box>
@@ -97,7 +101,7 @@ function parseTransactionInsight(resp: any) {
 
 							return (
 								<Row label="Risk Level" variant={riskVariant}>
-									<Value value={`${riskText} ${riskColor}`} extra="" />
+									<Value value={`${riskColor} ${riskText}`} extra="" />
 								</Row>
 							);
 						})()}
@@ -109,8 +113,8 @@ function parseTransactionInsight(resp: any) {
 	];
 }
 
-function formatRiskName(name: string): string {
-	return name
-		.replace(/_/g, ' ') // Replace underscores with spaces
-		.replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
-}
+// function formatRiskName(name: string): string {
+// 	return name
+// 		.replace(/_/g, ' ') // Replace underscores with spaces
+// 		.replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+// }

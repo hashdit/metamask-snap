@@ -30,17 +30,17 @@ export interface SignatureParsed {
 
 // Determine if the signature is a Permit signature.
 export async function parseSignature(signature: Signature, apiKey: any, chainNumber: string) {
-	// We consider personal_sign to be safe
+	// We consider personal_sign to have no obvious risk
 	if (signature.signatureMethod == 'personal_sign') {
 		return [
 			<Box>
 				<Heading>Signature Screen</Heading>
 				<Section>
 					<Row label="Risk Level" variant="default">
-						<Value value="✅ Safe" extra="" />
+						<Value value="🟢 No Obvious Risk" extra="" />
 					</Row>
 					<Text color="muted">
-						This signature is trying to confirm you own this address. It's a common way to verify your identity without sharing your private key. This process is generally safe.
+						This signature is trying to confirm you own this address. It's a common way to verify your identity without sharing your private key. This process generally does not pose any significant risk.
 					</Text>
 				</Section>
 			</Box>,
@@ -131,7 +131,7 @@ export async function callSignatureBlacklist(chainNumber: string, spenderAddress
 		}
 
 		const resp = await response.json();
-		console.log('callHashDitAddressSecurityV2_sig() response:', JSON.stringify(resp, null, 2));
+		console.log('callAddressSecurity_sig response:', JSON.stringify(resp, null, 2));
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
@@ -164,7 +164,7 @@ async function parseResponse(resp: any, spenderAddress: string, chainNumber: str
 
 	// Check if spender is an EOA, Unverified, or Verified
 	const spenderAddressType = await isDestinationVerified(spenderAddress, chainNumber, apiKey);
-
+	console.log('spenderAddressType', spenderAddressType);
 	return createContentForSignatureInsight(risk_level, riskLevelText, riskLevelColor, spenderAddress, spenderAddressType);
 }
 
@@ -174,9 +174,9 @@ async function createContentForSignatureInsight(risk_level: number, riskLevelTex
 			<Box>
 				<Heading>Signature Screen</Heading>
 				<Section>
-					<Heading>Risk Detail: Unverified Contract Approval</Heading>
+					<Heading>Token Approval To Unverified Contract</Heading>
 					<Row label="Risk Level" variant="critical">
-						<Value value="🚫 High" extra="" />
+						<Value value="🔴 High" extra="" />
 					</Row>
 					<Row label="Spender">
 						<Address address={spenderAddress as `0x${string}`} />
@@ -192,9 +192,9 @@ async function createContentForSignatureInsight(risk_level: number, riskLevelTex
 			<Box>
 				<Heading>Signature Screen</Heading>
 				<Section>
-					<Heading>Risk Detail: EOA Approval</Heading>
+					<Heading>Token Approval To EOA Address</Heading>
 					<Row label="Risk Level" variant="critical">
-						<Value value="🚫 High" extra="" />
+						<Value value="🔴 High" extra="" />
 					</Row>
 					<Row label="Spender">
 						<Address address={spenderAddress as `0x${string}`} />

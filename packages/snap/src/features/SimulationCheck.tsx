@@ -46,7 +46,7 @@ export async function callTransactionSimulation(apiKey: any, chainId: any, toAdd
 
 		if (!response.ok) {
 			console.error(`HTTP error! Status: ${response.status}`);
-			return createErrorContent('9999990');
+			return createErrorContent('9999999');
 		}
 
 		const resp = await response.json();
@@ -101,7 +101,8 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	const negativeBalanceChanges: JSX.Element[] = [];
 	const approvalChanges: JSX.Element[] = [];
 	const addressPoisoningContent: JSX.Element[] = [];
-	let maxRiskLevel = 0;
+	let simulationRiskLevel = 0;
+	let addressPoisoningRiskLevel = 0;
 
 	if (balance_changes) {
 		for (const item of balance_changes) {
@@ -216,15 +217,16 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 			if (similarityResult) {
 				addressPoisoningContent.push(similarityResult);
 			}
-			maxRiskLevel = riskLevel;
+			addressPoisoningRiskLevel = riskLevel;
 		}
 	}
 
 	return [
+		addressPoisoningContent.length > 0 ? (
+			<Box>{addressPoisoningContent}</Box>
+		) : null,
+		addressPoisoningRiskLevel,
 		<Box>
-			{addressPoisoningContent.length > 0 && (
-				<Box>{addressPoisoningContent}</Box>
-			)}
 			{approvalChanges.length > 0 && (
 				<Box>
 					<Heading>Approval Changes</Heading>
@@ -247,8 +249,9 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 			)}
 
 			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && <Section><Text>No balance changes found</Text></Section>}
-		</Box>,
-		maxRiskLevel,
+		</Box>
+		,0
+
 	];
 }
 
@@ -257,35 +260,41 @@ function createErrorContent(respCode: any) {
 
 	if (respCode == '0040005') {
 		return [
+			[],
+			0,
 			<Box>
 				<Heading>Transaction Simulation Failed </Heading>
 				<Section>
 					<Text color="warning">The transaction simulation reverted. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3,
+			3
 		];
 	}
 
 	if (respCode == '0040006') {
 		return [
+			[],
+			0,
 			<Box>
 				<Heading>Transaction Simulation Failed</Heading>
 				<Section>
 					<Text color="warning">The transaction simulation reverted without a reason. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3,
+			3
 		];
 	} else {
 		return [
+			[],
+			0,
 			<Box>
 				<Heading>Transaction Simulation Failed</Heading>
 				<Section>
 					<Text color="warning">The transaction simulation failed with code: {respCode}. Please try again or try reinstalling the extension.</Text>
 				</Section>
 			</Box>,
-			3,
+			3
 		];
 	}
 }

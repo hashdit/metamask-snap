@@ -28,7 +28,7 @@ export function addressPoisoningDetection(userAddresses: string[], targetAddress
 				))}
 
 				<Text color="muted">
-					⚠️ Warning: You are about to interact with an address that looks very similar to one of your own addresses. This is a common scam technique called "address poisoning" where
+					You are about to interact with an address that looks very similar to one of your own addresses. This is a common scam technique called "address poisoning" where
 					scammers create addresses that look similar to yours to trick you into sending funds to the wrong address. We highly recommend rejecting this transaction.
 				</Text>
 				</Section>
@@ -76,13 +76,13 @@ function detectSimilarity(userAddressArray: string[], targetAddressArray: string
 				let similarityRiskLevel;
 				switch (similarityScore) {
 					case 3:
-						similarityRiskLevel = '🚫 High Risk';
+						similarityRiskLevel = '🔴 High';
 						break;
 					case 4:
-						similarityRiskLevel = '🚫 High Risk';
+						similarityRiskLevel = '🔴 High';
 						break;
 					case 5:
-						similarityRiskLevel = '🚫 Critical Risk';
+						similarityRiskLevel = '🔴 Critical';
 						break;
 				}
 
