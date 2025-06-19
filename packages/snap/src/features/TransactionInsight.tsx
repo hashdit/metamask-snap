@@ -59,18 +59,18 @@ function parseTransactionInsight(resp: any) {
 						{[...riskDetails]
 							.sort((a, b) => b.risk - a.risk)
 							.map((detail: any, idx: number) => {
-								const detailRiskText = getRiskLevelText(detail.risk);
-								const detailRiskColor = getRiskLevelColor(detail.risk);
+								const riskText = getRiskLevelText(detail.risk);
+								const riskColor = getRiskLevelColor(detail.risk);
 								const formattedRiskName = getRiskTitle(detail.name || 'Unknown');
 
-								const detailVariant: 'default' | 'critical' | 'warning' = detail.risk >= 4 ? 'critical' : detail.risk === 3 ? 'warning' : 'default';
+								const riskVariant = getRiskLevelVariant(detail.risk);
 
 								return (
 									<Box key={`risk-detail-${idx}`}>
 										<Heading>{formattedRiskName}</Heading>
 
-										<Row label="Risk Level" variant={detailVariant}>
-											<Value value={`${detailRiskColor} ${detailRiskText}`} extra="" />
+										<Row label="Risk Level" variant={riskVariant}>
+											<Value value={`${riskColor} ${riskText}`} extra="" />
 										</Row>
 
 										{detail.value_type === 'address' && detail.value && (

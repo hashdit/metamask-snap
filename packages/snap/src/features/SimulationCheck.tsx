@@ -178,7 +178,6 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 					spender_address: string;
 				}>;
 
-				// TODO: Change tokenName and symbol order?
 				for (const approval of approvalList) {
 					approvalChanges.push(
 						<Box key={`approval-${tokenAddress}-${approval.spender_address}`}>

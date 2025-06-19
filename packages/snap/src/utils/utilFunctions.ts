@@ -17,7 +17,7 @@ export function toChecksumAddress(address: string): string {
 	// Get the keccak256 hash of the address
 	const hash = keccak256(address);
 
-	// Create a checksummed address
+	// Create a check-summed address
 	let checksumAddress = '0x';
 	for (let i = 0; i < address.length; i++) {
 		// Uppercase the address character if the corresponding hash character is greater than 8
@@ -44,7 +44,6 @@ export async function getBlockHeight() {
 		throw error;
 	}
 }
-
 
 export function getRiskLevelText(riskLevel: number): string {
 	switch (riskLevel) {
@@ -91,7 +90,7 @@ export function getRiskLevelVariant(riskLevel: number): 'default' | 'critical' |
 		case 1:
 			return 'default';
 		case 2:
-			return 'warning';
+			return 'default';
 		case 3:
 			return 'warning';
 		case 4:
@@ -125,49 +124,56 @@ export function riskLevelToBannerValues(riskLevel: number): [Severity, string, s
 export const getRiskTitle = (riskName: string): string => {
 	const riskDescriptions: { [key: string]: string } = {
 		// Destination Analysis
-		malicious_destination: "Transaction To Known Malicious Address",
-		EOA_destination: "Transaction Destination Is An EOA Address",
-		new_unverified_contract: "Transaction To Recently Created Unverified Contract",
-		unverified_contract: "Transaction To Unverified Contract",
-		new_verified_contract: "Transaction To Recently Created Verified Contract",
-		low_activity_address: "Transaction To Address With Little Transaction History",
+		malicious_destination: 'Transaction To Known Malicious Address',
+		EOA_destination: 'Transaction Destination Is An EOA Address',
+		new_unverified_contract: 'Transaction To Recently Created Unverified Contract',
+		unverified_contract: 'Transaction To Unverified Contract',
+		new_verified_contract: 'Transaction To Recently Created Verified Contract',
+		low_activity_address: 'Transaction To Address With Little Transaction History',
 
 		// Function Signature Analysis
-		malicious_signature: "Transaction Calls A Known Malicious Function",
-		unknown_signature: "Transaction Uses Unknown Function Signature",
-		custom_function: "Transaction Calls Custom/Non-Standard Function",
+		malicious_signature: 'Transaction Calls A Known Malicious Function',
+		unknown_signature: 'Transaction Uses Unknown Function Signature',
+		custom_function: 'Transaction Calls Custom/Non-Standard Function',
 
 		// Function Parameter Analysis
-		blacklisted_address_in_params: "Function Parameter Contains Blacklisted Address",
-		eoa_in_params: "Function Parameter Contains EOA Address",
-		unverified_contract_in_params: "Function Parameter Contains Unverified Contract",
-		low_activity_address_in_params: "Function Parameter Contains Low-Activity Address",
+		blacklisted_address_in_params: 'Function Parameter Contains Blacklisted Address',
+		eoa_in_params: 'Function Parameter Contains EOA Address',
+		unverified_contract_in_params: 'Function Parameter Contains Unverified Contract',
+		low_activity_address_in_params: 'Function Parameter Contains Low-Activity Address',
 
 		// ERC20 Transfer Analysis
-		malicious_recipient: "Transferring Tokens To Known Malicious Address",
-		invalid_transfer: "Could Not Determine Recipient Address For Transfer",
-		unverified_contract_recipient: "Transferring Tokens To Unverified Contract",
-		contract_recipient: "Transferring Tokens To A Contract",
-		new_contract_recipient: "Transferring Tokens To Recently Created Contract",
-		low_activity_recipient: "Transferring Tokens To Low-Activity Address",
-		high_portion_transfer: "Transferring Unusually Large Amount Of Tokens Or Using TransferFrom For Large Portion Of Balance",
+		malicious_recipient: 'Transferring Tokens To Known Malicious Address',
+		invalid_transfer: 'Could Not Determine Recipient Address For Transfer',
+		unverified_contract_recipient: 'Transferring Tokens To Unverified Contract',
+		contract_recipient: 'Transferring Tokens To A Contract',
+		new_contract_recipient: 'Transferring Tokens To Recently Created Contract',
+		low_activity_recipient: 'Transferring Tokens To Low-Activity Address',
+		high_portion_transfer: 'Transferring Unusually Large Amount Of Tokens Or Using TransferFrom For Large Portion Of Balance',
 
 		// ERC20 TransferFrom Analysis
-		delegation_mismatch: "TransferFrom Operator Is Not The Recipient",
-		contract_source: "Transferring Tokens From A Contract",
+		delegation_mismatch: 'TransferFrom Operator Is Not The Recipient',
+		contract_source: 'Transferring Tokens From A Contract',
 
 		// ERC20 Approval Analysis
-		malicious_spender: "Approving Tokens To Known Malicious Address",
-		invalid_approval: "Could Not Determine Spender Address For Approval",
-		unlimited_EOA_approval: "Unlimited Token Approval To EOA Address",
-		unlimited_unverified_contract_approval: "Unlimited Token Approval To Unverified Contract",
-		unlimited_approval: "Unlimited Token Approval To Verified Contract",
-		EOA_approval: "Token Approval To EOA Address",
-		unverified_contract_approval: "Token Approval To Unverified Contract",
+		malicious_spender: 'Approving Tokens To Known Malicious Address',
+		invalid_approval: 'Could Not Determine Spender Address For Approval',
+		unlimited_EOA_approval: 'Unlimited Token Approval To EOA Address',
+		unlimited_unverified_contract_approval: 'Unlimited Token Approval To Unverified Contract',
+		unlimited_approval: 'Unlimited Token Approval To Verified Contract',
+		EOA_approval: 'Token Approval To EOA Address',
+		unverified_contract_approval: 'Token Approval To Unverified Contract',
 
 		// dApp Security Analysis
-		dapp_risk: "The dApp URL Is Flagged As Risky By Threat Intelligence"
+		dapp_risk: 'The dApp URL Is Flagged As Risky By Threat Intelligence',
 	};
 
-	return riskDescriptions[riskName] || "Unknown Risk Type";
+	// If the mapping does not exist, reformat the risk name and return it.
+	return riskDescriptions[riskName] || formatRiskName(riskName);
 };
+
+function formatRiskName(name: string): string {
+	return name
+		.replace(/_/g, ' ') // Replace underscores with spaces
+		.replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+}

@@ -3,7 +3,7 @@ import { Box, Heading, Text, Bold, Divider, Banner, Link, Container, Footer, But
 import { Signature } from '@metamask/snaps-sdk';
 import { errorContent } from '../utils/content';
 
-import { getRiskLevelText, getRiskLevelColor } from '../utils/utilFunctions';
+import { getRiskLevelText, getRiskLevelColor, getRiskLevelVariant } from '../utils/utilFunctions';
 import { isDestinationVerified } from './UnverifiedCheck';
 
 // Expected structure for EIP712 signature
@@ -40,7 +40,8 @@ export async function parseSignature(signature: Signature, apiKey: any, chainNum
 						<Value value="🟢 No Obvious Risk" extra="" />
 					</Row>
 					<Text color="muted">
-						This signature is trying to confirm you own this address. It's a common way to verify your identity without sharing your private key. This process generally does not pose any significant risk.
+						This signature is trying to confirm you own this address. It's a common way to verify your identity without sharing your private key. This process generally does not pose any
+						significant risk.
 					</Text>
 				</Section>
 			</Box>,
@@ -153,22 +154,20 @@ async function parseResponse(resp: any, spenderAddress: string, chainNumber: str
 		return [null, 0];
 	}
 
+	let risk_level: number = 3; // Default to 3, as any approval has minimum "Medium" risk.
 	// Get the first item from the data array
 	const dataItem = resp.data[0];
-
-	let risk_level: any = '-1';
-
-	risk_level = dataItem.risk_level ?? '-1';
-	const riskLevelText = getRiskLevelText(risk_level);
-	const riskLevelColor = getRiskLevelColor(risk_level);
+	if (dataItem.risk_level !== undefined && dataItem.risk_level !== null) {
+		risk_level = Math.max(Number(dataItem.risk_level), 3);
+	}
 
 	// Check if spender is an EOA, Unverified, or Verified
 	const spenderAddressType = await isDestinationVerified(spenderAddress, chainNumber, apiKey);
 	console.log('spenderAddressType', spenderAddressType);
-	return createContentForSignatureInsight(risk_level, riskLevelText, riskLevelColor, spenderAddress, spenderAddressType);
+	return createContentForSignatureInsight(risk_level, spenderAddress, spenderAddressType);
 }
 
-async function createContentForSignatureInsight(risk_level: number, riskLevelText: string, riskLevelColor: string, spenderAddress: string, spenderAddressType: any) {
+async function createContentForSignatureInsight(risk_level: number, spenderAddress: string, spenderAddressType: any) {
 	if (spenderAddressType == 'unverified') {
 		return [
 			<Box>
@@ -206,22 +205,29 @@ async function createContentForSignatureInsight(risk_level: number, riskLevelTex
 			</Box>,
 			4,
 		];
-	}
+	} else {
+		const riskLevelText = getRiskLevelText(risk_level);
+		const riskLevelColor = getRiskLevelColor(risk_level);
+		const riskLevelVariant = getRiskLevelVariant(risk_level);
 
-	return [
-		<Box>
-			<Heading>Signature Screen</Heading>
-			<Section>
-				<Heading>Risk Detail: Token Approval</Heading>
-				<Row label="Risk Level" variant="default">
-					<Value value={`${riskLevelColor} ${riskLevelText}`} extra="" />
-				</Row>
-				<Row label="Spender">
-					<Address address={spenderAddress as `0x${string}`} />
-				</Row>
-				<Text color="muted">This transaction is trying to approve your tokens to a third-party. They would have access to your tokens without your permission.</Text>
-			</Section>
-		</Box>,
-		risk_level,
-	];
+		return [
+			<Box>
+				<Heading>Signature Screen</Heading>
+				<Section>
+					<Heading>Token Approval To Verified Contract</Heading>
+					<Row label="Risk Level" variant={riskLevelVariant}>
+						<Value value={`${riskLevelColor} ${riskLevelText}`} extra="" />
+					</Row>
+					<Row label="Spender">
+						<Address address={spenderAddress as `0x${string}`} />
+					</Row>
+					<Text color="muted">
+						You are using 'approve' to give unlimited approval to spend your tokens. This creates unnecessary risk as the approved address will maintain this access indefinitely. Consider
+						approving only the amount needed for your immediate transaction.
+					</Text>
+				</Section>
+			</Box>,
+			risk_level,
+		];
+	}
 }
