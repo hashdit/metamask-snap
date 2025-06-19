@@ -124,12 +124,12 @@ export function riskLevelToBannerValues(riskLevel: number): [Severity, string, s
 export const getRiskTitle = (riskName: string): string => {
 	const riskDescriptions: { [key: string]: string } = {
 		// Destination Analysis
-		malicious_destination: 'Transaction To Known Malicious Address',
-		EOA_destination: 'Transaction Destination Is An EOA Address',
-		new_unverified_contract: 'Transaction To Recently Created Unverified Contract',
-		unverified_contract: 'Transaction To Unverified Contract',
-		new_verified_contract: 'Transaction To Recently Created Verified Contract',
-		low_activity_address: 'Transaction To Address With Little Transaction History',
+		malicious_destination_interaction: 'Transaction To Known Malicious Address',
+		EOA_destination_interaction: 'Transaction Destination Is An EOA Address',
+		new_unverified_contract_interaction: 'Transaction To Recently Created Unverified Contract',
+		unverified_contract_interaction: 'Transaction To Unverified Contract',
+		new_verified_contract_interaction: 'Transaction To Recently Created Verified Contract',
+		low_activity_address_interaction: 'Transaction To Address With Little Transaction History',
 
 		// Function Signature Analysis
 		malicious_signature: 'Transaction Calls A Known Malicious Function',
