@@ -12,7 +12,7 @@ export const callTransactionInsight = async (transaction: any, transactionOrigin
 		chainId: chainNumber,
 	};
 	// Better debugging methods for transaction object
-	console.log('Transaction Insight Request Body', JSON.stringify(requestBody, null, 2), apiKey);
+	//console.log('Transaction Insight Request Body', JSON.stringify(requestBody, null, 2), apiKey);
 
 	try {
 		const response = await fetch('https://service.hashdit.io/v2/hashdit/transaction-security', {
@@ -30,7 +30,7 @@ export const callTransactionInsight = async (transaction: any, transactionOrigin
 		}
 
 		const resp = await response.json();
-		console.log('TransactionInsight() Response:', JSON.stringify(resp, null, 2));
+		//console.log('TransactionInsight() Response:', JSON.stringify(resp, null, 2));
 
 		// Check if the response has required fields
 		if (resp && typeof resp.overall_risk === 'number' && resp.chain) {

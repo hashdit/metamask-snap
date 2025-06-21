@@ -33,7 +33,7 @@ export async function callDomainSecurity(transactionUrl?: any, apiKey?: any): Pr
 		});
 
 		const resp = (await response.json()) as DomainSecurityResponse;
-		console.log('callDomainSecurity', resp);
+		//console.log('callDomainSecurity', resp);
 
 		if (resp.code === '0' && resp.status === 'ok' && resp.data.has_result) {
 			const riskLevel = resp.data.risk_level;

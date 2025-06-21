@@ -33,7 +33,7 @@ export async function callTransactionSimulation(apiKey: any, chainId: any, toAdd
 				invocation_tree: false,
 			},
 		};
-		console.log('simulation postBody', JSON.stringify(postBody, null, 2));
+		//console.log('simulation postBody', JSON.stringify(postBody, null, 2));
 
 		const response = await fetch(url, {
 			method: 'POST',
@@ -50,7 +50,7 @@ export async function callTransactionSimulation(apiKey: any, chainId: any, toAdd
 		}
 
 		const resp = await response.json();
-		console.log('Simulation Response', JSON.stringify(resp, null, 2));
+		//console.log('Simulation Response', JSON.stringify(resp, null, 2));
 
 		if (resp && resp.code === '000000000') {
 			const [result] = extractSimulationResult(resp);
@@ -107,7 +107,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	if (balance_changes) {
 		for (const item of balance_changes) {
 			for (const [key, value] of Object.entries(item)) {
-				console.log('EACH BALANCE CHANGE: ', key, value);
+				//console.log('EACH BALANCE CHANGE: ', key, value);
 
 				const tokenDetail = tokenDetails[key] || {};
 				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
@@ -157,7 +157,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 		for (const item of approve_changes) {
 		
 			for (const [tokenAddress, approvals] of Object.entries(item)) {
-				console.log('APPROVE CHANGES EACH VALUE iN ITEM: ', tokenAddress, approvals);
+				//console.log('APPROVE CHANGES EACH VALUE iN ITEM: ', tokenAddress, approvals);
 
 				const tokenDetail = tokenDetails[tokenAddress] || {};
 				let symbol = tokenDetail?.symbol || 'Unknown Symbol';

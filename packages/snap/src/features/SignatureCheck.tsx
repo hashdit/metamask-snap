@@ -66,7 +66,6 @@ export async function parseSignature(signature: Signature, apiKey: any, chainNum
 	};
 
 	const { primaryType, message } = signatureParsed.data;
-	console.log('PrimaryType and Message', primaryType, message);
 
 	let spender: string | undefined;
 	// let token: any;
@@ -88,7 +87,7 @@ export async function parseSignature(signature: Signature, apiKey: any, chainNum
 	else if (primaryType === 'Permit' && message.spender) {
 		spender = message.spender;
 	} else {
-		console.log('Not a Permit Signature, returning null');
+		//console.log('Not a Permit Signature, returning null');
 
 		return [null, 0];
 	}
@@ -132,7 +131,7 @@ export async function callSignatureBlacklist(chainNumber: string, spenderAddress
 		}
 
 		const resp = await response.json();
-		console.log('callAddressSecurity_sig response:', JSON.stringify(resp, null, 2));
+		//console.log('callAddressSecurity_sig response:', JSON.stringify(resp, null, 2));
 
 		// Check if the response has `code: 0` and `status: "ok"`
 		if (resp.code === '0' && resp.status === 'ok') {
@@ -163,7 +162,7 @@ async function parseResponse(resp: any, spenderAddress: string, chainNumber: str
 
 	// Check if spender is an EOA, Unverified, or Verified
 	const spenderAddressType = await isDestinationVerified(spenderAddress, chainNumber, apiKey);
-	console.log('spenderAddressType', spenderAddressType);
+	//console.log('spenderAddressType', spenderAddressType);
 	return createContentForSignatureInsight(risk_level, spenderAddress, spenderAddressType);
 }
 

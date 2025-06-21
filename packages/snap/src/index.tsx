@@ -20,7 +20,7 @@ export const onInstall: OnInstallHandler = async () => {
 
 // Called during a signature request transaction. Show insights
 export const onSignature: OnSignatureHandler = async ({ signature, signatureOrigin }) => {
-	console.log('onSignature', JSON.stringify(signature), signatureOrigin);
+	//console.log('onSignature', JSON.stringify(signature), signatureOrigin);
 	let signatureContent = null;
 	let signatureRiskScore = 0;
 	try {
@@ -80,7 +80,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 	try {
 		const chainNumber = chainId.split(':')[1];
 
-		console.log('transaction', transaction);
+		//console.log('transaction', transaction);
 
 		const persistedUserData = await snap.request({
 			method: 'snap_manageState',

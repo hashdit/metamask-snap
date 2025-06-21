@@ -33,7 +33,7 @@ export async function isDestinationVerified(contractAddress: any, chainNumber: a
 			return null;
 		}
 
-		console.log('address-classify', JSON.stringify(resp, null, 2));
+		//console.log('address-classify', JSON.stringify(resp, null, 2));
 		// Only check verification status if it's a contract
 		if (resp.data.address_type === 'Contract') {
 			if (resp.data.details.is_verified === true) {
