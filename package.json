@@ -1,7 +1,6 @@
 {
   "name": "HashDit-Snap",
   "version": "0.1.0",
-  "private": true,
   "description": "The HashDit Security MetaMask Snap that screens user's transactions for malicious activity before approving any transaction.",
   "homepage": "https://github.com/MetaMask/template-snap-monorepo#readme",
   "bugs": {
