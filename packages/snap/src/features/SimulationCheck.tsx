@@ -50,14 +50,14 @@ export async function callTransactionSimulation(apiKey: any, chainId: any, toAdd
 		}
 
 		const resp = await response.json();
-		//console.log('Simulation Response', JSON.stringify(resp, null, 2));
+		// console.log('Simulation Response', JSON.stringify(resp, null, 2));
 
 		if (resp && resp.code === '000000000') {
 			const [result] = extractSimulationResult(resp);
 
-
-			const tokenDetails = resp.data.token_details || {};
-			const involved_addresses = resp.data.involved_addresses || [];
+			// token_details may not be present in the new format, use empty object as fallback
+			const tokenDetails = resp.data?.token_details || {};
+			const involved_addresses = resp.data?.involved_addresses || [];
 			return createSimulationContent(result.balance_changes, result.approve_changes, tokenDetails, chainId, involved_addresses);
 		} else {
 			return createErrorContent(resp.code);
@@ -75,17 +75,26 @@ function extractSimulationResult(response: any) {
 		const sender = txn.from.toLowerCase();
 
 		let filteredBalanceChanges: any[] = [];
-		if (txn.balance_changes) {
-			for (const [key, value] of Object.entries(txn.balance_changes)) {
-				if (key.toLowerCase() === sender) {
-					filteredBalanceChanges.push(value);
+		if (txn.balance_changes && Array.isArray(txn.balance_changes)) {
+			// New format: balance_changes is an array
+			// Filter to only include balance changes that affect the sender
+			for (const balanceChange of txn.balance_changes) {
+				if (balanceChange.change_list && Array.isArray(balanceChange.change_list)) {
+					// Check if any change in the list affects the sender
+					const affectsSender = balanceChange.change_list.some((change: any) => change.address && change.address.toLowerCase() === sender);
+					if (affectsSender) {
+						filteredBalanceChanges.push(balanceChange);
+					}
 				}
 			}
 		}
+
 		let filteredApproveChanges: any[] = [];
-		if (txn.approve_changes) {
-			filteredApproveChanges.push(txn.approve_changes);
+		if (txn.approve_changes && Array.isArray(txn.approve_changes)) {
+			// approve_changes is now an array
+			filteredApproveChanges = txn.approve_changes;
 		}
+
 		return {
 			from: txn.from,
 			balance_changes: filteredBalanceChanges,
@@ -96,7 +105,6 @@ function extractSimulationResult(response: any) {
 }
 
 async function createSimulationContent(balance_changes: any, approve_changes: any, tokenDetails: any, chainNumber: number, involved_addresses: any) {
-
 	const positiveBalanceChanges: JSX.Element[] = [];
 	const negativeBalanceChanges: JSX.Element[] = [];
 	const approvalChanges: JSX.Element[] = [];
@@ -105,15 +113,16 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	let addressPoisoningRiskLevel = 0;
 
 	if (balance_changes) {
-		for (const item of balance_changes) {
-			for (const [key, value] of Object.entries(item)) {
-				//console.log('EACH BALANCE CHANGE: ', key, value);
+		for (const balance_change of balance_changes) {
+			if (balance_change && balance_change.change_list && balance_change.change_list.length > 0) {
+				// Get token details from the balance_change object itself
+				let symbol = balance_change.symbol || 'Unknown Symbol';
+				let tokenName = balance_change.tokenName || 'Unknown Token';
+				const tokenPriceUSD = balance_change.tokenPriceUSD ? parseFloat(balance_change.tokenPriceUSD) : null;
+				const divisor = balance_change.divisor ? parseInt(balance_change.divisor, 10) : 18;
 
-				const tokenDetail = tokenDetails[key] || {};
-				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
-				let tokenName = tokenDetail?.tokenName || 'Unknown Token';
-
-				if (symbol == 'native_token') {
+				// Handle native token naming
+				if (symbol === 'native_token') {
 					if (chainNumber == 1) {
 						symbol = 'ETH';
 						tokenName = 'Ethereum';
@@ -123,86 +132,112 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 					}
 				}
 
-				const numericValue = Number(value);
-				const normalizedTokenAmount = numericValue / 10 ** (tokenDetail?.divisor || 18);
-				const transferAmountInUSD = tokenDetail?.tokenPriceUSD ? (normalizedTokenAmount * tokenDetail.tokenPriceUSD).toFixed(2) : 'Unknown';
+				// Iterate through change_list items
+				for (const changeItem of balance_change.change_list) {
+					if (!changeItem || typeof changeItem !== 'object') continue;
 
-				const rowContent = (
-					<Box>
-						<Box>
-							<Box direction="horizontal">
-								<Text>{tokenName}</Text>
-								<Text color="muted">{`(${symbol})`}</Text>
-							</Box>
-							<Box direction="horizontal" alignment="space-between">
-								<Text color={numericValue > 0 ? 'success' : 'error'}>{`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}</Text>
-								<Text color="muted">{`${tokenDetail?.tokenPriceUSD ? `$${transferAmountInUSD} USD` : ''}`}</Text>
-							</Box>
+					// Use the new structure: address, amount_change, raw_amount_change, value_usd
+					const address = changeItem.address;
+					const amountChange = changeItem.amount_change || changeItem.raw_amount_change;
 
-							<Divider />
+					if (!address || !amountChange) continue;
+
+					const numericValue = parseFloat(String(amountChange));
+					if (isNaN(numericValue)) continue;
+
+					const normalizedTokenAmount = Math.abs(numericValue);
+					const valueUSD = changeItem.value_usd ? parseFloat(String(changeItem.value_usd)).toFixed(2) : tokenPriceUSD ? (normalizedTokenAmount * tokenPriceUSD).toFixed(2) : 'Unknown';
+
+					const rowContent = (
+						<Box key={`balance-${address}-${changeItem.raw_amount_change}`}>
+							<Box>
+								<Box direction="horizontal">
+									<Text>{tokenName}</Text>
+									<Text color="muted">{`(${symbol})`}</Text>
+								</Box>
+								<Box direction="horizontal" alignment="space-between">
+									<Text color={numericValue > 0 ? 'success' : 'error'}>{`${numericValue > 0 ? '+' : ''}${normalizedTokenAmount}`}</Text>
+									<Text color="muted">{valueUSD !== 'Unknown' ? `$${valueUSD} USD` : ''}</Text>
+								</Box>
+								<Divider />
+							</Box>
 						</Box>
-					</Box>
-				);
+					);
 
-				if (numericValue > 0) {
-					positiveBalanceChanges.push(rowContent);
-				} else {
-					negativeBalanceChanges.push(rowContent);
+					if (numericValue > 0) {
+						positiveBalanceChanges.push(rowContent);
+					} else {
+						negativeBalanceChanges.push(rowContent);
+					}
 				}
 			}
 		}
 	}
 
-	if (approve_changes) {
-		for (const item of approve_changes) {
-		
-			for (const [tokenAddress, approvals] of Object.entries(item)) {
-				//console.log('APPROVE CHANGES EACH VALUE iN ITEM: ', tokenAddress, approvals);
+	if (approve_changes && Array.isArray(approve_changes)) {
+		for (const approvalChange of approve_changes) {
+			if (!approvalChange || typeof approvalChange !== 'object') continue;
 
-				const tokenDetail = tokenDetails[tokenAddress] || {};
-				let symbol = tokenDetail?.symbol || 'Unknown Symbol';
-				let tokenName = tokenDetail?.tokenName || 'Unknown Token';
-				if (symbol == 'native_token') {
-					if (chainNumber == 1) {
-						symbol = 'ETH';
-						tokenName = 'Ethereum';
-					} else if (chainNumber == 56) {
-						symbol = 'BNB';
-						tokenName = 'Binance Coin';
-					}
+			// Get token details from the approvalChange object itself
+			const tokenAddress = approvalChange.token_address || '';
+			let symbol = approvalChange.symbol || 'Unknown Symbol';
+			let tokenName = approvalChange.tokenName || 'Unknown Token';
+			const tokenPriceUSD = approvalChange.tokenPriceUSD ? parseFloat(String(approvalChange.tokenPriceUSD)) : null;
+
+			// Handle native token naming
+			if (symbol === 'native_token') {
+				if (chainNumber == 1) {
+					symbol = 'ETH';
+					tokenName = 'Ethereum';
+				} else if (chainNumber == 56) {
+					symbol = 'BNB';
+					tokenName = 'Binance Coin';
 				}
+			}
 
-				const approvalList = approvals as Array<{
-					approve_amount: number;
-					approver_address: string;
-					spender_address: string;
-				}>;
+			// Get approve_list array
+			const approveList = approvalChange.approve_list;
+			if (!Array.isArray(approveList) || approveList.length === 0) continue;
 
-				for (const approval of approvalList) {
-					approvalChanges.push(
-						<Box key={`approval-${tokenAddress}-${approval.spender_address}`}>
-							{/* <Row label="Token">
-								<Value
-									value={tokenName}
-									extra={`(${symbol})`}
-								/>
-							</Row> */}
-							<Box direction="horizontal">
-								<Text>{tokenName}</Text>
-								<Text color="muted">{`(${symbol})`}</Text>
-							</Box>
-							<Row label="Token Address">
-								<Address address={tokenAddress as `0x${string}`} />
-							</Row>
-							<Row label="Spender">
-								<Address address={approval.spender_address as `0x${string}`} />
-							</Row>
-							<Row label="Amount">
-								<Value value={approval.approve_amount.toString()} extra="" />
-							</Row>
-						</Box>,
-					);
-				}
+			for (const approval of approveList) {
+				if (!approval || typeof approval !== 'object') continue;
+
+				// Parse approve_amount and format as integer (uint256 has no decimals)
+				const approveAmountRaw = approval.approve_amount != null ? parseFloat(String(approval.approve_amount)) : 0;
+				const approveAmount = isNaN(approveAmountRaw) ? '0' : approveAmountRaw.toFixed(0);
+
+				// Parse value_usd and format with 2 decimal places
+				const valueUSDRaw = approval.value_usd != null ? parseFloat(String(approval.value_usd)) : 0;
+				const valueUSD = isNaN(valueUSDRaw) ? '0.00' : valueUSDRaw.toFixed(2);
+
+				const spenderAddress = approval.spender_address || '';
+				const approverAddress = approval.approver_address || '';
+
+				if (!spenderAddress || !tokenAddress) continue;
+
+				approvalChanges.push(
+					<Box key={`approval-${tokenAddress}-${spenderAddress}`}>
+						<Box direction="horizontal">
+							<Text>{tokenName}</Text>
+							<Text color="muted">{`(${symbol})`}</Text>
+						</Box>
+						<Row label="Token Address">
+							<Address address={tokenAddress as `0x${string}`} />
+						</Row>
+						<Row label="Approver">
+							<Address address={approverAddress as `0x${string}`} />
+						</Row>
+						<Row label="Spender">
+							<Address address={spenderAddress as `0x${string}`} />
+						</Row>
+						<Row label="Amount">
+							<Value value={approveAmount} extra="" />
+						</Row>
+						<Row label="Value (USD)">
+							<Value value={`$${valueUSD}`} extra="" />
+						</Row>
+					</Box>,
+				);
 			}
 		}
 	}
@@ -221,9 +256,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	}
 
 	return [
-		addressPoisoningContent.length > 0 ? (
-			<Box>{addressPoisoningContent}</Box>
-		) : null,
+		addressPoisoningContent.length > 0 ? <Box>{addressPoisoningContent}</Box> : null,
 		addressPoisoningRiskLevel,
 		<Box>
 			{approvalChanges.length > 0 && (
@@ -247,10 +280,13 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 				</Box>
 			)}
 
-			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && <Section><Text>No balance changes found</Text></Section>}
-		</Box>
-		,0
-
+			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && (
+				<Section>
+					<Text>No balance changes found</Text>
+				</Section>
+			)}
+		</Box>,
+		0,
 	];
 }
 
@@ -267,7 +303,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation reverted. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	}
 
@@ -281,7 +317,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation reverted without a reason. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	} else {
 		return [
@@ -293,7 +329,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation failed with code: {respCode}. Please try again or try reinstalling the extension.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	}
 }
