@@ -4,7 +4,7 @@ import type { OnTransactionHandler, OnInstallHandler, OnHomePageHandler, OnSigna
 import { onInstallContent, onHomePageContent, errorContent, notSupportedChainContent } from './utils/content';
 import { runInstaller } from './utils/installer';
 import { callDomainSecurity } from './features/DomainCheck';
-import { callTransactionSimulation } from './features/SimulationCheck';
+
 
 import { callTransactionInsight } from './features/TransactionInsight';
 import { parseSignature } from './features/SignatureCheck';
@@ -12,6 +12,7 @@ import { Box, Heading, Text, Bold, Divider, Banner, Link, Container, Footer, But
 import { riskLevelToBannerValues } from './utils/utilFunctions';
 import { chainIdHexToNumber } from './utils/utilFunctions';
 import { addressPoisoningDetection } from './features/AddressPoisoning';
+import {callTransactionSimulation} from './features/SimulationCheck';
 
 // Called during after installation. Show install instructions and links
 export const onInstall: OnInstallHandler = async () => {
@@ -95,7 +96,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 				const [
 					[domainSecurityContent, domainRiskScore],
 					[transactionInsightContent, insightRiskScore],
-					[addressPoisoningContent, addressPoisoningRiskScore, transactionSimulationContent, simulationRiskScore],
+					 [addressPoisoningContent, addressPoisoningRiskScore, transactionSimulationContent, simulationRiskScore],
 				] = await Promise.all([
 					callDomainSecurity(transactionOrigin, apiKey),
 					callTransactionInsight(transaction, transactionOrigin, chainNumber, apiKey),
@@ -124,7 +125,7 @@ export const onTransaction: OnTransactionHandler = async ({ transaction, chainId
 								<Text>{description}</Text>
 							</Banner>
 							{sortedContent}
-							{transactionSimulationContent}
+							{transactionSimulationContent ? <Box>{transactionSimulationContent as JSX.Element}</Box> : null}
 						</Box>
 					),
 				};
