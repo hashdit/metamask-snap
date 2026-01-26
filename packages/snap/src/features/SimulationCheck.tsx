@@ -81,22 +81,20 @@ function extractSimulationResult(response: any) {
 			for (const balanceChange of txn.balance_changes) {
 				if (balanceChange.change_list && Array.isArray(balanceChange.change_list)) {
 					// Check if any change in the list affects the sender
-					const affectsSender = balanceChange.change_list.some((change: any) => 
-						change.address && change.address.toLowerCase() === sender
-					);
+					const affectsSender = balanceChange.change_list.some((change: any) => change.address && change.address.toLowerCase() === sender);
 					if (affectsSender) {
 						filteredBalanceChanges.push(balanceChange);
 					}
 				}
 			}
 		}
-		
+
 		let filteredApproveChanges: any[] = [];
 		if (txn.approve_changes && Array.isArray(txn.approve_changes)) {
 			// approve_changes is now an array
 			filteredApproveChanges = txn.approve_changes;
 		}
-		
+
 		return {
 			from: txn.from,
 			balance_changes: filteredBalanceChanges,
@@ -107,7 +105,6 @@ function extractSimulationResult(response: any) {
 }
 
 async function createSimulationContent(balance_changes: any, approve_changes: any, tokenDetails: any, chainNumber: number, involved_addresses: any) {
-
 	const positiveBalanceChanges: JSX.Element[] = [];
 	const negativeBalanceChanges: JSX.Element[] = [];
 	const approvalChanges: JSX.Element[] = [];
@@ -138,18 +135,18 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 				// Iterate through change_list items
 				for (const changeItem of balance_change.change_list) {
 					if (!changeItem || typeof changeItem !== 'object') continue;
-					
+
 					// Use the new structure: address, amount_change, raw_amount_change, value_usd
 					const address = changeItem.address;
 					const amountChange = changeItem.amount_change || changeItem.raw_amount_change;
-					
+
 					if (!address || !amountChange) continue;
-					
+
 					const numericValue = parseFloat(String(amountChange));
 					if (isNaN(numericValue)) continue;
-					
+
 					const normalizedTokenAmount = Math.abs(numericValue);
-					const valueUSD = changeItem.value_usd ? parseFloat(String(changeItem.value_usd)).toFixed(2) : (tokenPriceUSD ? (normalizedTokenAmount * tokenPriceUSD).toFixed(2) : 'Unknown');
+					const valueUSD = changeItem.value_usd ? parseFloat(String(changeItem.value_usd)).toFixed(2) : tokenPriceUSD ? (normalizedTokenAmount * tokenPriceUSD).toFixed(2) : 'Unknown';
 
 					const rowContent = (
 						<Box key={`balance-${address}-${changeItem.raw_amount_change}`}>
@@ -180,13 +177,13 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	if (approve_changes && Array.isArray(approve_changes)) {
 		for (const approvalChange of approve_changes) {
 			if (!approvalChange || typeof approvalChange !== 'object') continue;
-			
+
 			// Get token details from the approvalChange object itself
 			const tokenAddress = approvalChange.token_address || '';
 			let symbol = approvalChange.symbol || 'Unknown Symbol';
 			let tokenName = approvalChange.tokenName || 'Unknown Token';
 			const tokenPriceUSD = approvalChange.tokenPriceUSD ? parseFloat(String(approvalChange.tokenPriceUSD)) : null;
-			
+
 			// Handle native token naming
 			if (symbol === 'native_token') {
 				if (chainNumber == 1) {
@@ -204,20 +201,20 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 
 			for (const approval of approveList) {
 				if (!approval || typeof approval !== 'object') continue;
-				
+
 				// Parse approve_amount and format as integer (uint256 has no decimals)
 				const approveAmountRaw = approval.approve_amount != null ? parseFloat(String(approval.approve_amount)) : 0;
 				const approveAmount = isNaN(approveAmountRaw) ? '0' : approveAmountRaw.toFixed(0);
-				
+
 				// Parse value_usd and format with 2 decimal places
 				const valueUSDRaw = approval.value_usd != null ? parseFloat(String(approval.value_usd)) : 0;
 				const valueUSD = isNaN(valueUSDRaw) ? '0.00' : valueUSDRaw.toFixed(2);
-				
+
 				const spenderAddress = approval.spender_address || '';
 				const approverAddress = approval.approver_address || '';
-				
+
 				if (!spenderAddress || !tokenAddress) continue;
-				
+
 				approvalChanges.push(
 					<Box key={`approval-${tokenAddress}-${spenderAddress}`}>
 						<Box direction="horizontal">
@@ -259,9 +256,7 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 	}
 
 	return [
-		addressPoisoningContent.length > 0 ? (
-			<Box>{addressPoisoningContent}</Box>
-		) : null,
+		addressPoisoningContent.length > 0 ? <Box>{addressPoisoningContent}</Box> : null,
 		addressPoisoningRiskLevel,
 		<Box>
 			{approvalChanges.length > 0 && (
@@ -285,10 +280,13 @@ async function createSimulationContent(balance_changes: any, approve_changes: an
 				</Box>
 			)}
 
-			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && <Section><Text>No balance changes found</Text></Section>}
-		</Box>
-		,0
-
+			{positiveBalanceChanges.length === 0 && negativeBalanceChanges.length === 0 && (
+				<Section>
+					<Text>No balance changes found</Text>
+				</Section>
+			)}
+		</Box>,
+		0,
 	];
 }
 
@@ -305,7 +303,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation reverted. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	}
 
@@ -319,7 +317,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation reverted without a reason. This transaction will likely fail.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	} else {
 		return [
@@ -331,7 +329,7 @@ function createErrorContent(respCode: any) {
 					<Text color="warning">The transaction simulation failed with code: {respCode}. Please try again or try reinstalling the extension.</Text>
 				</Section>
 			</Box>,
-			3
+			3,
 		];
 	}
 }

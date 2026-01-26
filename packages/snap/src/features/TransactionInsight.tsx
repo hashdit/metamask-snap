@@ -7,12 +7,11 @@ const MAX_POLL_ATTEMPTS = 15;
 const POLL_INTERVAL_MS = 3000;
 
 // Helper function for delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Check if response is ready (both domain_security and tx_security are completed)
 const isResponseReady = (resp: any): boolean => {
-	return resp?.status?.domain_security === 'completed' && 
-		   resp?.status?.tx_security === 'completed';
+	return resp?.status?.domain_security === 'completed' && resp?.status?.tx_security === 'completed';
 };
 
 export const callTransactionInsight = async (transaction: any, transactionOrigin: any, chainNumber: string, apiKey: any) => {
@@ -141,7 +140,6 @@ function parseTransactionInsight(resp: any) {
 					</Box>
 				)}
 			</Section>
-			
 		</Box>,
 		overallRisk,
 	];
