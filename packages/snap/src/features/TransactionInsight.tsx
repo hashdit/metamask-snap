@@ -1,36 +1,68 @@
 /* eslint-disable */
 import { getRiskLevelText, getRiskLevelColor, getRiskLevelVariant } from '../utils/utilFunctions';
-import { Box, Heading, Text, Divider, Row, Address, Section, Value } from '@metamask/snaps-sdk/jsx';
+import { Box, Heading, Text, Divider, Row, Address, Section, Value, Button } from '@metamask/snaps-sdk/jsx';
 import { getRiskTitle } from '../utils/utilFunctions';
+
+const MAX_POLL_ATTEMPTS = 15;
+const POLL_INTERVAL_MS = 3000;
+
+// Helper function for delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Check if response is ready (both domain_security and tx_security are completed)
+const isResponseReady = (resp: any): boolean => {
+	return resp?.status?.domain_security === 'completed' && resp?.status?.tx_security === 'completed';
+};
 
 export const callTransactionInsight = async (transaction: any, transactionOrigin: any, chainNumber: string, apiKey: any) => {
 	const requestBody = {
+		chainId: chainNumber,
 		from: transaction.from,
 		to: transaction.to,
-		data: transaction.data || '',
-		value: transaction.value || '0x0',
-		chainId: chainNumber,
+		data: transaction.data || '0x',
+		nonce: transaction.nonce ? parseInt(transaction.nonce, 16) : 0,
+		value: transaction.value ? parseInt(transaction.value, 16) : 0,
+		aiAnalysis: false,
+		simulate: false,
+		allAddresses: true,
 	};
 	// Better debugging methods for transaction object
 	//console.log('Transaction Insight Request Body', JSON.stringify(requestBody, null, 2), apiKey);
 
 	try {
-		const response = await fetch('https://service.hashdit.io/v2/hashdit/transaction-security', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-API-Key': apiKey,
-			},
-			body: JSON.stringify(requestBody),
-		});
-		// Check for HTTP errors
-		if (!response.ok) {
-			console.error(`HTTP error! Status: ${response.status}`);
-			return [null, 0];
-		}
+		let resp = null;
+		let attempts = 0;
 
-		const resp = await response.json();
-		//console.log('TransactionInsight() Response:', JSON.stringify(resp, null, 2));
+		// Polling loop
+		while (attempts < MAX_POLL_ATTEMPTS) {
+			const response = await fetch('https://service.hashdit.io/v2/hashdit/transaction-security', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-API-Key': apiKey,
+				},
+				body: JSON.stringify(requestBody),
+			});
+
+			// Check for HTTP errors
+			if (!response.ok) {
+				console.error(`HTTP error! Status: ${response.status}`);
+				return [null, 0];
+			}
+
+			resp = await response.json();
+			//console.log('TransactionInsight() Response:', JSON.stringify(resp, null, 2));
+
+			// Check if response is ready
+			if (isResponseReady(resp)) {
+				break;
+			}
+
+			attempts++;
+			if (attempts < MAX_POLL_ATTEMPTS) {
+				await delay(POLL_INTERVAL_MS);
+			}
+		}
 
 		// Check if the response has required fields
 		if (resp && typeof resp.overall_risk === 'number' && resp.chain) {
